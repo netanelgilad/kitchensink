@@ -1,0 +1,24 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import BookingsPage from "../react-pages/bookings";
+import { loadBookingsServiceConfig } from "../headless/bookings/bookings-service";
+import { loadCheckoutServiceConfig } from "../headless/bookings/checkout-service";
+
+// Load service configurations on the server
+const bookingsConfig = await loadBookingsServiceConfig();
+const checkoutConfig = await loadCheckoutServiceConfig(
+  `${Astro.url.origin}/bookings?success=true`
+);
+---
+
+<BaseLayout>
+  <title>Book a Service - Wix Kitchensink</title>
+  <meta name="description" content="Book appointments and services online with our easy-to-use booking system powered by Wix Bookings." />
+  
+  <BookingsPage 
+    client:load 
+    bookingsConfig={bookingsConfig}
+    checkoutConfig={checkoutConfig}
+    slot="body" 
+  />
+</BaseLayout>
