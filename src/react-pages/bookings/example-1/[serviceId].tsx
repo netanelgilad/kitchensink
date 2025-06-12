@@ -3,7 +3,10 @@ import {
   createServicesManager,
   createServicesMap,
 } from "@wix/services-manager";
-import { ServicesManagerProvider } from "@wix/services-manager-react";
+import {
+  ServicesManagerProvider,
+  useService,
+} from "@wix/services-manager-react";
 import {
   BookingServiceService,
   BookingServiceServiceDefinition,
@@ -61,6 +64,16 @@ const ServiceAutoSelector = ({ serviceId }: { serviceId: string }) => {
       }}
     </BookingService.Service>
   );
+};
+
+const TimezoneAutoSetter = () => {
+  const { setTimezone } = useService(BookingAvailabilityServiceDefinition);
+  useEffect(() => {
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setTimezone(userTimezone);
+  }, [setTimezone]);
+
+  return null;
 };
 
 const CalendarSection = () => {
@@ -560,6 +573,7 @@ export default function ServiceBookingPage({
       <ServicesManagerProvider servicesManager={servicesManager}>
         {/* Auto-select the service on page load */}
         <ServiceAutoSelector serviceId={serviceId} />
+        <TimezoneAutoSetter />
 
         <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
           {/* Header */}
@@ -666,6 +680,13 @@ export default function ServiceBookingPage({
 
           {/* Main Content */}
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <BookingAvailability.Timezone>
+              {withDocsWrapper(
+                ({ timezone }) => <div className="text-white/70">{timezone}</div>,
+                "Timezone",
+                "/docs/components/booking-availability#timezone"
+              )}
+            </BookingAvailability.Timezone>
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Calendar */}
               <div className="lg:col-span-1">
