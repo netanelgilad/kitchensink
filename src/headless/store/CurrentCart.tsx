@@ -149,8 +149,8 @@ export const Items = (props: ItemsProps) => {
  * Props for Item headless component
  */
 export interface ItemProps {
-  /** Line item ID */
-  lineItemId: string;
+  /** Line item data */
+  item: any;
   /** Render prop function that receives item data */
   children: (props: ItemRenderProps) => React.ReactNode;
 }
@@ -188,9 +188,7 @@ export const Item = (props: ItemProps) => {
   >;
 
   const cart = service.cart.get();
-  const item = cart?.lineItems?.find(
-    (item: any) => item._id === props.lineItemId
-  );
+  const item = props.item;
   const isLoading = service.isLoading.get();
 
   if (!item) {
@@ -220,15 +218,17 @@ export const Item = (props: ItemProps) => {
   // Format price with proper currency
   const formattedPrice = formatCurrency(totalPrice, currency);
 
+  const lineItemId = item._id || "";
+
   return props.children({
     item,
     quantity,
     title: item.productName?.original || "",
     image,
     price: formattedPrice,
-    onIncrease: () => service.increaseLineItemQuantity(props.lineItemId),
-    onDecrease: () => service.decreaseLineItemQuantity(props.lineItemId),
-    onRemove: () => service.removeLineItem(props.lineItemId),
+    onIncrease: () => service.increaseLineItemQuantity(lineItemId),
+    onDecrease: () => service.decreaseLineItemQuantity(lineItemId),
+    onRemove: () => service.removeLineItem(lineItemId),
     isLoading,
   });
 };

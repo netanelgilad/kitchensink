@@ -723,7 +723,7 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
 
       <RelatedProducts.List>
         {withDocsWrapper(
-          ({ relatedProducts, isLoading, error, hasRelatedProducts }) => (
+          ({ products, isLoading, error, hasProducts }) => (
             <div className="border-t border-white/10 pt-6">
               <h3 className="text-lg font-semibold text-white mb-4">
                 You might also like
@@ -753,28 +753,28 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
                 </div>
               )}
 
-              {!isLoading && hasRelatedProducts && (
+              {!isLoading && hasProducts && (
                 <div className="grid grid-cols-2 gap-4">
-                  {relatedProducts.map((product) => {
+                  {products.map((product: any) => {
                     return (
                       <RelatedProducts.Item key={product._id} product={product}>
                         {withDocsWrapper(
                           ({
-                            name,
-                            imageUrl,
+                            title,
+                            image,
                             price,
-                            inStock,
-                            productUrl,
+                            available,
+                            href,
                             description,
                           }) => (
                             <a
-                              href={productUrl}
+                              href={href}
                               className="bg-white/5 rounded-lg p-4 border border-white/10 hover:border-white/20 transition-all duration-200 group cursor-pointer block"
                             >
                               <div className="aspect-square bg-white/10 rounded-lg mb-3 overflow-hidden group-hover:scale-105 transition-transform duration-200">
-                                {imageUrl ? (
+                                {image ? (
                                   <WixMediaImage
-                                    media={{ image: imageUrl }}
+                                    media={{ image: image }}
                                     className="w-full h-full object-cover"
                                   />
                                 ) : (
@@ -796,7 +796,7 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
                                 )}
                               </div>
                               <h4 className="text-white font-medium text-sm mb-1 group-hover:text-teal-400 transition-colors line-clamp-2">
-                                {name}
+                                {title}
                               </h4>
                               {description && (
                                 <p className="text-white/60 text-xs mb-2 line-clamp-2">
@@ -807,7 +807,7 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
                                 <p className="text-white font-semibold">
                                   {price}
                                 </p>
-                                {!inStock && (
+                                {!available && (
                                   <span className="text-red-400 text-xs">
                                     Out of Stock
                                   </span>
@@ -824,7 +824,7 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
                 </div>
               )}
 
-              {!isLoading && !hasRelatedProducts && !error && (
+              {!isLoading && !hasProducts && !error && (
                 <div className="text-center py-8">
                   <svg
                     className="w-12 h-12 text-white/20 mx-auto mb-3"

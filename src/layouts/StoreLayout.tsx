@@ -10,6 +10,7 @@ import {
 } from "../headless/store/current-cart-service";
 import { CurrentCart } from "../headless/store/CurrentCart";
 import { withDocsWrapper } from "../components/DocsMode";
+import WixMediaImage from "../headless/media/Image";
 
 interface StoreLayoutProps {
   children: ReactNode;
@@ -109,133 +110,151 @@ export function StoreLayout({
       {/* Cart Modal */}
       <CurrentCart.Content>
         {withDocsWrapper(
-          ({ isOpen, onClose, items, hasItems, itemCount }) => (
+          ({ isOpen, onClose }) => (
             <>
               {isOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
                   <div className="fixed right-0 top-0 h-full w-full max-w-md bg-slate-900 shadow-xl">
-                    <div className="flex items-center justify-between p-6 border-b border-white/10">
-                      <h2 className="text-xl font-bold text-white">
-                        Shopping Cart ({itemCount})
-                      </h2>
-                      <button
-                        onClick={onClose}
-                        className="p-2 text-white hover:text-teal-300 transition-colors"
-                      >
-                        <svg
-                          className="w-6 h-6"
-                          fill="none"
-                          stroke="currentColor"
-                          viewBox="0 0 24 24"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M6 18L18 6M6 6l12 12"
-                          />
-                        </svg>
-                      </button>
-                    </div>
+                    {/* Header */}
+                    <CurrentCart.Summary>
+                      {withDocsWrapper(
+                        ({ itemCount }) => (
+                          <div className="flex items-center justify-between p-6 border-b border-white/10">
+                            <h2 className="text-xl font-bold text-white">
+                              Shopping Cart ({itemCount})
+                            </h2>
+                            <button
+                              onClick={onClose}
+                              className="p-2 text-white hover:text-teal-300 transition-colors"
+                            >
+                              <svg
+                                className="w-6 h-6"
+                                fill="none"
+                                stroke="currentColor"
+                                viewBox="0 0 24 24"
+                              >
+                                <path
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  strokeWidth={2}
+                                  d="M6 18L18 6M6 6l12 12"
+                                />
+                              </svg>
+                            </button>
+                          </div>
+                        ),
+                        "CurrentCart.Summary",
+                        "/docs/components/current-cart#summary"
+                      )}
+                    </CurrentCart.Summary>
 
+                    {/* Items */}
                     <div className="flex-1 overflow-y-auto p-6">
-                      {hasItems ? (
-                        <CurrentCart.Items>
-                          {withDocsWrapper(
-                            ({ items }) => (
-                              <div className="space-y-4">
-                                {items.map((item) => (
-                                  <CurrentCart.Item key={item._id} item={item}>
-                                    {withDocsWrapper(
-                                      ({
-                                        title,
-                                        image,
-                                        price,
-                                        quantity,
-                                        onIncrease,
-                                        onDecrease,
-                                        onRemove,
-                                      }) => (
-                                        <div className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
-                                          <div className="w-16 h-16 bg-white/10 rounded-lg overflow-hidden flex-shrink-0">
-                                            {image && (
-                                              <WixMediaImage
-                                                media={{ image: image }}
-                                                className="w-full h-full object-cover"
-                                              />
-                                            )}
-                                          </div>
+                      <CurrentCart.Items>
+                        {withDocsWrapper(
+                          ({ hasItems, items }) => (
+                            <>
+                              {hasItems ? (
+                                <div className="space-y-4">
+                                  {items.map((item) => (
+                                    <CurrentCart.Item
+                                      key={item._id}
+                                      item={item}
+                                    >
+                                      {withDocsWrapper(
+                                        ({
+                                          title,
+                                          image,
+                                          price,
+                                          quantity,
+                                          onIncrease,
+                                          onDecrease,
+                                          onRemove,
+                                        }) => (
+                                          <div className="flex gap-4 p-4 bg-white/5 rounded-xl border border-white/10">
+                                            <div className="w-16 h-16 bg-white/10 rounded-lg overflow-hidden flex-shrink-0">
+                                              {image && (
+                                                <WixMediaImage
+                                                  media={{ image: image }}
+                                                  className="w-full h-full object-cover"
+                                                />
+                                              )}
+                                            </div>
 
-                                          <div className="flex-1 min-w-0">
-                                            <h3 className="text-white font-medium text-sm truncate">
-                                              {title}
-                                            </h3>
-                                            <p className="text-teal-400 font-semibold text-sm mt-1">
-                                              {price}
-                                            </p>
+                                            <div className="flex-1 min-w-0">
+                                              <h3 className="text-white font-medium text-sm truncate">
+                                                {title}
+                                              </h3>
+                                              <p className="text-teal-400 font-semibold text-sm mt-1">
+                                                {price}
+                                              </p>
 
-                                            <div className="flex items-center justify-between mt-3">
-                                              <div className="flex items-center gap-2">
+                                              <div className="flex items-center justify-between mt-3">
+                                                <div className="flex items-center gap-2">
+                                                  <button
+                                                    onClick={onDecrease}
+                                                    className="w-6 h-6 rounded bg-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+                                                  >
+                                                    -
+                                                  </button>
+                                                  <span className="text-white text-sm w-6 text-center">
+                                                    {quantity}
+                                                  </span>
+                                                  <button
+                                                    onClick={onIncrease}
+                                                    className="w-6 h-6 rounded bg-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+                                                  >
+                                                    +
+                                                  </button>
+                                                </div>
+
                                                 <button
-                                                  onClick={onDecrease}
-                                                  className="w-6 h-6 rounded bg-white/10 text-white text-sm hover:bg-white/20 transition-colors"
+                                                  onClick={onRemove}
+                                                  className="text-red-400 hover:text-red-300 text-xs transition-colors"
                                                 >
-                                                  -
-                                                </button>
-                                                <span className="text-white text-sm w-6 text-center">
-                                                  {quantity}
-                                                </span>
-                                                <button
-                                                  onClick={onIncrease}
-                                                  className="w-6 h-6 rounded bg-white/10 text-white text-sm hover:bg-white/20 transition-colors"
-                                                >
-                                                  +
+                                                  Remove
                                                 </button>
                                               </div>
-
-                                              <button
-                                                onClick={onRemove}
-                                                className="text-red-400 hover:text-red-300 text-xs transition-colors"
-                                              >
-                                                Remove
-                                              </button>
                                             </div>
                                           </div>
-                                        </div>
-                                      ),
-                                      "CurrentCart.Item",
-                                      "/docs/components/current-cart#item"
-                                    )}
-                                  </CurrentCart.Item>
-                                ))}
-                              </div>
-                            ),
-                            "CurrentCart.Items",
-                            "/docs/components/current-cart#items"
-                          )}
-                        </CurrentCart.Items>
-                      ) : (
-                        <div className="text-center py-8">
-                          <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <svg
-                              className="w-8 h-8 text-white/60"
-                              fill="none"
-                              stroke="currentColor"
-                              viewBox="0 0 24 24"
-                            >
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth="2"
-                                d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12H6L5 9z"
-                              />
-                            </svg>
-                          </div>
-                          <p className="text-white/60">Your cart is empty</p>
-                        </div>
-                      )}
+                                        ),
+                                        "CurrentCart.Item",
+                                        "/docs/components/current-cart#item"
+                                      )}
+                                    </CurrentCart.Item>
+                                  ))}
+                                </div>
+                              ) : (
+                                <div className="text-center py-8">
+                                  <div className="w-16 h-16 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-4">
+                                    <svg
+                                      className="w-8 h-8 text-white/60"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth="2"
+                                        d="M16 11V7a4 4 0 00-8 0v4M5 9h14l-1 12H6L5 9z"
+                                      />
+                                    </svg>
+                                  </div>
+                                  <p className="text-white/60">
+                                    Your cart is empty
+                                  </p>
+                                </div>
+                              )}
+                            </>
+                          ),
+                          "CurrentCart.Items",
+                          "/docs/components/current-cart#items"
+                        )}
+                      </CurrentCart.Items>
                     </div>
 
+                    {/* Footer */}
                     <div className="border-t border-white/10 p-6">
                       <CurrentCart.Summary>
                         {withDocsWrapper(
@@ -252,9 +271,9 @@ export function StoreLayout({
 
                               <CurrentCart.Checkout>
                                 {withDocsWrapper(
-                                  ({ onCheckout, canCheckout }) => (
+                                  ({ onProceed, canCheckout }) => (
                                     <button
-                                      onClick={onCheckout}
+                                      onClick={onProceed}
                                       disabled={!canCheckout}
                                       className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
                                     >
