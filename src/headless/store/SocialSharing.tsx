@@ -198,8 +198,3 @@ export const SocialSharing = {
   Platform,
   Platforms,
 } as const;
-
-// Backward compatibility exports (can be removed after migration)
-export const SharingActions = Root;
-export const SocialButton = Platform;
-export const ShareButtons = Platforms;

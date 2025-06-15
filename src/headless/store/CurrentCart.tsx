@@ -379,12 +379,3 @@ export const CurrentCart = {
   Checkout,
   Clear,
 } as const;
-
-// Backward compatibility exports (can be removed after migration)
-export const CartIcon = Trigger;
-export const CartModal = Content;
-export const CartLineItems = Items;
-export const CartLineItem = Item;
-export const CartSummary = Summary;
-export const CheckoutButton = Checkout;
-export const ClearCart = Clear;

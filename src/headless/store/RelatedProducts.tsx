@@ -130,7 +130,3 @@ export const RelatedProducts = {
   List,
   Item,
 } as const;
-
-// Backward compatibility exports (can be removed after migration)
-export const RelatedProductsList = List;
-export const RelatedProductCard = Item;

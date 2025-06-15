@@ -504,7 +504,7 @@ export default function ProductDetailPage({
                   </ProductVariantSelector.Trigger>
 
                   {/* Stock Status */}
-                  <ProductVariantSelector.StockStatus>
+                  <ProductVariantSelector.Stock>
                     {withDocsWrapper(
                       ({ inStock, status, quantity, trackInventory }) => (
                         <div className="flex items-center gap-2">
@@ -527,10 +527,10 @@ export default function ProductDetailPage({
                           </span>
                         </div>
                       ),
-                      "ProductVariantSelector.StockStatus",
-                      "/docs/components/product-variant-selector#stockstatus"
+                      "ProductVariantSelector.Stock",
+                      "/docs/components/product-variant-selector#stock"
                     )}
-                  </ProductVariantSelector.StockStatus>
+                  </ProductVariantSelector.Stock>
                 </div>
 
                 {/* Product Details */}
@@ -573,7 +573,7 @@ export default function ProductDetailPage({
 
             {/* Current Cart Summary */}
             <div className="mt-12 pt-8 border-t border-white/10">
-              <CurrentCart.CartSummary>
+              <CurrentCart.Summary>
                 {withDocsWrapper(
                   ({ subtotal, itemCount }) => (
                     <>
@@ -614,10 +614,10 @@ export default function ProductDetailPage({
                       )}
                     </>
                   ),
-                  "CurrentCart.CartSummary",
-                  "/docs/components/current-cart#cartsummary"
+                  "CurrentCart.Summary",
+                  "/docs/components/current-cart#summary"
                 )}
-              </CurrentCart.CartSummary>
+              </CurrentCart.Summary>
             </div>
           </div>
         </div>

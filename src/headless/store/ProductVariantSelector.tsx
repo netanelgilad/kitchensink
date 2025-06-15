@@ -320,11 +320,3 @@ export const ProductVariantSelector = {
   Price,
   Stock,
 } as const;
-
-// Backward compatibility exports (can be removed after migration)
-export const ProductOptions = Options;
-export const ProductOptionChoices = Option;
-export const ChoiceSelection = Choice;
-export const AddToCartTrigger = Trigger;
-export const ProductPrice = Price;
-export const StockStatus = Stock;

@@ -339,10 +339,3 @@ export const Collection = {
   Header,
   Actions,
 } as const;
-
-// Backward compatibility exports (can be removed after migration)
-export const ProductGrid = Grid;
-export const ProductCard = Item;
-export const LoadMoreProducts = LoadMore;
-export const CollectionHeader = Header;
-export const CollectionActions = Actions;

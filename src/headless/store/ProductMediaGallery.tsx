@@ -252,10 +252,3 @@ export const ProductMediaGallery = {
   Previous,
   Indicator,
 } as const;
-
-// Backward compatibility exports (can be removed after migration)
-export const SelectedImage = Viewport;
-export const MediaItemThumbnail = Thumbnail;
-export const NextImageButton = Next;
-export const PrevImageButton = Previous;
-export const MediaGalleryInfo = Indicator;
