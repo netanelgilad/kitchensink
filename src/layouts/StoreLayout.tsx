@@ -115,7 +115,6 @@ export function StoreLayout({
               {isOpen && (
                 <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm">
                   <div className="fixed right-0 top-0 h-full w-full max-w-md bg-slate-900 shadow-xl">
-                    {/* Header */}
                     <CurrentCart.Summary>
                       {withDocsWrapper(
                         ({ itemCount }) => (
@@ -148,7 +147,6 @@ export function StoreLayout({
                       )}
                     </CurrentCart.Summary>
 
-                    {/* Items */}
                     <div className="flex-1 overflow-y-auto p-6">
                       <CurrentCart.Items>
                         {withDocsWrapper(
@@ -254,7 +252,6 @@ export function StoreLayout({
                       </CurrentCart.Items>
                     </div>
 
-                    {/* Footer */}
                     <div className="border-t border-white/10 p-6">
                       <CurrentCart.Summary>
                         {withDocsWrapper(

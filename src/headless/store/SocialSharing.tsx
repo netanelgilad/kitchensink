@@ -192,7 +192,6 @@ export const Platforms = (props: PlatformsProps) => {
   });
 };
 
-// Clean namespace export aligned with common patterns
 export const SocialSharing = {
   Root,
   Platform,

@@ -311,7 +311,6 @@ export const Stock = (props: StockProps) => {
   });
 };
 
-// Clean namespace export aligned with Radix Select patterns
 export const ProductVariantSelector = {
   Options,
   Option,

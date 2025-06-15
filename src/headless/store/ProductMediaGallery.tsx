@@ -244,7 +244,6 @@ export const Indicator = (props: IndicatorProps) => {
   });
 };
 
-// Clean namespace export aligned with Headless UI Carousel patterns
 export const ProductMediaGallery = {
   Viewport,
   Thumbnail,

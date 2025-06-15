@@ -331,7 +331,6 @@ export const Actions = (props: ActionsProps) => {
   }
 };
 
-// Clean namespace export aligned with industry standards
 export const Collection = {
   Grid,
   Item,

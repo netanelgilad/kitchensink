@@ -369,7 +369,6 @@ export const Checkout = (props: CheckoutProps) => {
   });
 };
 
-// Clean namespace export aligned with Radix Dialog patterns
 export const CurrentCart = {
   Trigger,
   Content,

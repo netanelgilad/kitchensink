@@ -125,7 +125,6 @@ export const Item = (props: ItemProps) => {
   });
 };
 
-// Clean namespace export aligned with other components
 export const RelatedProducts = {
   List,
   Item,

@@ -485,11 +485,9 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
 
               <div className="flex flex-col gap-3">
                 <div className="flex gap-3">
-                  {/* Add to Cart Button */}
                   <button
                     onClick={async () => {
                       await onAddToCart();
-                      onAddToCart();
                     }}
                     disabled={!canAddToCart || isLoading}
                     className="flex-1 bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
@@ -527,7 +525,6 @@ const ProductInfo = ({ onAddToCart }: { onAddToCart: () => void }) => {
                   <button
                     onClick={async () => {
                       await onAddToCart();
-                      onAddToCart();
                       setTimeout(() => {
                         window.location.href = "/checkout";
                       }, 1000);
