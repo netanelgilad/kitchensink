@@ -19,8 +19,6 @@ import {
 } from "../../../headless/store/current-cart-service";
 import { Collection } from "../../../headless/store/Collection";
 import WixMediaImage from "../../../headless/media/Image";
-import ProductFilterControls from "../../../components/ProductFilterControls";
-import ProductSortControls from "../../../components/ProductSortControls";
 
 interface StoreExample2PageProps {
   collectionServiceConfig: any;
@@ -312,6 +310,211 @@ const LoadMoreSection = () => {
   );
 };
 
+// Local FilterSidebar component
+const COLOR_OPTIONS = ["Red", "Blue", "Green", "Black", "White"];
+const SIZE_OPTIONS = [
+  "100ml",
+  "150ml",
+  "250ml",
+  "500ml",
+  "Large",
+  "Medium",
+  "Small",
+  "X-Large",
+];
+const PRICE_MIN = 0;
+const PRICE_MAX = 1000;
+const STEP = 1;
+const DEBOUNCE_DELAY = 300;
+
+function FilterSidebar({
+  filter,
+  setFilter,
+}: {
+  filter: any;
+  setFilter: (f: any) => void;
+}) {
+  const color: string[] = filter.color || [];
+  const size: string[] = filter.size || [];
+  const [localMin, setLocalMin] = React.useState(
+    typeof filter.minPrice === "number" ? filter.minPrice : PRICE_MIN
+  );
+  const [localMax, setLocalMax] = React.useState(
+    typeof filter.maxPrice === "number" ? filter.maxPrice : PRICE_MAX
+  );
+  React.useEffect(() => {
+    setLocalMin(
+      typeof filter.minPrice === "number" ? filter.minPrice : PRICE_MIN
+    );
+    setLocalMax(
+      typeof filter.maxPrice === "number" ? filter.maxPrice : PRICE_MAX
+    );
+  }, [filter.minPrice, filter.maxPrice]);
+  const priceDebounceRef = React.useRef<NodeJS.Timeout | null>(null);
+  React.useEffect(() => {
+    if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
+    priceDebounceRef.current = setTimeout(() => {
+      setFilter({
+        ...filter,
+        minPrice: localMin,
+        maxPrice: localMax,
+      });
+    }, DEBOUNCE_DELAY);
+    return () => {
+      if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [localMin, localMax]);
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.min(Number(e.target.value), localMax - STEP);
+    setLocalMin(value);
+  };
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.max(Number(e.target.value), localMin + STEP);
+    setLocalMax(value);
+  };
+  const handleColorChange = (c: string) => {
+    setFilter({
+      ...filter,
+      color: color.includes(c) ? color.filter((v) => v !== c) : [...color, c],
+    });
+  };
+  const handleSizeChange = (s: string) => {
+    setFilter({
+      ...filter,
+      size: size.includes(s) ? size.filter((v) => v !== s) : [...size, s],
+    });
+  };
+  return (
+    <div className="bg-white/10 rounded-2xl shadow-lg border border-white/10 p-6">
+      <h2 className="text-lg font-bold text-white mb-4">Filter by</h2>
+      {/* Price Range */}
+      <div className="mb-6">
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Price
+        </h3>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between text-white/80 text-sm mb-1">
+            <span>Min: ${localMin}</span>
+            <span>Max: ${localMax}</span>
+          </div>
+          <div className="relative h-8 flex items-center">
+            <input
+              type="range"
+              min={PRICE_MIN}
+              max={PRICE_MAX}
+              step={STEP}
+              value={localMin}
+              onChange={handleMinPriceChange}
+              className="absolute w-full pointer-events-auto accent-cyan-500 h-2 bg-transparent z-10"
+              style={{ zIndex: localMin < localMax ? 20 : 10 }}
+            />
+            <input
+              type="range"
+              min={PRICE_MIN}
+              max={PRICE_MAX}
+              step={STEP}
+              value={localMax}
+              onChange={handleMaxPriceChange}
+              className="absolute w-full pointer-events-auto accent-cyan-500 h-2 bg-transparent z-0"
+              style={{ zIndex: localMax > localMin ? 20 : 10 }}
+            />
+            <div className="absolute w-full h-2 bg-white/20 rounded-full" />
+            <div
+              className="absolute h-2 bg-cyan-500 rounded-full"
+              style={{
+                left: `${
+                  ((localMin - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100
+                }%`,
+                width: `${
+                  ((localMax - localMin) / (PRICE_MAX - PRICE_MIN)) * 100
+                }%`,
+              }}
+            />
+          </div>
+        </div>
+      </div>
+      {/* Color */}
+      <div className="border-t border-white/10 pt-5 mb-6">
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Color
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {COLOR_OPTIONS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`px-4 py-1 rounded-full border text-sm font-medium transition-all
+                ${
+                  color.includes(c)
+                    ? "bg-cyan-500 border-cyan-500 text-white shadow"
+                    : "bg-white/10 border-white/20 text-white/80 hover:bg-cyan-500/10 hover:border-cyan-400 hover:text-cyan-300"
+                }
+              `}
+              onClick={() => handleColorChange(c)}
+              aria-pressed={color.includes(c)}
+            >
+              {c}
+            </button>
+          ))}
+        </div>
+      </div>
+      {/* Size */}
+      <div className="border-t border-white/10 pt-5">
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Size
+        </h3>
+        <div className="flex flex-wrap gap-2">
+          {SIZE_OPTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`px-4 py-1 rounded-full border text-sm font-medium transition-all
+                ${
+                  size.includes(s)
+                    ? "bg-cyan-500 border-cyan-500 text-white shadow"
+                    : "bg-white/10 border-white/20 text-white/80 hover:bg-cyan-500/10 hover:border-cyan-400 hover:text-cyan-300"
+                }
+              `}
+              onClick={() => handleSizeChange(s)}
+              aria-pressed={size.includes(s)}
+            >
+              {s}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Local SortDropdown component
+const SORT_OPTIONS = [
+  { label: "Newest", value: { field: "_createdDate", order: "DESC" } },
+  { label: "Oldest", value: { field: "_createdDate", order: "ASC" } },
+];
+function SortDropdown({
+  sort,
+  setSort,
+}: {
+  sort: any;
+  setSort: (s: any) => void;
+}) {
+  return (
+    <select
+      className="bg-white/10 border border-white/20 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+      value={JSON.stringify(sort)}
+      onChange={(e) => setSort(JSON.parse(e.target.value))}
+    >
+      {SORT_OPTIONS.map((opt) => (
+        <option key={opt.label} value={JSON.stringify(opt.value)}>
+          {opt.label}
+        </option>
+      ))}
+    </select>
+  );
+}
+
 export default function StoreExample2Page({
   collectionServiceConfig,
   currentCartServiceConfig,
@@ -378,24 +581,19 @@ export default function StoreExample2Page({
               {/* Sidebar Filters */}
               <aside className="md:w-64 w-full mb-8 md:mb-0">
                 <Collection.Filter>
-                  {({ filter, setFilter }) => (
-                    <div className="bg-white/10 rounded-2xl shadow-lg border border-white/10 p-6">
-                      <h2 className="text-lg font-bold text-white mb-4">
-                        Filter by
-                      </h2>
-                      <ProductFilterControls
-                        filter={{ ...filter, ...clientFilter }}
-                        setFilter={(f) => {
-                          setFilter({
-                            minPrice: f.minPrice,
-                            maxPrice: f.maxPrice,
-                            color: f.color,
-                            size: f.size,
-                          });
-                          setClientFilter(f);
-                        }}
-                      />
-                    </div>
+                  {({ setFilter }) => (
+                    <FilterSidebar
+                      filter={clientFilter}
+                      setFilter={(f) => {
+                        setFilter({
+                          minPrice: f.minPrice,
+                          maxPrice: f.maxPrice,
+                          color: f.color,
+                          size: f.size,
+                        });
+                        setClientFilter(f);
+                      }}
+                    />
                   )}
                 </Collection.Filter>
               </aside>
@@ -405,7 +603,7 @@ export default function StoreExample2Page({
                   {({ sort, setSort }) => (
                     <>
                       <div className="flex justify-end mb-4">
-                        <ProductSortControls sort={sort} setSort={setSort} />
+                        <SortDropdown sort={sort} setSort={setSort} />
                       </div>
                       <ProductGridContent filter={clientFilter} sort={sort} />
                       <LoadMoreSection />
