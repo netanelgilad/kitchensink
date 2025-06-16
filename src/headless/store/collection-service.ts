@@ -16,10 +16,22 @@ export interface CollectionServiceAPI {
 
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
+
+  setFilter: (newFilter: Record<string, any>) => void;
+  setSort: (newSort: { field: string; order: "ASC" | "DESC" }) => void;
+  filter: Signal<Record<string, any>>;
+  sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
 }
 
 export const CollectionServiceDefinition =
   defineService<CollectionServiceAPI>("collection");
+
+// Allowed sort and filter fields for productsV3.queryProducts
+const ALLOWED_SORT_FIELDS = ["_createdDate"];
+const ALLOWED_FILTER_FIELDS = [
+  "actualPriceRange.minValue.amount",
+  "options.choicesSettings.choices.name",
+];
 
 export const CollectionService = implementService.withConfig<{
   initialProducts?: productsV3.V3Product[];
@@ -44,12 +56,59 @@ export const CollectionService = implementService.withConfig<{
 
   const pageSize = config.pageSize || 12;
 
+  // New: filter and sort signals
+  const filter: Signal<Record<string, any>> = signalsService.signal({});
+  const sort: Signal<{ field: string; order: "ASC" | "DESC" }> =
+    signalsService.signal({ field: "name", order: "ASC" });
+
+  // New: setters
+  const setFilter = (newFilter: Record<string, any>) => {
+    filter.set(newFilter);
+    refresh();
+  };
+  const setSort = (newSort: { field: string; order: "ASC" | "DESC" }) => {
+    sort.set(newSort);
+    refresh();
+  };
+
+  const buildQuery = () => {
+    let query = productsV3.queryProducts();
+    const f = filter.get();
+    // Price filtering
+    if (f.minPrice) {
+      query = query.ge("actualPriceRange.minValue.amount", f.minPrice);
+    }
+    if (f.maxPrice) {
+      query = query.le("actualPriceRange.minValue.amount", f.maxPrice);
+    }
+    // Color filtering
+    if (f.color && Array.isArray(f.color) && f.color.length > 0) {
+      // @ts-expect-error: options.Color is a valid field for Wix API, but not in local types
+      query = query.hasSome("options.Color", f.color);
+    }
+    // Size filtering
+    if (f.size && Array.isArray(f.size) && f.size.length > 0) {
+      // @ts-expect-error: options.Size is a valid field for Wix API, but not in local types
+      query = query.hasSome("options.Size", f.size);
+    }
+    // Sorting
+    const s = sort.get();
+    if (s.field === "_createdDate") {
+      if (s.order === "ASC") {
+        query = query.ascending("_createdDate");
+      } else {
+        query = query.descending("_createdDate");
+      }
+    }
+    return query;
+  };
+
   const loadMore = async () => {
     try {
       isLoading.set(true);
       error.set(null);
 
-      let query = productsV3.queryProducts();
+      let query = buildQuery();
 
       const currentProducts = productsList.get();
       const productResults = await query.limit(pageSize).find();
@@ -72,7 +131,7 @@ export const CollectionService = implementService.withConfig<{
       isLoading.set(true);
       error.set(null);
 
-      let query = productsV3.queryProducts();
+      let query = buildQuery();
 
       const productResults = await query.limit(pageSize).find();
 
@@ -96,6 +155,10 @@ export const CollectionService = implementService.withConfig<{
     hasProducts,
     loadMore,
     refresh,
+    setFilter,
+    setSort,
+    filter,
+    sort,
   };
 });
 

@@ -331,10 +331,83 @@ export const Actions = (props: ActionsProps) => {
   }
 };
 
+// Headless component for filter controls
+export interface FilterProps {
+  children: (props: {
+    filter: Record<string, any>;
+    setFilter: (filter: Record<string, any>) => void;
+  }) => React.ReactNode;
+}
+
+export const Filter = (props: FilterProps) => {
+  const service = useService(CollectionServiceDefinition) as ServiceAPI<
+    typeof CollectionServiceDefinition
+  >;
+
+  if (!service) {
+    console.error("CollectionService is undefined in Filter");
+    return props.children({
+      filter: {},
+      setFilter: () => {},
+    });
+  }
+
+  try {
+    return props.children({
+      filter: service.filter?.get() || {},
+      setFilter: service.setFilter || (() => {}),
+    });
+  } catch (err) {
+    console.error("Error in Filter:", err);
+    return props.children({
+      filter: {},
+      setFilter: () => {},
+    });
+  }
+};
+
+// Headless component for sort controls
+export interface SortProps {
+  children: (props: {
+    sort: { field: string; order: "ASC" | "DESC" };
+    setSort: (sort: { field: string; order: "ASC" | "DESC" }) => void;
+  }) => React.ReactNode;
+}
+
+export const Sort = (props: SortProps) => {
+  const service = useService(CollectionServiceDefinition) as ServiceAPI<
+    typeof CollectionServiceDefinition
+  >;
+
+  if (!service) {
+    console.error("CollectionService is undefined in Sort");
+    return props.children({
+      sort: { field: "name", order: "ASC" },
+      setSort: () => {},
+    });
+  }
+
+  try {
+    return props.children({
+      sort: service.sort?.get() || { field: "name", order: "ASC" },
+      setSort: service.setSort || (() => {}),
+    });
+  } catch (err) {
+    console.error("Error in Sort:", err);
+    return props.children({
+      sort: { field: "name", order: "ASC" },
+      setSort: () => {},
+    });
+  }
+};
+
+// Namespace export for clean API
 export const Collection = {
   Grid,
   Item,
   LoadMore,
   Header,
   Actions,
+  Filter,
+  Sort,
 } as const;
