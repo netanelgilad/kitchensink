@@ -74,6 +74,13 @@ export const CollectionService = implementService.withConfig<{
   const buildQuery = () => {
     let query = productsV3.queryProducts();
     const f = filter.get();
+    // Price filtering (re-added)
+    if (typeof f.minPrice === "number") {
+      query = query.ge("actualPriceRange.minValue.amount", f.minPrice);
+    }
+    if (typeof f.maxPrice === "number") {
+      query = query.le("actualPriceRange.minValue.amount", f.maxPrice);
+    }
     // Color filtering
     if (f.color && Array.isArray(f.color) && f.color.length > 0) {
       // @ts-expect-error: options.Color is a valid field for Wix API, but not in local types
