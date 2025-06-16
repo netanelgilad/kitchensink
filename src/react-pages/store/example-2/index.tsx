@@ -32,24 +32,46 @@ const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
     <Collection.Grid>
       {withDocsWrapper(
         ({ products, isLoading, error, isEmpty }) => {
-          // Client-side color/size filtering
+          // Client-side color/size filtering (if needed)
           let filteredProducts = products;
-          if (filter.colors && filter.colors.length > 0) {
+          if (filter.color && filter.color.length > 0) {
             filteredProducts = filteredProducts.filter((product) => {
               return product.options?.some((opt: any) =>
                 opt.choicesSettings?.choices?.some((choice: any) =>
-                  filter.colors.includes(choice.name)
+                  filter.color.includes(choice.name)
                 )
               );
             });
           }
-          if (filter.sizes && filter.sizes.length > 0) {
+          if (filter.size && filter.size.length > 0) {
             filteredProducts = filteredProducts.filter((product) => {
               return product.options?.some((opt: any) =>
                 opt.choicesSettings?.choices?.some((choice: any) =>
-                  filter.sizes.includes(choice.name)
+                  filter.size.includes(choice.name)
                 )
               );
+            });
+          }
+          // Client-side price filtering
+          if (
+            typeof filter.minPrice === "number" ||
+            typeof filter.maxPrice === "number"
+          ) {
+            filteredProducts = filteredProducts.filter((product) => {
+              const price = parseFloat(
+                product.actualPriceRange?.minValue?.amount ?? "0"
+              );
+              if (
+                typeof filter.minPrice === "number" &&
+                price < filter.minPrice
+              )
+                return false;
+              if (
+                typeof filter.maxPrice === "number" &&
+                price > filter.maxPrice
+              )
+                return false;
+              return true;
             });
           }
           // Client-side price sorting
@@ -367,6 +389,8 @@ export default function StoreExample2Page({
                           setFilter({
                             minPrice: f.minPrice,
                             maxPrice: f.maxPrice,
+                            color: f.color,
+                            size: f.size,
                           });
                           setClientFilter(f);
                         }}

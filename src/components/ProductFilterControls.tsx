@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useEffect } from "react";
 
 interface ProductFilterControlsProps {
   filter: Record<string, any>;
@@ -17,98 +17,175 @@ const SIZE_OPTIONS = [
   "X-Large",
 ];
 
+const PRICE_MIN = 0;
+const PRICE_MAX = 1000;
+const STEP = 1;
+const DEBOUNCE_DELAY = 300;
+
 export const ProductFilterControls: React.FC<ProductFilterControlsProps> = ({
   filter,
   setFilter,
 }) => {
-  const [minPrice, setMinPrice] = useState(filter.minPrice || "");
-  const [maxPrice, setMaxPrice] = useState(filter.maxPrice || "");
-  const [colors, setColors] = useState<string[]>(filter.colors || []);
-  const [sizes, setSizes] = useState<string[]>(filter.sizes || []);
+  const color: string[] = filter.color || [];
+  const size: string[] = filter.size || [];
+  const minPrice =
+    typeof filter.minPrice === "number" ? filter.minPrice : PRICE_MIN;
+  const maxPrice =
+    typeof filter.maxPrice === "number" ? filter.maxPrice : PRICE_MAX;
 
-  const handleColorChange = (color: string) => {
-    setColors((prev) =>
-      prev.includes(color) ? prev.filter((c) => c !== color) : [...prev, color]
-    );
-  };
-  const handleSizeChange = (size: string) => {
-    setSizes((prev) =>
-      prev.includes(size) ? prev.filter((s) => s !== size) : [...prev, size]
-    );
+  // Debounce logic for price filter
+  const priceDebounceRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingPriceRef = useRef<{ minPrice: number; maxPrice: number } | null>(
+    null
+  );
+
+  // Call this to debounce setFilter for price
+  const debounceSetPrice = (newMin: number, newMax: number) => {
+    pendingPriceRef.current = { minPrice: newMin, maxPrice: newMax };
+    if (priceDebounceRef.current) {
+      clearTimeout(priceDebounceRef.current);
+    }
+    priceDebounceRef.current = setTimeout(() => {
+      setFilter({
+        ...filter,
+        minPrice: pendingPriceRef.current!.minPrice,
+        maxPrice: pendingPriceRef.current!.maxPrice,
+      });
+      priceDebounceRef.current = null;
+    }, DEBOUNCE_DELAY);
   };
 
-  const applyFilters = () => {
+  // Clean up timer on unmount
+  useEffect(() => {
+    return () => {
+      if (priceDebounceRef.current) {
+        clearTimeout(priceDebounceRef.current);
+      }
+    };
+  }, []);
+
+  // Handlers for the custom slider
+  const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.min(Number(e.target.value), maxPrice - STEP);
+    debounceSetPrice(value, maxPrice);
+  };
+  const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = Math.max(Number(e.target.value), minPrice + STEP);
+    debounceSetPrice(minPrice, value);
+  };
+  const handleColorChange = (c: string) => {
     setFilter({
-      minPrice: minPrice ? Number(minPrice) : undefined,
-      maxPrice: maxPrice ? Number(maxPrice) : undefined,
-      colors,
-      sizes,
+      ...filter,
+      color: color.includes(c) ? color.filter((v) => v !== c) : [...color, c],
+    });
+  };
+  const handleSizeChange = (s: string) => {
+    setFilter({
+      ...filter,
+      size: size.includes(s) ? size.filter((v) => v !== s) : [...size, s],
     });
   };
 
   return (
-    <div className="bg-white/5 rounded-xl p-4 flex flex-col gap-4">
+    <div className="bg-white/5 rounded-2xl p-6 flex flex-col gap-8 border border-white/10 shadow-lg">
+      {/* Price Range */}
       <div>
-        <label className="block text-white/80 mb-1">Price Range</label>
-        <div className="flex gap-2">
-          <input
-            type="number"
-            placeholder="Min"
-            className="w-24 px-2 py-1 rounded bg-white/10 text-white"
-            value={minPrice}
-            onChange={(e) => setMinPrice(e.target.value)}
-          />
-          <span className="text-white/60">-</span>
-          <input
-            type="number"
-            placeholder="Max"
-            className="w-24 px-2 py-1 rounded bg-white/10 text-white"
-            value={maxPrice}
-            onChange={(e) => setMaxPrice(e.target.value)}
-          />
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Price
+        </h3>
+        <div className="flex flex-col gap-2">
+          <div className="flex justify-between text-white/80 text-sm mb-1">
+            <span>Min: ${minPrice}</span>
+            <span>Max: ${maxPrice}</span>
+          </div>
+          <div className="relative h-8 flex items-center">
+            {/* Min slider */}
+            <input
+              type="range"
+              min={PRICE_MIN}
+              max={PRICE_MAX}
+              step={STEP}
+              value={minPrice}
+              onChange={handleMinPriceChange}
+              className="absolute w-full pointer-events-auto accent-cyan-500 h-2 bg-transparent z-10"
+              style={{ zIndex: minPrice < maxPrice ? 20 : 10 }}
+            />
+            {/* Max slider */}
+            <input
+              type="range"
+              min={PRICE_MIN}
+              max={PRICE_MAX}
+              step={STEP}
+              value={maxPrice}
+              onChange={handleMaxPriceChange}
+              className="absolute w-full pointer-events-auto accent-cyan-500 h-2 bg-transparent z-0"
+              style={{ zIndex: maxPrice > minPrice ? 20 : 10 }}
+            />
+            {/* Track background */}
+            <div className="absolute w-full h-2 bg-white/20 rounded-full" />
+            {/* Selected range highlight */}
+            <div
+              className="absolute h-2 bg-cyan-500 rounded-full"
+              style={{
+                left: `${
+                  ((minPrice - PRICE_MIN) / (PRICE_MAX - PRICE_MIN)) * 100
+                }%`,
+                width: `${
+                  ((maxPrice - minPrice) / (PRICE_MAX - PRICE_MIN)) * 100
+                }%`,
+              }}
+            />
+          </div>
         </div>
       </div>
-      <div>
-        <label className="block text-white/80 mb-1">Color</label>
+      <div className="border-t border-white/10 pt-5">
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Color
+        </h3>
         <div className="flex flex-wrap gap-2">
-          {COLOR_OPTIONS.map((color) => (
-            <label
-              key={color}
-              className="flex items-center gap-1 text-white/70"
+          {COLOR_OPTIONS.map((c) => (
+            <button
+              key={c}
+              type="button"
+              className={`px-4 py-1 rounded-full border text-sm font-medium transition-all
+                ${
+                  color.includes(c)
+                    ? "bg-cyan-500 border-cyan-500 text-white shadow"
+                    : "bg-white/10 border-white/20 text-white/80 hover:bg-cyan-500/10 hover:border-cyan-400 hover:text-cyan-300"
+                }
+              `}
+              onClick={() => handleColorChange(c)}
+              aria-pressed={color.includes(c)}
             >
-              <input
-                type="checkbox"
-                checked={colors.includes(color)}
-                onChange={() => handleColorChange(color)}
-                className="accent-cyan-500"
-              />
-              {color}
-            </label>
+              {c}
+            </button>
           ))}
         </div>
       </div>
-      <div>
-        <label className="block text-white/80 mb-1">Size</label>
+      <div className="border-t border-white/10 pt-5">
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Size
+        </h3>
         <div className="flex flex-wrap gap-2">
-          {SIZE_OPTIONS.map((size) => (
-            <label key={size} className="flex items-center gap-1 text-white/70">
-              <input
-                type="checkbox"
-                checked={sizes.includes(size)}
-                onChange={() => handleSizeChange(size)}
-                className="accent-cyan-500"
-              />
-              {size}
-            </label>
+          {SIZE_OPTIONS.map((s) => (
+            <button
+              key={s}
+              type="button"
+              className={`px-4 py-1 rounded-full border text-sm font-medium transition-all
+                ${
+                  size.includes(s)
+                    ? "bg-cyan-500 border-cyan-500 text-white shadow"
+                    : "bg-white/10 border-white/20 text-white/80 hover:bg-cyan-500/10 hover:border-cyan-400 hover:text-cyan-300"
+                }
+              `}
+              onClick={() => handleSizeChange(s)}
+              aria-pressed={size.includes(s)}
+            >
+              {s}
+            </button>
           ))}
         </div>
       </div>
-      <button
-        className="mt-2 bg-gradient-to-r from-teal-500 to-cyan-600 text-white font-semibold py-2 px-4 rounded-lg hover:from-teal-600 hover:to-cyan-700 transition-all"
-        onClick={applyFilters}
-      >
-        Apply Filters
-      </button>
     </div>
   );
 };
