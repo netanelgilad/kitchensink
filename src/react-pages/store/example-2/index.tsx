@@ -19,11 +19,6 @@ import {
 } from "../../../headless/store/current-cart-service";
 import { Collection } from "../../../headless/store/Collection";
 import WixMediaImage from "../../../headless/media/Image";
-import {
-  URLParamsService,
-  type FilterParams,
-  type SortParams,
-} from "../../../headless/store/url-params-service";
 
 interface StoreExample2PageProps {
   collectionServiceConfig: any;

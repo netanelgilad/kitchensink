@@ -31,7 +31,6 @@ export interface CollectionServiceAPI {
   ) => void;
   filter: Signal<Record<string, any>>;
   sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
-  syncWithCurrentURL: () => void;
 }
 
 export const CollectionServiceDefinition =
@@ -86,13 +85,13 @@ export const CollectionService = implementService.withConfig<{
       (config.initialSort || { field: "_createdDate", order: "DESC" }) as any
     );
 
-  // Apply client-side filtering and sorting
+  // Apply filtering and sorting to products
   const applyFiltersAndSort = () => {
     let filteredProducts = rawProductsList.get();
     const currentFilter = filter.get();
     const currentSort = sort.get();
 
-    // Client-side color filtering
+    // Color filtering
     if (currentFilter.color && currentFilter.color.length > 0) {
       filteredProducts = filteredProducts.filter((product) => {
         return product.options?.some((opt: any) =>
@@ -103,7 +102,7 @@ export const CollectionService = implementService.withConfig<{
       });
     }
 
-    // Client-side size filtering
+    // Size filtering
     if (currentFilter.size && currentFilter.size.length > 0) {
       filteredProducts = filteredProducts.filter((product) => {
         return product.options?.some((opt: any) =>
@@ -114,7 +113,7 @@ export const CollectionService = implementService.withConfig<{
       });
     }
 
-    // Client-side price filtering
+    // Price filtering
     if (
       typeof currentFilter.minPrice === "number" ||
       typeof currentFilter.maxPrice === "number"
@@ -137,7 +136,7 @@ export const CollectionService = implementService.withConfig<{
       });
     }
 
-    // Client-side sorting
+    // Sorting
     if (currentSort.field === "price") {
       filteredProducts = [...filteredProducts].sort((a, b) => {
         const aPrice = parseFloat(a.actualPriceRange?.minValue?.amount ?? "0");
@@ -160,7 +159,7 @@ export const CollectionService = implementService.withConfig<{
   // Apply filtering and sorting to current products
   applyFiltersAndSort();
 
-  // Set up browser navigation listener only (no automatic sync on initialization)
+  // Set up browser navigation listener for back/forward buttons
   if (typeof window !== "undefined" && config.enableURLSync) {
     const handlePopState = () => {
       try {
@@ -168,25 +167,14 @@ export const CollectionService = implementService.withConfig<{
         const { filter: urlFilter, sort: urlSort } =
           URLParamsService.parseSearchParams(searchParams);
 
-        // Use atomic update method for browser navigation but skip URL update since we're responding TO URL changes
-        setFilterAndSort(urlFilter, urlSort, false); // false = don't update URL
+        setFilterAndSort(urlFilter, urlSort, false); // Don't update URL since we're responding to URL changes
       } catch (error) {
         console.warn("Failed to handle browser navigation:", error);
       }
     };
 
     window.addEventListener("popstate", handlePopState);
-
-    // Clean up listener when service is destroyed
-    // Note: This is a simplified cleanup - in a real implementation you'd want
-    // to track this in the service lifecycle
   }
-
-  // Expose a method to sync with current URL (to be called after hydration)
-  const syncWithCurrentURL = () => {
-    // This method is no longer needed since we initialize from server-side URL params
-    // but keeping it for API compatibility
-  };
 
   // Atomic method to update both filter and sort together
   const setFilterAndSort = (
@@ -198,7 +186,7 @@ export const CollectionService = implementService.withConfig<{
     filter.set(newFilter);
     sort.set(newSort);
 
-    // Update URL once with both parameters (only if requested)
+    // Update URL with both parameters if requested
     if (updateURL && config.enableURLSync && typeof window !== "undefined") {
       URLParamsService.updateURL(
         newFilter as FilterParams,
@@ -206,38 +194,34 @@ export const CollectionService = implementService.withConfig<{
       );
     }
 
-    // Apply filtering and sorting once
     applyFiltersAndSort();
   };
 
-  // New: setters with URL sync
   const setFilter = (newFilter: Record<string, any>) => {
     filter.set(newFilter);
 
-    // Update URL if enabled - preserve current sort state
+    // Update URL and preserve current sort state
     if (config.enableURLSync && typeof window !== "undefined") {
       URLParamsService.updateURL(
         newFilter as FilterParams,
-        sort.get() as SortParams // Use current sort state
+        sort.get() as SortParams
       );
     }
 
-    // Apply filtering and sorting to current products
     applyFiltersAndSort();
   };
 
   const setSort = (newSort: { field: string; order: "ASC" | "DESC" }) => {
     sort.set(newSort);
 
-    // Update URL if enabled - preserve current filter state
+    // Update URL and preserve current filter state
     if (config.enableURLSync && typeof window !== "undefined") {
       URLParamsService.updateURL(
-        filter.get() as FilterParams, // Use current filter state
+        filter.get() as FilterParams,
         newSort as SortParams
       );
     }
 
-    // Apply filtering and sorting to current products
     applyFiltersAndSort();
   };
 
@@ -245,10 +229,7 @@ export const CollectionService = implementService.withConfig<{
     let query = productsV3.queryProducts();
     const f = filter.get();
 
-    // Note: Price and option filtering will be handled client-side to avoid API limitations
-    // Only use server-side filtering for fields that are known to work
-
-    // Sorting - only use fields that are supported by the API
+    // Apply server-side sorting for supported fields only
     const s = sort.get();
     if (s.field === "_createdDate") {
       if (s.order === "ASC") {
@@ -257,7 +238,6 @@ export const CollectionService = implementService.withConfig<{
         query = query.descending("_createdDate");
       }
     }
-    // Note: Price sorting will be handled client-side
 
     return query;
   };
@@ -275,7 +255,6 @@ export const CollectionService = implementService.withConfig<{
       const newProducts = [...currentProducts, ...(productResults.items || [])];
       rawProductsList.set(newProducts);
 
-      // Apply filtering and sorting to the updated raw products
       applyFiltersAndSort();
     } catch (err) {
       error.set(
@@ -297,7 +276,6 @@ export const CollectionService = implementService.withConfig<{
 
       rawProductsList.set(productResults.items || []);
 
-      // Apply filtering and sorting to the refreshed raw products
       applyFiltersAndSort();
     } catch (err) {
       error.set(
@@ -321,7 +299,6 @@ export const CollectionService = implementService.withConfig<{
     setFilterAndSort,
     filter,
     sort,
-    syncWithCurrentURL,
   };
 });
 
@@ -354,7 +331,6 @@ export async function loadCollectionServiceConfig(
         query = query.descending("_createdDate");
       }
     }
-    // Note: All filtering will be handled client-side to avoid API limitations
 
     const productResults = await query.limit(12).find();
 
