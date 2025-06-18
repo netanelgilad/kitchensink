@@ -416,13 +416,6 @@ function FilterSidebar({
         </button>
       </div>
 
-      {/* URL Status Indicator */}
-      <div className="mb-4 p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
-        <p className="text-cyan-300 text-xs">
-          ✓ Filters sync with URL for easy sharing
-        </p>
-      </div>
-
       {/* Price Range */}
       <div className="mb-6">
         <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
@@ -611,31 +604,19 @@ export default function StoreExample2Page({
   }, []);
 
   // Update URL when filters or sort changes
-  const updateFilter = useCallback(
-    (newFilter: any) => {
-      setClientFilter(newFilter);
-      if (typeof window !== "undefined") {
-        URLParamsService.updateURL(
-          newFilter as FilterParams,
-          clientSort as SortParams
-        );
-      }
-    },
-    [clientSort]
-  );
+  const updateURL = useCallback(() => {
+    if (typeof window !== "undefined") {
+      URLParamsService.updateURL(
+        clientFilter as FilterParams,
+        clientSort as SortParams
+      );
+    }
+  }, [clientFilter, clientSort]);
 
-  const updateSort = useCallback(
-    (newSort: any) => {
-      setClientSort(newSort);
-      if (typeof window !== "undefined") {
-        URLParamsService.updateURL(
-          clientFilter as FilterParams,
-          newSort as SortParams
-        );
-      }
-    },
-    [clientFilter]
-  );
+  // Update URL whenever filter or sort changes
+  useEffect(() => {
+    updateURL();
+  }, [updateURL]);
 
   return (
     <KitchensinkLayout>
@@ -694,7 +675,7 @@ export default function StoreExample2Page({
                           color: f.color,
                           size: f.size,
                         });
-                        updateFilter(f);
+                        setClientFilter(f);
                       }}
                     />
                   )}
@@ -710,7 +691,7 @@ export default function StoreExample2Page({
                           sort={clientSort}
                           setSort={(newSort) => {
                             setSort(newSort);
-                            updateSort(newSort);
+                            setClientSort(newSort);
                           }}
                         />
                       </div>
