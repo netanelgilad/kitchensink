@@ -508,25 +508,12 @@ export default function StoreExample2Page({
       )
   );
 
-  // Listen for back/forward navigation to sync with URL changes
+  // Sync with URL parameters after hydration to avoid hydration mismatch
   useEffect(() => {
-    const handlePopState = () => {
-      if (typeof window !== "undefined") {
-        const searchParams = new URLSearchParams(window.location.search);
-        const { filter, sort } =
-          URLParamsService.parseSearchParams(searchParams);
-
-        // Get the service instance and update it directly
-        const service = servicesManager.getService(CollectionServiceDefinition);
-        if (service) {
-          service.setFilter(filter);
-          service.setSort(sort);
-        }
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
+    const service = servicesManager.getService(CollectionServiceDefinition);
+    if (service) {
+      service.syncWithCurrentURL();
+    }
   }, [servicesManager]);
 
   return (

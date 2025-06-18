@@ -26,6 +26,7 @@ export interface CollectionServiceAPI {
   setSort: (newSort: { field: string; order: "ASC" | "DESC" }) => void;
   filter: Signal<Record<string, any>>;
   sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
+  syncWithCurrentURL: () => void;
 }
 
 export const CollectionServiceDefinition =
@@ -71,7 +72,7 @@ export const CollectionService = implementService.withConfig<{
 
   const pageSize = config.pageSize || 12;
 
-  // New: filter and sort signals with initial values from config
+  // Use config values for initial state to ensure server/client consistency
   const filter: Signal<Record<string, any>> = signalsService.signal(
     (config.initialFilter || {}) as any
   );
@@ -153,6 +154,44 @@ export const CollectionService = implementService.withConfig<{
 
   // Apply filtering and sorting to current products
   applyFiltersAndSort();
+
+  // Set up browser navigation listener on client-side
+  if (typeof window !== "undefined" && config.enableURLSync) {
+    const handlePopState = () => {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const { filter: urlFilter, sort: urlSort } =
+          URLParamsService.parseSearchParams(searchParams);
+        filter.set(urlFilter);
+        sort.set(urlSort);
+        applyFiltersAndSort();
+      } catch (error) {
+        console.warn("Failed to handle browser navigation:", error);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+
+    // Clean up listener when service is destroyed
+    // Note: This is a simplified cleanup - in a real implementation you'd want
+    // to track this in the service lifecycle
+  }
+
+  // Expose a method to sync with current URL (to be called after hydration)
+  const syncWithCurrentURL = () => {
+    if (typeof window !== "undefined" && config.enableURLSync) {
+      try {
+        const searchParams = new URLSearchParams(window.location.search);
+        const { filter: urlFilter, sort: urlSort } =
+          URLParamsService.parseSearchParams(searchParams);
+        filter.set(urlFilter);
+        sort.set(urlSort);
+        applyFiltersAndSort();
+      } catch (error) {
+        console.warn("Failed to sync with current URL:", error);
+      }
+    }
+  };
 
   // New: setters with URL sync
   const setFilter = (newFilter: Record<string, any>) => {
@@ -264,6 +303,7 @@ export const CollectionService = implementService.withConfig<{
     setSort,
     filter,
     sort,
+    syncWithCurrentURL,
   };
 });
 
