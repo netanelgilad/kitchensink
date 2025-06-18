@@ -373,8 +373,35 @@ export const CollectionService = implementService.withConfig<{
   };
 });
 
+// Helper function to find category by slug
+async function findCategoryBySlug(
+  slug: string,
+  categories: any[]
+): Promise<string | null> {
+  // First, try to find by exact slug match (if categories have a slug field)
+  const exactMatch = categories.find((cat) => cat.slug === slug);
+  if (exactMatch) return exactMatch._id;
+
+  // If no slug field, try to match by name (convert slug to name format)
+  const nameFromSlug = slug.replace(/-/g, " ").toLowerCase();
+  const nameMatch = categories.find(
+    (cat) => cat.name?.toLowerCase() === nameFromSlug
+  );
+  if (nameMatch) return nameMatch._id;
+
+  // If still no match, try partial name matching
+  const partialMatch = categories.find(
+    (cat) =>
+      cat.name?.toLowerCase().includes(nameFromSlug) ||
+      nameFromSlug.includes(cat.name?.toLowerCase())
+  );
+  if (partialMatch) return partialMatch._id;
+
+  return null;
+}
+
 export async function loadCollectionServiceConfig(
-  categoryId?: string,
+  categoryIdOrSlug?: string,
   searchParams?: URLSearchParams
 ): Promise<ServiceFactoryConfig<typeof CollectionService>> {
   try {
@@ -414,6 +441,23 @@ export async function loadCollectionServiceConfig(
       categoriesData = [];
     }
 
+    // Resolve categoryIdOrSlug to actual categoryId
+    let categoryId: string | undefined = undefined;
+    if (categoryIdOrSlug) {
+      // Check if it's already a valid category ID (starts with UUID pattern or is found directly)
+      const directMatch = categoriesData.find(
+        (cat) => cat._id === categoryIdOrSlug
+      );
+      if (directMatch) {
+        categoryId = categoryIdOrSlug;
+      } else {
+        // Try to find by slug
+        categoryId =
+          (await findCategoryBySlug(categoryIdOrSlug, categoriesData)) ||
+          undefined;
+      }
+    }
+
     // Start with a basic query to get initial products
     let query = productsV3.queryProducts();
 
@@ -445,7 +489,7 @@ export async function loadCollectionServiceConfig(
     return {
       initialProducts: [],
       pageSize: 12,
-      categoryId,
+      categoryId: undefined,
       initialFilter: {},
       initialSort: { field: "_createdDate", order: "DESC" },
       enableURLSync: true,

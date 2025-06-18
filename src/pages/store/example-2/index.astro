@@ -1,31 +1,6 @@
 ---
-import BaseLayout from "../../../layouts/BaseLayout.astro";
-import StoreExample2Page from "../../../react-pages/store/example-2/index";
-import { loadCollectionServiceConfig } from "../../../headless/store/collection-service";
-import { loadCurrentCartServiceConfig } from "../../../headless/store/current-cart-service";
-
-// Extract URL search parameters for server-side initialization
-const searchParams = new URLSearchParams(Astro.url.search);
-
-// Load initial data for services with URL parameters
-const collectionServiceConfig = await loadCollectionServiceConfig(
-  undefined,
-  searchParams
-);
-const currentCartServiceConfig = await loadCurrentCartServiceConfig();
+// Redirect to the all-products category page
+const searchParams = Astro.url.search;
+const redirectUrl = `/store/example-2/category/all-products${searchParams}`;
+return Astro.redirect(redirectUrl);
 ---
-
-<BaseLayout>
-  <title>Store Example 2 - Advanced Product Experience</title>
-  <meta
-    name="description"
-    content="Advanced e-commerce experience with enhanced variant selection, dynamic pricing, and wishlist functionality"
-  />
-
-  <StoreExample2Page
-    client:load
-    collectionServiceConfig={collectionServiceConfig}
-    currentCartServiceConfig={currentCartServiceConfig}
-    slot="body"
-  />
-</BaseLayout>

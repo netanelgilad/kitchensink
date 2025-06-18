@@ -1,0 +1,47 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import StoreExample2Page from "../../../../react-pages/store/example-2/index";
+import { loadCollectionServiceConfig } from "../../../../headless/store/collection-service";
+import { loadCurrentCartServiceConfig } from "../../../../headless/store/current-cart-service";
+
+// Extract category slug from URL params
+const { slug } = Astro.params;
+
+// Extract URL search parameters for server-side initialization
+const searchParams = new URLSearchParams(Astro.url.search);
+
+// Ensure slug exists, otherwise redirect or show error
+if (!slug) {
+  return Astro.redirect("/store/example-2");
+}
+
+// Load initial data for services with URL parameters and category slug
+const collectionServiceConfig = await loadCollectionServiceConfig(
+  slug, // Pass the slug directly - the service will resolve it to a category ID
+  searchParams
+);
+const currentCartServiceConfig = await loadCurrentCartServiceConfig();
+
+// Generate page title and description based on slug
+const pageTitle =
+  slug === "all-products"
+    ? "All Products - Store Example 2"
+    : `${slug.replace(/-/g, " ").replace(/\b\w/g, (l) => l.toUpperCase())} - Store Example 2`;
+
+const pageDescription =
+  slug === "all-products"
+    ? "Browse our complete collection of products with advanced filtering and URL synchronization"
+    : `Explore our ${slug.replace(/-/g, " ")} collection with advanced filtering and sorting options`;
+---
+
+<BaseLayout>
+  <title>{pageTitle}</title>
+  <meta name="description" content={pageDescription} />
+
+  <StoreExample2Page
+    client:load
+    collectionServiceConfig={collectionServiceConfig}
+    currentCartServiceConfig={currentCartServiceConfig}
+    slot="body"
+  />
+</BaseLayout>

@@ -570,6 +570,31 @@ function CategoryMenu({
 }) {
   console.log("CategoryMenu received categories:", categories);
 
+  // Helper function to convert category name to slug
+  const categoryToSlug = (category: any): string => {
+    if (category.slug) {
+      return category.slug;
+    }
+    // Convert name to slug format
+    return category.name?.toLowerCase().replace(/\s+/g, "-") || "category";
+  };
+
+  // Helper function to navigate to category URL
+  const navigateToCategory = (category: any | null) => {
+    const currentUrl = new URL(window.location.href);
+    const searchParams = currentUrl.searchParams.toString();
+    const queryString = searchParams ? `?${searchParams}` : "";
+
+    if (category === null) {
+      // Navigate to all products
+      window.location.href = `/store/example-2/category/all-products${queryString}`;
+    } else {
+      // Navigate to specific category
+      const slug = categoryToSlug(category);
+      window.location.href = `/store/example-2/category/${slug}${queryString}`;
+    }
+  };
+
   return (
     <div className="mb-8">
       <h2 className="text-xl font-bold text-white mb-4">Browse by Category</h2>
@@ -579,7 +604,7 @@ function CategoryMenu({
           categories.map((category) => (
             <button
               key={category._id}
-              onClick={() => setCategory(category._id)}
+              onClick={() => navigateToCategory(category)}
               className={`px-6 py-2 rounded-full font-medium transition-all ${
                 selectedCategory === category._id
                   ? "bg-cyan-500 text-white shadow-lg"
