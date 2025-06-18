@@ -112,10 +112,26 @@ const ProductGridContent = () => {
                                 </div>
                               )}
 
-                              <div className="absolute top-2 left-2">
-                                <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                  New
-                                </span>
+                              <div className="absolute top-2 left-2 flex flex-col gap-1">
+                                {/* New badge for recently created products */}
+                                {(() => {
+                                  const createdDate = new Date(
+                                    product._createdDate || 0
+                                  );
+                                  const daysSinceCreated = Math.floor(
+                                    (Date.now() - createdDate.getTime()) /
+                                      (1000 * 60 * 60 * 24)
+                                  );
+
+                                  if (daysSinceCreated <= 7) {
+                                    return (
+                                      <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                        New
+                                      </span>
+                                    );
+                                  }
+                                  return null;
+                                })()}
                               </div>
                             </div>
 
@@ -464,6 +480,43 @@ function FilterSidebar({
           ))}
         </div>
       </div>
+
+      {/* Availability */}
+      <div className="border-t border-white/10 pt-5">
+        <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
+          Availability
+        </h3>
+        <div className="space-y-2">
+          {[
+            { label: "All Products", value: "all" },
+            { label: "In Stock", value: "inStock" },
+            { label: "Out of Stock", value: "outOfStock" },
+          ].map((option) => (
+            <label
+              key={option.value}
+              className="flex items-center gap-2 cursor-pointer"
+            >
+              <input
+                type="radio"
+                name="availability"
+                value={option.value}
+                checked={(filter.availability || "all") === option.value}
+                onChange={(e) => {
+                  setFilter({
+                    ...filter,
+                    availability: e.target.value as
+                      | "all"
+                      | "inStock"
+                      | "outOfStock",
+                  });
+                }}
+                className="w-4 h-4 text-cyan-500 bg-white/10 border-white/20 focus:ring-cyan-400 focus:ring-2"
+              />
+              <span className="text-white/80 text-sm">{option.label}</span>
+            </label>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
@@ -474,6 +527,7 @@ const SORT_OPTIONS = [
   { label: "Oldest", value: { field: "_createdDate", order: "ASC" } },
   { label: "Price: Low to High", value: { field: "price", order: "ASC" } },
   { label: "Price: High to Low", value: { field: "price", order: "DESC" } },
+  { label: "Popularity", value: { field: "popularity", order: "DESC" } },
 ];
 function SortDropdown({
   sort,
@@ -500,6 +554,88 @@ function SortDropdown({
           </option>
         ))}
       </select>
+    </div>
+  );
+}
+
+// Category Menu Component
+function CategoryMenu({
+  collections,
+  selectedCollection,
+  setCollection,
+}: {
+  collections: any[];
+  selectedCollection: string | null;
+  setCollection: (id: string | null) => void;
+}) {
+  return (
+    <div className="mb-8">
+      <h2 className="text-xl font-bold text-white mb-4">Browse by Category</h2>
+      <div className="flex flex-wrap gap-3">
+        <button
+          onClick={() => setCollection(null)}
+          className={`px-6 py-2 rounded-full font-medium transition-all ${
+            selectedCollection === null
+              ? "bg-cyan-500 text-white shadow-lg"
+              : "bg-white/10 text-white/80 border border-white/20 hover:bg-cyan-500/10 hover:border-cyan-400"
+          }`}
+        >
+          All Products
+        </button>
+        {collections.map((collection) => (
+          <button
+            key={collection._id}
+            onClick={() => setCollection(collection._id)}
+            className={`px-6 py-2 rounded-full font-medium transition-all ${
+              selectedCollection === collection._id
+                ? "bg-cyan-500 text-white shadow-lg"
+                : "bg-white/10 text-white/80 border border-white/20 hover:bg-cyan-500/10 hover:border-cyan-400"
+            }`}
+          >
+            {collection.name}
+          </button>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Collection Header Component
+function CollectionHeaderSection({
+  collectionInfo,
+  selectedCollection,
+}: {
+  collectionInfo: { name?: string; description?: string } | null;
+  selectedCollection: string | null;
+}) {
+  if (!selectedCollection || !collectionInfo) {
+    return (
+      <div className="text-center mb-12">
+        <h1 className="text-5xl font-bold text-white mb-4">
+          <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
+            All Products
+          </span>
+        </h1>
+        <p className="text-white/80 text-xl max-w-2xl mx-auto">
+          Discover our complete collection of products with advanced filtering
+          and URL synchronization
+        </p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="text-center mb-12">
+      <h1 className="text-5xl font-bold text-white mb-4">
+        <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
+          {collectionInfo.name}
+        </span>
+      </h1>
+      {collectionInfo.description && (
+        <p className="text-white/80 text-xl max-w-2xl mx-auto">
+          {collectionInfo.description}
+        </p>
+      )}
     </div>
   );
 }
@@ -535,35 +671,45 @@ export default function StoreExample2Page({
         />
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
           <div className="max-w-7xl mx-auto">
-            <div className="text-center mb-12">
-              <h1 className="text-5xl font-bold text-white mb-4">
-                <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                  Store with URL Sync
-                </span>
-              </h1>
-              <p className="text-white/80 text-xl max-w-2xl mx-auto">
-                Experience our e-commerce platform where all filters and sorting
-                sync with the URL for easy sharing and SEO benefits
-              </p>
+            {/* Category Menu */}
+            <Collection.Categories>
+              {({ collections, selectedCollection, setCollection }) => (
+                <CategoryMenu
+                  collections={collections}
+                  selectedCollection={selectedCollection}
+                  setCollection={setCollection}
+                />
+              )}
+            </Collection.Categories>
 
-              <Collection.Header>
-                {withDocsWrapper(
-                  ({ totalProducts, isLoading, hasProducts }) => (
-                    <div className="mt-6">
-                      {!isLoading && hasProducts && (
-                        <p className="text-white/60">
-                          Showing {totalProducts} product
-                          {totalProducts !== 1 ? "s" : ""} with URL
-                          synchronization
-                        </p>
-                      )}
-                    </div>
-                  ),
-                  "Collection.Header",
-                  "/docs/components/collection#header"
-                )}
-              </Collection.Header>
-            </div>
+            {/* Dynamic Header Section */}
+            <Collection.CollectionHeader>
+              {({ collectionInfo, selectedCollection }) => (
+                <CollectionHeaderSection
+                  collectionInfo={collectionInfo}
+                  selectedCollection={selectedCollection}
+                />
+              )}
+            </Collection.CollectionHeader>
+
+            <Collection.Header>
+              {withDocsWrapper(
+                ({ totalProducts, isLoading, hasProducts }) => (
+                  <div className="mb-6">
+                    {!isLoading && hasProducts && (
+                      <p className="text-white/60 text-center">
+                        Showing {totalProducts} product
+                        {totalProducts !== 1 ? "s" : ""} with URL
+                        synchronization
+                      </p>
+                    )}
+                  </div>
+                ),
+                "Collection.Header",
+                "/docs/components/collection#header"
+              )}
+            </Collection.Header>
+
             {/* Main layout: sidebar + content */}
             <div className="flex flex-col md:flex-row gap-8">
               {/* Sidebar Filters */}

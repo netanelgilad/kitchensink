@@ -383,6 +383,101 @@ export const Sort = (props: SortProps) => {
   });
 };
 
+/**
+ * Render props for Categories component
+ */
+export interface CategoriesRenderProps {
+  /** Available collections/categories */
+  collections: any[];
+  /** Currently selected collection ID */
+  selectedCollection: string | null;
+  /** Function to set the selected collection */
+  setCollection: (collectionId: string | null) => void;
+  /** Loading state for collections */
+  isLoading: boolean;
+}
+
+/**
+ * Props for Categories headless component
+ */
+export interface CategoriesProps {
+  /** Render prop function that receives categories data and actions */
+  children: (props: CategoriesRenderProps) => React.ReactNode;
+}
+
+/**
+ * Headless component for category/collection navigation
+ */
+export const Categories = (props: CategoriesProps) => {
+  const service = useService(CollectionServiceDefinition) as ServiceAPI<
+    typeof CollectionServiceDefinition
+  >;
+
+  const collections = useSignal(service?.collections) || [];
+  const selectedCollection = useSignal(service?.selectedCollection) || null;
+  const isLoading = useSignal(service?.isLoading) || false;
+
+  if (!service) {
+    console.error("CollectionService is undefined in Categories");
+    return props.children({
+      collections: [],
+      selectedCollection: null,
+      setCollection: () => {},
+      isLoading: false,
+    });
+  }
+
+  return props.children({
+    collections,
+    selectedCollection,
+    setCollection: service.setCollection || (() => {}),
+    isLoading,
+  });
+};
+
+/**
+ * Render props for CollectionHeader component
+ */
+export interface CollectionHeaderRenderProps {
+  /** Current collection information */
+  collectionInfo: { name?: string; description?: string } | null;
+  /** Selected collection ID */
+  selectedCollection: string | null;
+}
+
+/**
+ * Props for CollectionHeader headless component
+ */
+export interface CollectionHeaderProps {
+  /** Render prop function that receives collection header data */
+  children: (props: CollectionHeaderRenderProps) => React.ReactNode;
+}
+
+/**
+ * Headless component for collection header information
+ */
+export const CollectionHeader = (props: CollectionHeaderProps) => {
+  const service = useService(CollectionServiceDefinition) as ServiceAPI<
+    typeof CollectionServiceDefinition
+  >;
+
+  const collectionInfo = useSignal(service?.currentCollectionInfo) || null;
+  const selectedCollection = useSignal(service?.selectedCollection) || null;
+
+  if (!service) {
+    console.error("CollectionService is undefined in CollectionHeader");
+    return props.children({
+      collectionInfo: null,
+      selectedCollection: null,
+    });
+  }
+
+  return props.children({
+    collectionInfo,
+    selectedCollection,
+  });
+};
+
 // Hook to subscribe to signal changes and trigger React re-renders
 function useSignal<T>(
   signal: Signal<T> | ReadOnlySignal<T> | undefined
@@ -415,4 +510,6 @@ export const Collection = {
   Actions,
   Filter,
   Sort,
+  Categories,
+  CollectionHeader,
 } as const;

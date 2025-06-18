@@ -5,7 +5,7 @@ import {
 } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../Signal";
-import { productsV3 } from "@wix/stores";
+import { productsV3, collections } from "@wix/stores";
 import {
   URLParamsService,
   type FilterParams,
@@ -19,11 +19,17 @@ export interface CollectionServiceAPI {
   totalProducts: Signal<number>;
   hasProducts: Signal<boolean>;
 
+  // Category data
+  collections: Signal<any[]>;
+  selectedCollection: Signal<string | null>;
+  currentCollectionInfo: Signal<{ name?: string; description?: string } | null>;
+
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
 
   setFilter: (newFilter: Record<string, any>) => void;
   setSort: (newSort: { field: string; order: "ASC" | "DESC" }) => void;
+  setCollection: (collectionId: string | null) => void;
   filter: Signal<Record<string, any>>;
   sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
 }
@@ -45,6 +51,7 @@ export const CollectionService = implementService.withConfig<{
   initialFilter?: Record<string, any>;
   initialSort?: { field: string; order: "ASC" | "DESC" };
   enableURLSync?: boolean;
+  initialCollections?: any[];
 }>()(CollectionServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
 
@@ -68,6 +75,18 @@ export const CollectionService = implementService.withConfig<{
   const hasProducts: Signal<boolean> = signalsService.signal(
     (initialProducts.length > 0) as any
   );
+
+  // Category/Collection signals
+  const collections: Signal<any[]> = signalsService.signal(
+    (config.initialCollections || []) as any
+  );
+  const selectedCollection: Signal<string | null> = signalsService.signal(
+    (config.collectionId || null) as any
+  );
+  const currentCollectionInfo: Signal<{
+    name?: string;
+    description?: string;
+  } | null> = signalsService.signal(null as any);
 
   const pageSize = config.pageSize || 12;
 
@@ -131,6 +150,35 @@ export const CollectionService = implementService.withConfig<{
       });
     }
 
+    // Availability filtering
+    if (currentFilter.availability && currentFilter.availability !== "all") {
+      filteredProducts = filteredProducts.filter((product) => {
+        // Check inventory availability status
+        // For products with variants, check if any variant is in stock
+        let isInStock = false;
+
+        if (
+          product.variantsInfo?.variants &&
+          product.variantsInfo.variants.length > 0
+        ) {
+          // Check if any variant is in stock
+          isInStock = product.variantsInfo.variants.some(
+            (variant) => variant.inventoryStatus?.inStock === true
+          );
+        } else {
+          // For single variant products, check the product's inventory status
+          isInStock = product.inventory?.availabilityStatus !== "OUT_OF_STOCK";
+        }
+
+        if (currentFilter.availability === "inStock") {
+          return isInStock;
+        } else if (currentFilter.availability === "outOfStock") {
+          return !isInStock;
+        }
+        return true; // 'all' case
+      });
+    }
+
     // Sorting
     if (currentSort.field === "price") {
       filteredProducts = [...filteredProducts].sort((a, b) => {
@@ -143,6 +191,15 @@ export const CollectionService = implementService.withConfig<{
         const aDate = new Date(a._createdDate || 0).getTime();
         const bDate = new Date(b._createdDate || 0).getTime();
         return currentSort.order === "ASC" ? aDate - bDate : bDate - aDate;
+      });
+    } else if (currentSort.field === "popularity") {
+      // For now, we'll sort by a combination of factors or just use creation date
+      // In a real implementation, you might have a popularity score
+      filteredProducts = [...filteredProducts].sort((a, b) => {
+        // Placeholder: sort by creation date for now
+        const aDate = new Date(a._createdDate || 0).getTime();
+        const bDate = new Date(b._createdDate || 0).getTime();
+        return bDate - aDate; // Most recent first for "popularity"
       });
     }
 
@@ -200,6 +257,35 @@ export const CollectionService = implementService.withConfig<{
     }
 
     applyFiltersAndSort();
+  };
+
+  const setCollection = async (collectionId: string | null) => {
+    selectedCollection.set(collectionId);
+
+    // Load collection info if collectionId is provided
+    if (collectionId) {
+      try {
+        // Use the imported collections module correctly
+        const { collections: storeCollections } = await import("@wix/stores");
+        const collectionResult = await storeCollections
+          .queryCollections()
+          .eq("_id", collectionId)
+          .find();
+        const collection = collectionResult.items?.[0];
+        currentCollectionInfo.set({
+          name: collection?.name || undefined,
+          description: collection?.description || undefined,
+        });
+      } catch (error) {
+        console.warn("Failed to load collection info:", error);
+        currentCollectionInfo.set(null);
+      }
+    } else {
+      currentCollectionInfo.set(null);
+    }
+
+    // Refresh products for the new collection
+    refresh();
   };
 
   const buildQuery = () => {
@@ -269,10 +355,14 @@ export const CollectionService = implementService.withConfig<{
     error,
     totalProducts,
     hasProducts,
+    collections,
+    selectedCollection,
+    currentCollectionInfo,
     loadMore,
     refresh,
     setFilter,
     setSort,
+    setCollection,
     filter,
     sort,
   };
@@ -296,8 +386,23 @@ export async function loadCollectionServiceConfig(
       initialSort = parsed.sort;
     }
 
+    // Load collections data
+    let collectionsData: any[] = [];
+    try {
+      const { collections: storeCollections } = await import("@wix/stores");
+      const collectionsResult = await storeCollections
+        .queryCollections()
+        .find();
+      collectionsData = collectionsResult.items || [];
+    } catch (error) {
+      console.warn("Failed to load collections:", error);
+    }
+
     // Start with a basic query to get initial products
     let query = productsV3.queryProducts();
+
+    // Note: Collection filtering would be done client-side or via different API
+    // For now, we'll get all products and filter client-side if needed
 
     // Only apply sorting that is known to work with the API
     if (initialSort.field === "_createdDate") {
@@ -317,6 +422,7 @@ export async function loadCollectionServiceConfig(
       initialFilter,
       initialSort,
       enableURLSync: true,
+      initialCollections: collectionsData,
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
@@ -327,6 +433,7 @@ export async function loadCollectionServiceConfig(
       initialFilter: {},
       initialSort: { field: "_createdDate", order: "DESC" },
       enableURLSync: true,
+      initialCollections: [],
     };
   }
 }

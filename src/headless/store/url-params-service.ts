@@ -4,6 +4,8 @@ export interface FilterParams {
   size?: string[];
   minPrice?: number;
   maxPrice?: number;
+  availability?: "inStock" | "outOfStock" | "all";
+  category?: string;
 }
 
 export interface SortParams {
@@ -42,6 +44,11 @@ export class URLParamsService {
           sort.field = "price";
           sort.order = "DESC";
           break;
+        case "popularity":
+          // Note: We'll need to implement popularity sorting
+          sort.field = "popularity";
+          sort.order = "DESC";
+          break;
       }
     }
 
@@ -72,6 +79,24 @@ export class URLParamsService {
       filter.maxPrice = parseFloat(maxPriceParam);
     }
 
+    // Parse availability parameter
+    const availabilityParam = searchParams.get("availability");
+    if (
+      availabilityParam &&
+      ["inStock", "outOfStock", "all"].includes(availabilityParam)
+    ) {
+      filter.availability = availabilityParam as
+        | "inStock"
+        | "outOfStock"
+        | "all";
+    }
+
+    // Parse category parameter
+    const categoryParam = searchParams.get("category");
+    if (categoryParam) {
+      filter.category = categoryParam;
+    }
+
     return { filter, sort };
   }
 
@@ -97,6 +122,8 @@ export class URLParamsService {
       } else {
         params.set("sort", "price_desc");
       }
+    } else if (sort.field === "popularity") {
+      params.set("sort", "popularity");
     }
 
     // Add filter parameters
@@ -114,6 +141,14 @@ export class URLParamsService {
 
     if (typeof filter.maxPrice === "number") {
       params.set("maxPrice", filter.maxPrice.toString());
+    }
+
+    if (filter.availability && filter.availability !== "all") {
+      params.set("availability", filter.availability);
+    }
+
+    if (filter.category) {
+      params.set("category", filter.category);
     }
 
     return params;
