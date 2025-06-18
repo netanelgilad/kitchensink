@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import {
   createServicesManager,
   createServicesMap,
@@ -19,6 +19,11 @@ import {
 } from "../../../headless/store/current-cart-service";
 import { Collection } from "../../../headless/store/Collection";
 import WixMediaImage from "../../../headless/media/Image";
+import {
+  URLParamsService,
+  type FilterParams,
+  type SortParams,
+} from "../../../headless/store/url-params-service";
 
 interface StoreExample2PageProps {
   collectionServiceConfig: any;
@@ -84,6 +89,14 @@ const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
               return sort.order === "ASC" ? aPrice - bPrice : bPrice - aPrice;
             });
           }
+          // Client-side date sorting
+          if (sort && sort.field === "_createdDate") {
+            filteredProducts = [...filteredProducts].sort((a, b) => {
+              const aDate = new Date(a._createdDate || 0).getTime();
+              const bDate = new Date(b._createdDate || 0).getTime();
+              return sort.order === "ASC" ? aDate - bDate : bDate - aDate;
+            });
+          }
           return (
             <div className="min-h-screen">
               {error && (
@@ -125,7 +138,7 @@ const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
                     No Products Found
                   </h2>
                   <p className="text-white/70">
-                    We couldn't find any products to display.
+                    Try adjusting your filters or search criteria.
                   </p>
                 </div>
               ) : (
@@ -297,7 +310,8 @@ const LoadMoreSection = () => {
                 </div>
 
                 <p className="text-white/60 text-sm mt-4">
-                  Advanced store experience • {totalProducts} products loaded
+                  Advanced store experience with URL sync • {totalProducts}{" "}
+                  products loaded
                 </p>
               </div>
             )}
@@ -310,7 +324,7 @@ const LoadMoreSection = () => {
   );
 };
 
-// Local FilterSidebar component
+// Local FilterSidebar component with URL sync
 const COLOR_OPTIONS = ["Red", "Blue", "Green", "Black", "White"];
 const SIZE_OPTIONS = [
   "100ml",
@@ -385,9 +399,30 @@ function FilterSidebar({
       size: size.includes(s) ? size.filter((v) => v !== s) : [...size, s],
     });
   };
+
+  const clearAllFilters = () => {
+    setFilter({});
+  };
+
   return (
     <div className="bg-white/10 rounded-2xl shadow-lg border border-white/10 p-6">
-      <h2 className="text-lg font-bold text-white mb-4">Filter by</h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-lg font-bold text-white">Filter by</h2>
+        <button
+          onClick={clearAllFilters}
+          className="text-cyan-400 hover:text-cyan-300 text-sm font-medium transition-colors"
+        >
+          Clear All
+        </button>
+      </div>
+
+      {/* URL Status Indicator */}
+      <div className="mb-4 p-2 bg-cyan-500/10 rounded-lg border border-cyan-500/20">
+        <p className="text-cyan-300 text-xs">
+          ✓ Filters sync with URL for easy sharing
+        </p>
+      </div>
+
       {/* Price Range */}
       <div className="mb-6">
         <h3 className="text-base font-semibold text-white mb-2 tracking-wide">
@@ -488,10 +523,12 @@ function FilterSidebar({
   );
 }
 
-// Local SortDropdown component
+// Local SortDropdown component with URL sync
 const SORT_OPTIONS = [
   { label: "Newest", value: { field: "_createdDate", order: "DESC" } },
   { label: "Oldest", value: { field: "_createdDate", order: "ASC" } },
+  { label: "Price: Low to High", value: { field: "price", order: "ASC" } },
+  { label: "Price: High to Low", value: { field: "price", order: "DESC" } },
 ];
 function SortDropdown({
   sort,
@@ -501,17 +538,24 @@ function SortDropdown({
   setSort: (s: any) => void;
 }) {
   return (
-    <select
-      className="bg-white/10 border border-white/20 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
-      value={JSON.stringify(sort)}
-      onChange={(e) => setSort(JSON.parse(e.target.value))}
-    >
-      {SORT_OPTIONS.map((opt) => (
-        <option key={opt.label} value={JSON.stringify(opt.value)}>
-          {opt.label}
-        </option>
-      ))}
-    </select>
+    <div className="flex items-center gap-2">
+      <span className="text-white/70 text-sm">Sort by:</span>
+      <select
+        className="bg-white/10 border border-white/20 text-white rounded-lg px-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-cyan-400"
+        value={JSON.stringify(sort)}
+        onChange={(e) => setSort(JSON.parse(e.target.value))}
+      >
+        {SORT_OPTIONS.map((opt) => (
+          <option
+            key={opt.label}
+            value={JSON.stringify(opt.value)}
+            className="bg-slate-800"
+          >
+            {opt.label}
+          </option>
+        ))}
+      </select>
+    </div>
   );
 }
 
@@ -532,7 +576,67 @@ export default function StoreExample2Page({
         currentCartServiceConfig
       )
   );
-  const [clientFilter, setClientFilter] = useState<any>({});
+  // Initialize filters from URL params
+  const [clientFilter, setClientFilter] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const { filter } = URLParamsService.parseSearchParams(searchParams);
+      return filter;
+    }
+    return {};
+  });
+
+  const [clientSort, setClientSort] = useState<any>(() => {
+    if (typeof window !== "undefined") {
+      const searchParams = new URLSearchParams(window.location.search);
+      const { sort } = URLParamsService.parseSearchParams(searchParams);
+      return sort;
+    }
+    return { field: "_createdDate", order: "DESC" };
+  });
+
+  // Update URL when filters or sort changes
+  const updateFilter = useCallback(
+    (newFilter: any) => {
+      setClientFilter(newFilter);
+      if (typeof window !== "undefined") {
+        URLParamsService.updateURL(
+          newFilter as FilterParams,
+          clientSort as SortParams
+        );
+      }
+    },
+    [clientSort]
+  );
+
+  const updateSort = useCallback(
+    (newSort: any) => {
+      setClientSort(newSort);
+      if (typeof window !== "undefined") {
+        URLParamsService.updateURL(
+          clientFilter as FilterParams,
+          newSort as SortParams
+        );
+      }
+    },
+    [clientFilter]
+  );
+
+  // Listen for back/forward navigation
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const searchParams = new URLSearchParams(window.location.search);
+        const { filter, sort } =
+          URLParamsService.parseSearchParams(searchParams);
+        setClientFilter(filter);
+        setClientSort(sort);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   return (
     <KitchensinkLayout>
@@ -541,21 +645,21 @@ export default function StoreExample2Page({
         servicesManager={servicesManager}
       >
         <PageDocsRegistration
-          title="Advanced Store Collection"
-          description="Enhanced product collection interface with advanced product interactions, wishlist functionality, and modern design patterns using Collection and CurrentCart headless components."
-          docsUrl="/docs/examples/advanced-store-collection"
+          title="Store Collection with URL Parameters"
+          description="Enhanced product collection interface with URL parameter synchronization for filters and sorting. Perfect for SEO and shareable product links."
+          docsUrl="/docs/examples/store-collection-url-params"
         />
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center mb-12">
               <h1 className="text-5xl font-bold text-white mb-4">
                 <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-                  Advanced Store
+                  Store with URL Sync
                 </span>
               </h1>
               <p className="text-white/80 text-xl max-w-2xl mx-auto">
-                Experience our next-generation e-commerce platform with enhanced
-                interactions and modern design patterns
+                Experience our e-commerce platform where all filters and sorting
+                sync with the URL for easy sharing and SEO benefits
               </p>
 
               <Collection.Header>
@@ -565,8 +669,8 @@ export default function StoreExample2Page({
                       {!isLoading && hasProducts && (
                         <p className="text-white/60">
                           Showing {totalProducts} product
-                          {totalProducts !== 1 ? "s" : ""} with enhanced
-                          features
+                          {totalProducts !== 1 ? "s" : ""} with URL
+                          synchronization
                         </p>
                       )}
                     </div>
@@ -591,7 +695,7 @@ export default function StoreExample2Page({
                           color: f.color,
                           size: f.size,
                         });
-                        setClientFilter(f);
+                        updateFilter(f);
                       }}
                     />
                   )}
@@ -603,7 +707,13 @@ export default function StoreExample2Page({
                   {({ sort, setSort }) => (
                     <>
                       <div className="flex justify-end mb-4">
-                        <SortDropdown sort={sort} setSort={setSort} />
+                        <SortDropdown
+                          sort={sort}
+                          setSort={(newSort) => {
+                            setSort(newSort);
+                            updateSort(newSort);
+                          }}
+                        />
                       </div>
                       <ProductGridContent filter={clientFilter} sort={sort} />
                       <LoadMoreSection />

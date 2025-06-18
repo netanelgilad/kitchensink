@@ -6,6 +6,11 @@ import {
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../Signal";
 import { productsV3 } from "@wix/stores";
+import {
+  URLParamsService,
+  type FilterParams,
+  type SortParams,
+} from "./url-params-service";
 
 export interface CollectionServiceAPI {
   products: Signal<productsV3.V3Product[]>;
@@ -37,6 +42,9 @@ export const CollectionService = implementService.withConfig<{
   initialProducts?: productsV3.V3Product[];
   pageSize?: number;
   collectionId?: string;
+  initialFilter?: Record<string, any>;
+  initialSort?: { field: string; order: "ASC" | "DESC" };
+  enableURLSync?: boolean;
 }>()(CollectionServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
 
@@ -56,42 +64,52 @@ export const CollectionService = implementService.withConfig<{
 
   const pageSize = config.pageSize || 12;
 
-  // New: filter and sort signals
-  const filter: Signal<Record<string, any>> = signalsService.signal({});
+  // New: filter and sort signals with initial values from config
+  const filter: Signal<Record<string, any>> = signalsService.signal(
+    (config.initialFilter || {}) as any
+  );
   const sort: Signal<{ field: string; order: "ASC" | "DESC" }> =
-    signalsService.signal({ field: "name", order: "ASC" });
+    signalsService.signal(
+      (config.initialSort || { field: "_createdDate", order: "DESC" }) as any
+    );
 
-  // New: setters
+  // New: setters with URL sync
   const setFilter = (newFilter: Record<string, any>) => {
     filter.set(newFilter);
+
+    // Update URL if enabled
+    if (config.enableURLSync && typeof window !== "undefined") {
+      URLParamsService.updateURL(
+        newFilter as FilterParams,
+        sort.get() as SortParams
+      );
+    }
+
     refresh();
   };
+
   const setSort = (newSort: { field: string; order: "ASC" | "DESC" }) => {
     sort.set(newSort);
+
+    // Update URL if enabled
+    if (config.enableURLSync && typeof window !== "undefined") {
+      URLParamsService.updateURL(
+        filter.get() as FilterParams,
+        newSort as SortParams
+      );
+    }
+
     refresh();
   };
 
   const buildQuery = () => {
     let query = productsV3.queryProducts();
     const f = filter.get();
-    // Price filtering (re-added)
-    if (typeof f.minPrice === "number") {
-      query = query.ge("actualPriceRange.minValue.amount", f.minPrice);
-    }
-    if (typeof f.maxPrice === "number") {
-      query = query.le("actualPriceRange.minValue.amount", f.maxPrice);
-    }
-    // Color filtering
-    if (f.color && Array.isArray(f.color) && f.color.length > 0) {
-      // @ts-expect-error: options.Color is a valid field for Wix API, but not in local types
-      query = query.hasSome("options.Color", f.color);
-    }
-    // Size filtering
-    if (f.size && Array.isArray(f.size) && f.size.length > 0) {
-      // @ts-expect-error: options.Size is a valid field for Wix API, but not in local types
-      query = query.hasSome("options.Size", f.size);
-    }
-    // Sorting
+
+    // Note: Price and option filtering will be handled client-side to avoid API limitations
+    // Only use server-side filtering for fields that are known to work
+
+    // Sorting - only use fields that are supported by the API
     const s = sort.get();
     if (s.field === "_createdDate") {
       if (s.order === "ASC") {
@@ -100,6 +118,8 @@ export const CollectionService = implementService.withConfig<{
         query = query.descending("_createdDate");
       }
     }
+    // Note: Price sorting will be handled client-side
+
     return query;
   };
 
@@ -163,10 +183,35 @@ export const CollectionService = implementService.withConfig<{
 });
 
 export async function loadCollectionServiceConfig(
-  collectionId?: string
+  collectionId?: string,
+  searchParams?: URLSearchParams
 ): Promise<ServiceFactoryConfig<typeof CollectionService>> {
   try {
+    // Parse URL search parameters for initial filter and sort
+    let initialFilter: Record<string, any> = {};
+    let initialSort: { field: string; order: "ASC" | "DESC" } = {
+      field: "_createdDate",
+      order: "DESC",
+    };
+
+    if (searchParams) {
+      const parsed = URLParamsService.parseSearchParams(searchParams);
+      initialFilter = parsed.filter;
+      initialSort = parsed.sort;
+    }
+
+    // Start with a basic query to get initial products
     let query = productsV3.queryProducts();
+
+    // Only apply sorting that is known to work with the API
+    if (initialSort.field === "_createdDate") {
+      if (initialSort.order === "ASC") {
+        query = query.ascending("_createdDate");
+      } else {
+        query = query.descending("_createdDate");
+      }
+    }
+    // Note: All filtering will be handled client-side to avoid API limitations
 
     const productResults = await query.limit(12).find();
 
@@ -174,6 +219,9 @@ export async function loadCollectionServiceConfig(
       initialProducts: productResults.items || [],
       pageSize: 12,
       collectionId,
+      initialFilter,
+      initialSort,
+      enableURLSync: true,
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
@@ -181,6 +229,9 @@ export async function loadCollectionServiceConfig(
       initialProducts: [],
       pageSize: 12,
       collectionId,
+      initialFilter: {},
+      initialSort: { field: "_createdDate", order: "DESC" },
+      enableURLSync: true,
     };
   }
 }
