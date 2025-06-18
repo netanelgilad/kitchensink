@@ -24,11 +24,6 @@ export interface CollectionServiceAPI {
 
   setFilter: (newFilter: Record<string, any>) => void;
   setSort: (newSort: { field: string; order: "ASC" | "DESC" }) => void;
-  setFilterAndSort: (
-    newFilter: Record<string, any>,
-    newSort: { field: string; order: "ASC" | "DESC" },
-    updateURL?: boolean
-  ) => void;
   filter: Signal<Record<string, any>>;
   sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
 }
@@ -167,7 +162,10 @@ export const CollectionService = implementService.withConfig<{
         const { filter: urlFilter, sort: urlSort } =
           URLParamsService.parseSearchParams(searchParams);
 
-        setFilterAndSort(urlFilter, urlSort, false); // Don't update URL since we're responding to URL changes
+        // Update both filter and sort without URL sync (since we're responding to URL changes)
+        filter.set(urlFilter);
+        sort.set(urlSort);
+        applyFiltersAndSort();
       } catch (error) {
         console.warn("Failed to handle browser navigation:", error);
       }
@@ -175,27 +173,6 @@ export const CollectionService = implementService.withConfig<{
 
     window.addEventListener("popstate", handlePopState);
   }
-
-  // Atomic method to update both filter and sort together
-  const setFilterAndSort = (
-    newFilter: Record<string, any>,
-    newSort: { field: string; order: "ASC" | "DESC" },
-    updateURL: boolean = true // Default to true for normal updates
-  ) => {
-    // Update both signals atomically
-    filter.set(newFilter);
-    sort.set(newSort);
-
-    // Update URL with both parameters if requested
-    if (updateURL && config.enableURLSync && typeof window !== "undefined") {
-      URLParamsService.updateURL(
-        newFilter as FilterParams,
-        newSort as SortParams
-      );
-    }
-
-    applyFiltersAndSort();
-  };
 
   const setFilter = (newFilter: Record<string, any>) => {
     filter.set(newFilter);
@@ -296,7 +273,6 @@ export const CollectionService = implementService.withConfig<{
     refresh,
     setFilter,
     setSort,
-    setFilterAndSort,
     filter,
     sort,
   };
