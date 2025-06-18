@@ -576,6 +576,7 @@ export default function StoreExample2Page({
         currentCartServiceConfig
       )
   );
+
   // Initialize filters from URL params
   const [clientFilter, setClientFilter] = useState<any>(() => {
     if (typeof window !== "undefined") {
@@ -708,14 +709,17 @@ export default function StoreExample2Page({
                     <>
                       <div className="flex justify-end mb-4">
                         <SortDropdown
-                          sort={sort}
+                          sort={clientSort}
                           setSort={(newSort) => {
                             setSort(newSort);
                             updateSort(newSort);
                           }}
                         />
                       </div>
-                      <ProductGridContent filter={clientFilter} sort={sort} />
+                      <ProductGridContent
+                        filter={clientFilter}
+                        sort={clientSort}
+                      />
                       <LoadMoreSection />
                     </>
                   )}
