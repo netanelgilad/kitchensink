@@ -50,9 +50,16 @@ export const CollectionService = implementService.withConfig<{
 
   const initialProducts = config.initialProducts || [];
 
+  // Store raw products from API
+  const rawProductsList: Signal<productsV3.V3Product[]> = signalsService.signal(
+    initialProducts as any
+  );
+
+  // Computed filtered and sorted products
   const productsList: Signal<productsV3.V3Product[]> = signalsService.signal(
     initialProducts as any
   );
+
   const isLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
   const totalProducts: Signal<number> = signalsService.signal(
@@ -73,6 +80,80 @@ export const CollectionService = implementService.withConfig<{
       (config.initialSort || { field: "_createdDate", order: "DESC" }) as any
     );
 
+  // Apply client-side filtering and sorting
+  const applyFiltersAndSort = () => {
+    let filteredProducts = rawProductsList.get();
+    const currentFilter = filter.get();
+    const currentSort = sort.get();
+
+    // Client-side color filtering
+    if (currentFilter.color && currentFilter.color.length > 0) {
+      filteredProducts = filteredProducts.filter((product) => {
+        return product.options?.some((opt: any) =>
+          opt.choicesSettings?.choices?.some((choice: any) =>
+            currentFilter.color.includes(choice.name)
+          )
+        );
+      });
+    }
+
+    // Client-side size filtering
+    if (currentFilter.size && currentFilter.size.length > 0) {
+      filteredProducts = filteredProducts.filter((product) => {
+        return product.options?.some((opt: any) =>
+          opt.choicesSettings?.choices?.some((choice: any) =>
+            currentFilter.size.includes(choice.name)
+          )
+        );
+      });
+    }
+
+    // Client-side price filtering
+    if (
+      typeof currentFilter.minPrice === "number" ||
+      typeof currentFilter.maxPrice === "number"
+    ) {
+      filteredProducts = filteredProducts.filter((product) => {
+        const price = parseFloat(
+          product.actualPriceRange?.minValue?.amount ?? "0"
+        );
+        if (
+          typeof currentFilter.minPrice === "number" &&
+          price < currentFilter.minPrice
+        )
+          return false;
+        if (
+          typeof currentFilter.maxPrice === "number" &&
+          price > currentFilter.maxPrice
+        )
+          return false;
+        return true;
+      });
+    }
+
+    // Client-side sorting
+    if (currentSort.field === "price") {
+      filteredProducts = [...filteredProducts].sort((a, b) => {
+        const aPrice = parseFloat(a.actualPriceRange?.minValue?.amount ?? "0");
+        const bPrice = parseFloat(b.actualPriceRange?.minValue?.amount ?? "0");
+        return currentSort.order === "ASC" ? aPrice - bPrice : bPrice - aPrice;
+      });
+    } else if (currentSort.field === "_createdDate") {
+      filteredProducts = [...filteredProducts].sort((a, b) => {
+        const aDate = new Date(a._createdDate || 0).getTime();
+        const bDate = new Date(b._createdDate || 0).getTime();
+        return currentSort.order === "ASC" ? aDate - bDate : bDate - aDate;
+      });
+    }
+
+    productsList.set(filteredProducts);
+    totalProducts.set(filteredProducts.length);
+    hasProducts.set(filteredProducts.length > 0);
+  };
+
+  // Apply filtering and sorting to current products
+  applyFiltersAndSort();
+
   // New: setters with URL sync
   const setFilter = (newFilter: Record<string, any>) => {
     filter.set(newFilter);
@@ -85,7 +166,8 @@ export const CollectionService = implementService.withConfig<{
       );
     }
 
-    refresh();
+    // Apply filtering and sorting to current products
+    applyFiltersAndSort();
   };
 
   const setSort = (newSort: { field: string; order: "ASC" | "DESC" }) => {
@@ -99,7 +181,8 @@ export const CollectionService = implementService.withConfig<{
       );
     }
 
-    refresh();
+    // Apply filtering and sorting to current products
+    applyFiltersAndSort();
   };
 
   const buildQuery = () => {
@@ -130,13 +213,14 @@ export const CollectionService = implementService.withConfig<{
 
       let query = buildQuery();
 
-      const currentProducts = productsList.get();
+      const currentProducts = rawProductsList.get();
       const productResults = await query.limit(pageSize).find();
 
       const newProducts = [...currentProducts, ...(productResults.items || [])];
-      productsList.set(newProducts);
-      totalProducts.set(newProducts.length);
-      hasProducts.set(newProducts.length > 0);
+      rawProductsList.set(newProducts);
+
+      // Apply filtering and sorting to the updated raw products
+      applyFiltersAndSort();
     } catch (err) {
       error.set(
         err instanceof Error ? err.message : "Failed to load more products"
@@ -155,9 +239,10 @@ export const CollectionService = implementService.withConfig<{
 
       const productResults = await query.limit(pageSize).find();
 
-      productsList.set(productResults.items || []);
-      totalProducts.set((productResults.items || []).length);
-      hasProducts.set((productResults.items || []).length > 0);
+      rawProductsList.set(productResults.items || []);
+
+      // Apply filtering and sorting to the refreshed raw products
+      applyFiltersAndSort();
     } catch (err) {
       error.set(
         err instanceof Error ? err.message : "Failed to refresh products"

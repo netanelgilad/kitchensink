@@ -2,6 +2,8 @@ import type { ServiceAPI } from "@wix/services-definitions";
 import { useService } from "@wix/services-manager-react";
 import { CollectionServiceDefinition } from "./collection-service";
 import { productsV3 } from "@wix/stores";
+import { useState, useEffect } from "react";
+import type { Signal, ReadOnlySignal } from "../Signal";
 
 /**
  * Props for Grid headless component
@@ -37,6 +39,13 @@ export const Grid = (props: GridProps) => {
     typeof CollectionServiceDefinition
   >;
 
+  // Use useSignal hook to subscribe to signal changes
+  const products = useSignal(service?.products) || [];
+  const isLoading = useSignal(service?.isLoading) || false;
+  const error = useSignal(service?.error) || null;
+  const totalProducts = useSignal(service?.totalProducts) || 0;
+  const hasProducts = useSignal(service?.hasProducts) || false;
+
   // Debug logging to help identify service issues
   if (!service) {
     console.error("CollectionService is undefined");
@@ -50,33 +59,14 @@ export const Grid = (props: GridProps) => {
     });
   }
 
-  // Safely access service properties with error handling
-  try {
-    const productList = service.products?.get() || [];
-    const isLoading = service.isLoading?.get() || false;
-    const error = service.error?.get() || null;
-    const totalProducts = service.totalProducts?.get() || 0;
-    const hasProducts = service.hasProducts?.get() || false;
-
-    return props.children({
-      products: productList,
-      isLoading,
-      error,
-      isEmpty: !hasProducts && !isLoading,
-      totalProducts,
-      hasProducts,
-    });
-  } catch (err) {
-    console.error("Error accessing service properties:", err);
-    return props.children({
-      products: [],
-      isLoading: false,
-      error: "Failed to load products",
-      isEmpty: true,
-      totalProducts: 0,
-      hasProducts: false,
-    });
-  }
+  return props.children({
+    products,
+    isLoading,
+    error,
+    isEmpty: !hasProducts && !isLoading,
+    totalProducts,
+    hasProducts,
+  });
 };
 
 /**
@@ -174,6 +164,11 @@ export const LoadMore = (props: LoadMoreProps) => {
     typeof CollectionServiceDefinition
   >;
 
+  // Use useSignal hook to subscribe to signal changes
+  const isLoading = useSignal(service?.isLoading) || false;
+  const hasProducts = useSignal(service?.hasProducts) || false;
+  const totalProducts = useSignal(service?.totalProducts) || 0;
+
   // Error handling for undefined service
   if (!service) {
     console.error("CollectionService is undefined in LoadMore");
@@ -186,28 +181,13 @@ export const LoadMore = (props: LoadMoreProps) => {
     });
   }
 
-  try {
-    const isLoading = service.isLoading?.get() || false;
-    const hasProducts = service.hasProducts?.get() || false;
-    const totalProducts = service.totalProducts?.get() || 0;
-
-    return props.children({
-      loadMore: service.loadMore || (async () => {}),
-      refresh: service.refresh || (async () => {}),
-      isLoading,
-      hasProducts,
-      totalProducts,
-    });
-  } catch (err) {
-    console.error("Error in LoadMore:", err);
-    return props.children({
-      loadMore: async () => {},
-      refresh: async () => {},
-      isLoading: false,
-      hasProducts: false,
-      totalProducts: 0,
-    });
-  }
+  return props.children({
+    loadMore: service.loadMore || (async () => {}),
+    refresh: service.refresh || (async () => {}),
+    isLoading,
+    hasProducts,
+    totalProducts,
+  });
 };
 
 /**
@@ -238,6 +218,11 @@ export const Header = (props: HeaderProps) => {
     typeof CollectionServiceDefinition
   >;
 
+  // Use useSignal hook to subscribe to signal changes
+  const totalProducts = useSignal(service?.totalProducts) || 0;
+  const isLoading = useSignal(service?.isLoading) || false;
+  const hasProducts = useSignal(service?.hasProducts) || false;
+
   // Error handling for undefined service
   if (!service) {
     console.error("CollectionService is undefined in Header");
@@ -248,24 +233,11 @@ export const Header = (props: HeaderProps) => {
     });
   }
 
-  try {
-    const totalProducts = service.totalProducts?.get() || 0;
-    const isLoading = service.isLoading?.get() || false;
-    const hasProducts = service.hasProducts?.get() || false;
-
-    return props.children({
-      totalProducts,
-      isLoading,
-      hasProducts,
-    });
-  } catch (err) {
-    console.error("Error in Header:", err);
-    return props.children({
-      totalProducts: 0,
-      isLoading: false,
-      hasProducts: false,
-    });
-  }
+  return props.children({
+    totalProducts,
+    isLoading,
+    hasProducts,
+  });
 };
 
 /**
@@ -299,6 +271,10 @@ export const Actions = (props: ActionsProps) => {
     typeof CollectionServiceDefinition
   >;
 
+  // Use useSignal hook to subscribe to signal changes
+  const isLoading = useSignal(service?.isLoading) || false;
+  const error = useSignal(service?.error) || null;
+
   // Error handling for undefined service
   if (!service) {
     console.error("CollectionService is undefined in Actions");
@@ -310,25 +286,12 @@ export const Actions = (props: ActionsProps) => {
     });
   }
 
-  try {
-    const isLoading = service.isLoading?.get() || false;
-    const error = service.error?.get() || null;
-
-    return props.children({
-      refresh: service.refresh || (async () => {}),
-      loadMore: service.loadMore || (async () => {}),
-      isLoading,
-      error,
-    });
-  } catch (err) {
-    console.error("Error in Actions:", err);
-    return props.children({
-      refresh: async () => {},
-      loadMore: async () => {},
-      isLoading: false,
-      error: "Failed to load actions",
-    });
-  }
+  return props.children({
+    refresh: service.refresh || (async () => {}),
+    loadMore: service.loadMore || (async () => {}),
+    isLoading,
+    error,
+  });
 };
 
 // Headless component for filter controls
@@ -344,6 +307,9 @@ export const Filter = (props: FilterProps) => {
     typeof CollectionServiceDefinition
   >;
 
+  // Use useSignal hook to subscribe to signal changes
+  const filter = useSignal(service?.filter) || {};
+
   if (!service) {
     console.error("CollectionService is undefined in Filter");
     return props.children({
@@ -352,18 +318,10 @@ export const Filter = (props: FilterProps) => {
     });
   }
 
-  try {
-    return props.children({
-      filter: service.filter?.get() || {},
-      setFilter: service.setFilter || (() => {}),
-    });
-  } catch (err) {
-    console.error("Error in Filter:", err);
-    return props.children({
-      filter: {},
-      setFilter: () => {},
-    });
-  }
+  return props.children({
+    filter,
+    setFilter: service.setFilter || (() => {}),
+  });
 };
 
 // Headless component for sort controls
@@ -379,27 +337,48 @@ export const Sort = (props: SortProps) => {
     typeof CollectionServiceDefinition
   >;
 
+  // Use useSignal hook to subscribe to signal changes
+  const sort = useSignal(service?.sort) || {
+    field: "_createdDate",
+    order: "DESC",
+  };
+
   if (!service) {
     console.error("CollectionService is undefined in Sort");
     return props.children({
-      sort: { field: "name", order: "ASC" },
+      sort: { field: "_createdDate", order: "DESC" },
       setSort: () => {},
     });
   }
 
-  try {
-    return props.children({
-      sort: service.sort?.get() || { field: "name", order: "ASC" },
-      setSort: service.setSort || (() => {}),
-    });
-  } catch (err) {
-    console.error("Error in Sort:", err);
-    return props.children({
-      sort: { field: "name", order: "ASC" },
-      setSort: () => {},
-    });
-  }
+  return props.children({
+    sort,
+    setSort: service.setSort || (() => {}),
+  });
 };
+
+// Hook to subscribe to signal changes and trigger React re-renders
+function useSignal<T>(
+  signal: Signal<T> | ReadOnlySignal<T> | undefined
+): T | undefined {
+  const [value, setValue] = useState<T | undefined>(() => signal?.get());
+
+  useEffect(() => {
+    if (!signal) return;
+
+    // Set initial value
+    setValue(signal.get());
+
+    // Subscribe to changes
+    const unsubscribe = signal.subscribe((newValue: T) => {
+      setValue(newValue);
+    });
+
+    return unsubscribe;
+  }, [signal]);
+
+  return value;
+}
 
 // Namespace export for clean API
 export const Collection = {

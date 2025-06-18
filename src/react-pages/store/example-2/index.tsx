@@ -30,73 +30,11 @@ interface StoreExample2PageProps {
   currentCartServiceConfig: any;
 }
 
-const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
+const ProductGridContent = () => {
   return (
     <Collection.Grid>
       {withDocsWrapper(
         ({ products, isLoading, error, isEmpty }) => {
-          // Client-side color/size filtering (if needed)
-          let filteredProducts = products;
-          if (filter.color && filter.color.length > 0) {
-            filteredProducts = filteredProducts.filter((product) => {
-              return product.options?.some((opt: any) =>
-                opt.choicesSettings?.choices?.some((choice: any) =>
-                  filter.color.includes(choice.name)
-                )
-              );
-            });
-          }
-          if (filter.size && filter.size.length > 0) {
-            filteredProducts = filteredProducts.filter((product) => {
-              return product.options?.some((opt: any) =>
-                opt.choicesSettings?.choices?.some((choice: any) =>
-                  filter.size.includes(choice.name)
-                )
-              );
-            });
-          }
-          // Client-side price filtering
-          if (
-            typeof filter.minPrice === "number" ||
-            typeof filter.maxPrice === "number"
-          ) {
-            filteredProducts = filteredProducts.filter((product) => {
-              const price = parseFloat(
-                product.actualPriceRange?.minValue?.amount ?? "0"
-              );
-              if (
-                typeof filter.minPrice === "number" &&
-                price < filter.minPrice
-              )
-                return false;
-              if (
-                typeof filter.maxPrice === "number" &&
-                price > filter.maxPrice
-              )
-                return false;
-              return true;
-            });
-          }
-          // Client-side price sorting
-          if (sort && sort.field === "price") {
-            filteredProducts = [...filteredProducts].sort((a, b) => {
-              const aPrice = parseFloat(
-                a.actualPriceRange?.minValue?.amount ?? "0"
-              );
-              const bPrice = parseFloat(
-                b.actualPriceRange?.minValue?.amount ?? "0"
-              );
-              return sort.order === "ASC" ? aPrice - bPrice : bPrice - aPrice;
-            });
-          }
-          // Client-side date sorting
-          if (sort && sort.field === "_createdDate") {
-            filteredProducts = [...filteredProducts].sort((a, b) => {
-              const aDate = new Date(a._createdDate || 0).getTime();
-              const bDate = new Date(b._createdDate || 0).getTime();
-              return sort.order === "ASC" ? aDate - bDate : bDate - aDate;
-            });
-          }
           return (
             <div className="min-h-screen">
               {error && (
@@ -117,7 +55,7 @@ const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
                     </div>
                   ))}
                 </div>
-              ) : filteredProducts.length === 0 ? (
+              ) : products.length === 0 ? (
                 <div className="text-center py-16">
                   <div className="w-24 h-24 bg-white/10 rounded-full flex items-center justify-center mx-auto mb-6">
                     <svg
@@ -143,7 +81,7 @@ const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                  {filteredProducts.map((product) => (
+                  {products.map((product) => (
                     <Collection.Item key={product._id} product={product}>
                       {withDocsWrapper(
                         ({
@@ -173,7 +111,7 @@ const ProductGridContent = ({ filter, sort }: { filter: any; sort: any }) => {
                                       strokeLinecap="round"
                                       strokeLinejoin="round"
                                       strokeWidth="2"
-                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                                      d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2 2v12a2 2 0 002 2z"
                                     />
                                   </svg>
                                 </div>
@@ -570,53 +508,26 @@ export default function StoreExample2Page({
       )
   );
 
-  // Initialize with default values to match server-side render
-  const [clientFilter, setClientFilter] = useState<any>({});
-  const [clientSort, setClientSort] = useState<any>({
-    field: "_createdDate",
-    order: "DESC",
-  });
-
-  // Read URL parameters after hydration to avoid mismatch
-  useEffect(() => {
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      const { filter, sort } = URLParamsService.parseSearchParams(searchParams);
-      setClientFilter(filter);
-      setClientSort(sort);
-    }
-  }, []);
-
-  // Listen for back/forward navigation after hydration
+  // Listen for back/forward navigation to sync with URL changes
   useEffect(() => {
     const handlePopState = () => {
       if (typeof window !== "undefined") {
         const searchParams = new URLSearchParams(window.location.search);
         const { filter, sort } =
           URLParamsService.parseSearchParams(searchParams);
-        setClientFilter(filter);
-        setClientSort(sort);
+
+        // Get the service instance and update it directly
+        const service = servicesManager.getService(CollectionServiceDefinition);
+        if (service) {
+          service.setFilter(filter);
+          service.setSort(sort);
+        }
       }
     };
 
     window.addEventListener("popstate", handlePopState);
     return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
-
-  // Update URL when filters or sort changes
-  const updateURL = useCallback(() => {
-    if (typeof window !== "undefined") {
-      URLParamsService.updateURL(
-        clientFilter as FilterParams,
-        clientSort as SortParams
-      );
-    }
-  }, [clientFilter, clientSort]);
-
-  // Update URL whenever filter or sort changes
-  useEffect(() => {
-    updateURL();
-  }, [updateURL]);
+  }, [servicesManager]);
 
   return (
     <KitchensinkLayout>
@@ -665,19 +576,8 @@ export default function StoreExample2Page({
               {/* Sidebar Filters */}
               <aside className="md:w-64 w-full mb-8 md:mb-0">
                 <Collection.Filter>
-                  {({ setFilter }) => (
-                    <FilterSidebar
-                      filter={clientFilter}
-                      setFilter={(f) => {
-                        setFilter({
-                          minPrice: f.minPrice,
-                          maxPrice: f.maxPrice,
-                          color: f.color,
-                          size: f.size,
-                        });
-                        setClientFilter(f);
-                      }}
-                    />
+                  {({ filter, setFilter }) => (
+                    <FilterSidebar filter={filter} setFilter={setFilter} />
                   )}
                 </Collection.Filter>
               </aside>
@@ -687,18 +587,9 @@ export default function StoreExample2Page({
                   {({ sort, setSort }) => (
                     <>
                       <div className="flex justify-end mb-4">
-                        <SortDropdown
-                          sort={clientSort}
-                          setSort={(newSort) => {
-                            setSort(newSort);
-                            setClientSort(newSort);
-                          }}
-                        />
+                        <SortDropdown sort={sort} setSort={setSort} />
                       </div>
-                      <ProductGridContent
-                        filter={clientFilter}
-                        sort={clientSort}
-                      />
+                      <ProductGridContent />
                       <LoadMoreSection />
                     </>
                   )}
