@@ -24,6 +24,11 @@ export interface CollectionServiceAPI {
 
   setFilter: (newFilter: Record<string, any>) => void;
   setSort: (newSort: { field: string; order: "ASC" | "DESC" }) => void;
+  setFilterAndSort: (
+    newFilter: Record<string, any>,
+    newSort: { field: string; order: "ASC" | "DESC" },
+    updateURL?: boolean
+  ) => void;
   filter: Signal<Record<string, any>>;
   sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
   syncWithCurrentURL: () => void;
@@ -155,16 +160,16 @@ export const CollectionService = implementService.withConfig<{
   // Apply filtering and sorting to current products
   applyFiltersAndSort();
 
-  // Set up browser navigation listener on client-side
+  // Set up browser navigation listener only (no automatic sync on initialization)
   if (typeof window !== "undefined" && config.enableURLSync) {
     const handlePopState = () => {
       try {
         const searchParams = new URLSearchParams(window.location.search);
         const { filter: urlFilter, sort: urlSort } =
           URLParamsService.parseSearchParams(searchParams);
-        filter.set(urlFilter);
-        sort.set(urlSort);
-        applyFiltersAndSort();
+
+        // Use atomic update method for browser navigation but skip URL update since we're responding TO URL changes
+        setFilterAndSort(urlFilter, urlSort, false); // false = don't update URL
       } catch (error) {
         console.warn("Failed to handle browser navigation:", error);
       }
@@ -179,29 +184,41 @@ export const CollectionService = implementService.withConfig<{
 
   // Expose a method to sync with current URL (to be called after hydration)
   const syncWithCurrentURL = () => {
-    if (typeof window !== "undefined" && config.enableURLSync) {
-      try {
-        const searchParams = new URLSearchParams(window.location.search);
-        const { filter: urlFilter, sort: urlSort } =
-          URLParamsService.parseSearchParams(searchParams);
-        filter.set(urlFilter);
-        sort.set(urlSort);
-        applyFiltersAndSort();
-      } catch (error) {
-        console.warn("Failed to sync with current URL:", error);
-      }
+    // This method is no longer needed since we initialize from server-side URL params
+    // but keeping it for API compatibility
+  };
+
+  // Atomic method to update both filter and sort together
+  const setFilterAndSort = (
+    newFilter: Record<string, any>,
+    newSort: { field: string; order: "ASC" | "DESC" },
+    updateURL: boolean = true // Default to true for normal updates
+  ) => {
+    // Update both signals atomically
+    filter.set(newFilter);
+    sort.set(newSort);
+
+    // Update URL once with both parameters (only if requested)
+    if (updateURL && config.enableURLSync && typeof window !== "undefined") {
+      URLParamsService.updateURL(
+        newFilter as FilterParams,
+        newSort as SortParams
+      );
     }
+
+    // Apply filtering and sorting once
+    applyFiltersAndSort();
   };
 
   // New: setters with URL sync
   const setFilter = (newFilter: Record<string, any>) => {
     filter.set(newFilter);
 
-    // Update URL if enabled
+    // Update URL if enabled - preserve current sort state
     if (config.enableURLSync && typeof window !== "undefined") {
       URLParamsService.updateURL(
         newFilter as FilterParams,
-        sort.get() as SortParams
+        sort.get() as SortParams // Use current sort state
       );
     }
 
@@ -212,10 +229,10 @@ export const CollectionService = implementService.withConfig<{
   const setSort = (newSort: { field: string; order: "ASC" | "DESC" }) => {
     sort.set(newSort);
 
-    // Update URL if enabled
+    // Update URL if enabled - preserve current filter state
     if (config.enableURLSync && typeof window !== "undefined") {
       URLParamsService.updateURL(
-        filter.get() as FilterParams,
+        filter.get() as FilterParams, // Use current filter state
         newSort as SortParams
       );
     }
@@ -301,6 +318,7 @@ export const CollectionService = implementService.withConfig<{
     refresh,
     setFilter,
     setSort,
+    setFilterAndSort,
     filter,
     sort,
     syncWithCurrentURL,

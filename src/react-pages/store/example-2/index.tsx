@@ -508,14 +508,6 @@ export default function StoreExample2Page({
       )
   );
 
-  // Sync with URL parameters after hydration to avoid hydration mismatch
-  useEffect(() => {
-    const service = servicesManager.getService(CollectionServiceDefinition);
-    if (service) {
-      service.syncWithCurrentURL();
-    }
-  }, [servicesManager]);
-
   return (
     <KitchensinkLayout>
       <StoreLayout

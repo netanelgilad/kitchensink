@@ -4,8 +4,14 @@ import StoreExample2Page from "../../../react-pages/store/example-2/index";
 import { loadCollectionServiceConfig } from "../../../headless/store/collection-service";
 import { loadCurrentCartServiceConfig } from "../../../headless/store/current-cart-service";
 
-// Load initial data for services
-const collectionServiceConfig = await loadCollectionServiceConfig();
+// Extract URL search parameters for server-side initialization
+const searchParams = new URLSearchParams(Astro.url.search);
+
+// Load initial data for services with URL parameters
+const collectionServiceConfig = await loadCollectionServiceConfig(
+  undefined,
+  searchParams
+);
 const currentCartServiceConfig = await loadCurrentCartServiceConfig();
 ---
 
