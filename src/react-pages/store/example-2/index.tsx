@@ -277,9 +277,17 @@ const DEBOUNCE_DELAY = 300;
 function FilterSidebar({
   filter,
   setFilter,
+  toggleColorFilter,
+  toggleSizeFilter,
+  setPriceRange,
+  clearAllFilters,
 }: {
   filter: any;
   setFilter: (f: any) => void;
+  toggleColorFilter: (color: string) => void;
+  toggleSizeFilter: (size: string) => void;
+  setPriceRange: (minPrice: number, maxPrice: number) => void;
+  clearAllFilters: () => void;
 }) {
   const color: string[] = filter.color || [];
   const size: string[] = filter.size || [];
@@ -301,40 +309,22 @@ function FilterSidebar({
   React.useEffect(() => {
     if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
     priceDebounceRef.current = setTimeout(() => {
-      setFilter({
-        ...filter,
-        minPrice: localMin,
-        maxPrice: localMax,
-      });
+      setPriceRange(localMin, localMax);
     }, DEBOUNCE_DELAY);
     return () => {
       if (priceDebounceRef.current) clearTimeout(priceDebounceRef.current);
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [localMin, localMax]);
+
   const handleMinPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.min(Number(e.target.value), localMax - STEP);
     setLocalMin(value);
   };
+
   const handleMaxPriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = Math.max(Number(e.target.value), localMin + STEP);
     setLocalMax(value);
-  };
-  const handleColorChange = (c: string) => {
-    setFilter({
-      ...filter,
-      color: color.includes(c) ? color.filter((v) => v !== c) : [...color, c],
-    });
-  };
-  const handleSizeChange = (s: string) => {
-    setFilter({
-      ...filter,
-      size: size.includes(s) ? size.filter((v) => v !== s) : [...size, s],
-    });
-  };
-
-  const clearAllFilters = () => {
-    setFilter({});
   };
 
   return (
@@ -412,7 +402,7 @@ function FilterSidebar({
                     : "bg-white/10 border-white/20 text-white/80 hover:bg-cyan-500/10 hover:border-cyan-400 hover:text-cyan-300"
                 }
               `}
-              onClick={() => handleColorChange(c)}
+              onClick={() => toggleColorFilter(c)}
               aria-pressed={color.includes(c)}
             >
               {c}
@@ -437,7 +427,7 @@ function FilterSidebar({
                     : "bg-white/10 border-white/20 text-white/80 hover:bg-cyan-500/10 hover:border-cyan-400 hover:text-cyan-300"
                 }
               `}
-              onClick={() => handleSizeChange(s)}
+              onClick={() => toggleSizeFilter(s)}
               aria-pressed={size.includes(s)}
             >
               {s}
@@ -550,8 +540,22 @@ export default function StoreExample2Page({
               {/* Sidebar Filters */}
               <aside className="md:w-64 w-full mb-8 md:mb-0">
                 <Collection.Filter>
-                  {({ filter, setFilter }) => (
-                    <FilterSidebar filter={filter} setFilter={setFilter} />
+                  {({
+                    filter,
+                    setFilter,
+                    toggleColorFilter,
+                    toggleSizeFilter,
+                    setPriceRange,
+                    clearAllFilters,
+                  }) => (
+                    <FilterSidebar
+                      filter={filter}
+                      setFilter={setFilter}
+                      toggleColorFilter={toggleColorFilter}
+                      toggleSizeFilter={toggleSizeFilter}
+                      setPriceRange={setPriceRange}
+                      clearAllFilters={clearAllFilters}
+                    />
                   )}
                 </Collection.Filter>
               </aside>

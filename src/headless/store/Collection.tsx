@@ -294,14 +294,35 @@ export const Actions = (props: ActionsProps) => {
   });
 };
 
-// Headless component for filter controls
-export interface FilterProps {
-  children: (props: {
-    filter: Record<string, any>;
-    setFilter: (filter: Record<string, any>) => void;
-  }) => React.ReactNode;
+/**
+ * Render props for Filter component
+ */
+export interface FilterRenderProps {
+  /** Current filter state */
+  filter: Record<string, any>;
+  /** Function to set entire filter object */
+  setFilter: (filter: Record<string, any>) => void;
+  /** Function to toggle a color filter */
+  toggleColorFilter: (color: string) => void;
+  /** Function to toggle a size filter */
+  toggleSizeFilter: (size: string) => void;
+  /** Function to set price range */
+  setPriceRange: (minPrice: number, maxPrice: number) => void;
+  /** Function to clear all filters */
+  clearAllFilters: () => void;
 }
 
+/**
+ * Props for Filter headless component
+ */
+export interface FilterProps {
+  /** Render prop function that receives filter data and actions */
+  children: (props: FilterRenderProps) => React.ReactNode;
+}
+
+/**
+ * Headless component for filter controls with manipulation helpers
+ */
 export const Filter = (props: FilterProps) => {
   const service = useService(CollectionServiceDefinition) as ServiceAPI<
     typeof CollectionServiceDefinition
@@ -315,23 +336,81 @@ export const Filter = (props: FilterProps) => {
     return props.children({
       filter: {},
       setFilter: () => {},
+      toggleColorFilter: () => {},
+      toggleSizeFilter: () => {},
+      setPriceRange: () => {},
+      clearAllFilters: () => {},
     });
   }
+
+  // Filter manipulation helpers - UI logic belongs in headless component
+  const toggleColorFilter = (color: string) => {
+    const currentColors = filter.color || [];
+    const newColors = currentColors.includes(color)
+      ? currentColors.filter((c: string) => c !== color)
+      : [...currentColors, color];
+
+    service.setFilter({
+      ...filter,
+      color: newColors.length > 0 ? newColors : undefined,
+    });
+  };
+
+  const toggleSizeFilter = (size: string) => {
+    const currentSizes = filter.size || [];
+    const newSizes = currentSizes.includes(size)
+      ? currentSizes.filter((s: string) => s !== size)
+      : [...currentSizes, size];
+
+    service.setFilter({
+      ...filter,
+      size: newSizes.length > 0 ? newSizes : undefined,
+    });
+  };
+
+  const setPriceRange = (minPrice: number, maxPrice: number) => {
+    service.setFilter({
+      ...filter,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+    });
+  };
+
+  const clearAllFilters = () => {
+    service.setFilter({});
+  };
 
   return props.children({
     filter,
     setFilter: service.setFilter || (() => {}),
+    toggleColorFilter,
+    toggleSizeFilter,
+    setPriceRange,
+    clearAllFilters,
   });
 };
 
-// Headless component for sort controls
-export interface SortProps {
-  children: (props: {
-    sort: { field: string; order: "ASC" | "DESC" };
-    setSort: (sort: { field: string; order: "ASC" | "DESC" }) => void;
-  }) => React.ReactNode;
+/**
+ * Render props for Sort component
+ */
+export interface SortRenderProps {
+  /** Current sort state */
+  sort: { field: string; order: "ASC" | "DESC" };
+  /** Function to set sort */
+  setSort: (sort: { field: string; order: "ASC" | "DESC" }) => void;
 }
 
+/**
+ * Props for Sort headless component
+ */
+export interface SortProps {
+  /** Render prop function that receives sort data and actions */
+  children: (props: SortRenderProps) => React.ReactNode;
+}
+
+/**
+ * Headless component for sort controls
+ */
 export const Sort = (props: SortProps) => {
   const service = useService(CollectionServiceDefinition) as ServiceAPI<
     typeof CollectionServiceDefinition
