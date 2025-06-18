@@ -577,24 +577,38 @@ export default function StoreExample2Page({
       )
   );
 
-  // Initialize filters from URL params
-  const [clientFilter, setClientFilter] = useState<any>(() => {
-    if (typeof window !== "undefined") {
-      const searchParams = new URLSearchParams(window.location.search);
-      const { filter } = URLParamsService.parseSearchParams(searchParams);
-      return filter;
-    }
-    return {};
+  // Initialize with default values to match server-side render
+  const [clientFilter, setClientFilter] = useState<any>({});
+  const [clientSort, setClientSort] = useState<any>({
+    field: "_createdDate",
+    order: "DESC",
   });
 
-  const [clientSort, setClientSort] = useState<any>(() => {
+  // Read URL parameters after hydration to avoid mismatch
+  useEffect(() => {
     if (typeof window !== "undefined") {
       const searchParams = new URLSearchParams(window.location.search);
-      const { sort } = URLParamsService.parseSearchParams(searchParams);
-      return sort;
+      const { filter, sort } = URLParamsService.parseSearchParams(searchParams);
+      setClientFilter(filter);
+      setClientSort(sort);
     }
-    return { field: "_createdDate", order: "DESC" };
-  });
+  }, []);
+
+  // Listen for back/forward navigation after hydration
+  useEffect(() => {
+    const handlePopState = () => {
+      if (typeof window !== "undefined") {
+        const searchParams = new URLSearchParams(window.location.search);
+        const { filter, sort } =
+          URLParamsService.parseSearchParams(searchParams);
+        setClientFilter(filter);
+        setClientSort(sort);
+      }
+    };
+
+    window.addEventListener("popstate", handlePopState);
+    return () => window.removeEventListener("popstate", handlePopState);
+  }, []);
 
   // Update URL when filters or sort changes
   const updateFilter = useCallback(
@@ -622,22 +636,6 @@ export default function StoreExample2Page({
     },
     [clientFilter]
   );
-
-  // Listen for back/forward navigation
-  useEffect(() => {
-    const handlePopState = () => {
-      if (typeof window !== "undefined") {
-        const searchParams = new URLSearchParams(window.location.search);
-        const { filter, sort } =
-          URLParamsService.parseSearchParams(searchParams);
-        setClientFilter(filter);
-        setClientSort(sort);
-      }
-    };
-
-    window.addEventListener("popstate", handlePopState);
-    return () => window.removeEventListener("popstate", handlePopState);
-  }, []);
 
   return (
     <KitchensinkLayout>
