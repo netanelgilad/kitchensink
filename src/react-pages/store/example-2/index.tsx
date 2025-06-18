@@ -277,20 +277,49 @@ const DEBOUNCE_DELAY = 300;
 function FilterSidebar({
   filter,
   setFilter,
-  toggleColorFilter,
-  toggleSizeFilter,
-  setPriceRange,
-  clearAllFilters,
 }: {
   filter: any;
   setFilter: (f: any) => void;
-  toggleColorFilter: (color: string) => void;
-  toggleSizeFilter: (size: string) => void;
-  setPriceRange: (minPrice: number, maxPrice: number) => void;
-  clearAllFilters: () => void;
 }) {
   const color: string[] = filter.color || [];
   const size: string[] = filter.size || [];
+
+  // Helper functions using setFilter
+  const toggleColorFilter = (colorName: string) => {
+    const currentColors = filter.color || [];
+    const newColors = currentColors.includes(colorName)
+      ? currentColors.filter((c: string) => c !== colorName)
+      : [...currentColors, colorName];
+
+    setFilter({
+      ...filter,
+      color: newColors.length > 0 ? newColors : undefined,
+    });
+  };
+
+  const toggleSizeFilter = (sizeName: string) => {
+    const currentSizes = filter.size || [];
+    const newSizes = currentSizes.includes(sizeName)
+      ? currentSizes.filter((s: string) => s !== sizeName)
+      : [...currentSizes, sizeName];
+
+    setFilter({
+      ...filter,
+      size: newSizes.length > 0 ? newSizes : undefined,
+    });
+  };
+
+  const setPriceRange = (minPrice: number, maxPrice: number) => {
+    setFilter({
+      ...filter,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+    });
+  };
+
+  const clearAllFilters = () => {
+    setFilter({});
+  };
   const [localMin, setLocalMin] = React.useState(
     typeof filter.minPrice === "number" ? filter.minPrice : PRICE_MIN
   );
@@ -540,22 +569,8 @@ export default function StoreExample2Page({
               {/* Sidebar Filters */}
               <aside className="md:w-64 w-full mb-8 md:mb-0">
                 <Collection.Filter>
-                  {({
-                    filter,
-                    setFilter,
-                    toggleColorFilter,
-                    toggleSizeFilter,
-                    setPriceRange,
-                    clearAllFilters,
-                  }) => (
-                    <FilterSidebar
-                      filter={filter}
-                      setFilter={setFilter}
-                      toggleColorFilter={toggleColorFilter}
-                      toggleSizeFilter={toggleSizeFilter}
-                      setPriceRange={setPriceRange}
-                      clearAllFilters={clearAllFilters}
-                    />
+                  {({ filter, setFilter }) => (
+                    <FilterSidebar filter={filter} setFilter={setFilter} />
                   )}
                 </Collection.Filter>
               </aside>

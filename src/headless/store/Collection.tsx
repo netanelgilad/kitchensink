@@ -302,14 +302,6 @@ export interface FilterRenderProps {
   filter: Record<string, any>;
   /** Function to set entire filter object */
   setFilter: (filter: Record<string, any>) => void;
-  /** Function to toggle a color filter */
-  toggleColorFilter: (color: string) => void;
-  /** Function to toggle a size filter */
-  toggleSizeFilter: (size: string) => void;
-  /** Function to set price range */
-  setPriceRange: (minPrice: number, maxPrice: number) => void;
-  /** Function to clear all filters */
-  clearAllFilters: () => void;
 }
 
 /**
@@ -321,7 +313,7 @@ export interface FilterProps {
 }
 
 /**
- * Headless component for filter controls with manipulation helpers
+ * Headless component for filter controls
  */
 export const Filter = (props: FilterProps) => {
   const service = useService(CollectionServiceDefinition) as ServiceAPI<
@@ -336,57 +328,12 @@ export const Filter = (props: FilterProps) => {
     return props.children({
       filter: {},
       setFilter: () => {},
-      toggleColorFilter: () => {},
-      toggleSizeFilter: () => {},
-      setPriceRange: () => {},
-      clearAllFilters: () => {},
     });
   }
-
-  // Filter manipulation helpers - UI logic belongs in headless component
-  const toggleColorFilter = (color: string) => {
-    const currentColors = filter.color || [];
-    const newColors = currentColors.includes(color)
-      ? currentColors.filter((c: string) => c !== color)
-      : [...currentColors, color];
-
-    service.setFilter({
-      ...filter,
-      color: newColors.length > 0 ? newColors : undefined,
-    });
-  };
-
-  const toggleSizeFilter = (size: string) => {
-    const currentSizes = filter.size || [];
-    const newSizes = currentSizes.includes(size)
-      ? currentSizes.filter((s: string) => s !== size)
-      : [...currentSizes, size];
-
-    service.setFilter({
-      ...filter,
-      size: newSizes.length > 0 ? newSizes : undefined,
-    });
-  };
-
-  const setPriceRange = (minPrice: number, maxPrice: number) => {
-    service.setFilter({
-      ...filter,
-      minPrice: minPrice,
-      maxPrice: maxPrice,
-    });
-  };
-
-  const clearAllFilters = () => {
-    service.setFilter({});
-  };
 
   return props.children({
     filter,
     setFilter: service.setFilter || (() => {}),
-    toggleColorFilter,
-    toggleSizeFilter,
-    setPriceRange,
-    clearAllFilters,
   });
 };
 
