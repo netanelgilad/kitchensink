@@ -394,59 +394,21 @@ export async function loadCollectionServiceConfig(
     // Load categories data
     let categoriesData: any[] = [];
     try {
-      console.log("Attempting to load categories...");
-
-      // Use searchCategories API
-      try {
-        const searchResult = await categoriesAPI.searchCategories({
-          treeReference: {
-            appNamespace: "@wix/stores",
-          },
-        });
-        console.log("Categories search result:", searchResult);
-        categoriesData = searchResult.categories || [];
-      } catch (treeError) {
-        console.warn(
-          "Failed with @wix/stores, trying different approaches:",
-          treeError
-        );
-
-        // Try with different treeKey
-        try {
-          const searchResult = await categoriesAPI.searchCategories({
-            treeReference: {
-              appNamespace: "@wix/stores",
-              treeKey: "",
+      // Try searchCategories with sorting
+      const searchResult = await categoriesAPI.searchCategories({
+        treeReference: {
+          appNamespace: "@wix/stores",
+        },
+        search: {
+          sort: [
+            {
+              fieldName: "createdDate",
+              order: "ASC",
             },
-          });
-          console.log("Categories search result with treeKey:", searchResult);
-          categoriesData = searchResult.categories || [];
-        } catch (fallbackError) {
-          console.warn("All searchCategories attempts failed:", fallbackError);
-          // Try with legacy queryCategories as last resort
-          try {
-            const queryResult = await categoriesAPI
-              .queryCategories({
-                treeReference: {
-                  appNamespace: "@wix/stores",
-                  treeKey: "",
-                },
-              })
-              .find();
-            console.log("Legacy query result:", queryResult);
-            categoriesData = queryResult.items || [];
-          } catch (legacyError) {
-            console.warn("All category loading attempts failed:", legacyError);
-            categoriesData = [];
-          }
-        }
-      }
-
-      console.log(
-        "Final loaded categories:",
-        categoriesData.length,
-        categoriesData
-      );
+          ],
+        },
+      });
+      categoriesData = searchResult.categories || [];
     } catch (error) {
       console.error("Failed to load categories:", error);
       categoriesData = [];

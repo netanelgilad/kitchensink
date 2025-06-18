@@ -574,16 +574,7 @@ function CategoryMenu({
     <div className="mb-8">
       <h2 className="text-xl font-bold text-white mb-4">Browse by Category</h2>
       <div className="flex flex-wrap gap-3">
-        <button
-          onClick={() => setCategory(null)}
-          className={`px-6 py-2 rounded-full font-medium transition-all ${
-            selectedCategory === null
-              ? "bg-cyan-500 text-white shadow-lg"
-              : "bg-white/10 text-white/80 border border-white/20 hover:bg-cyan-500/10 hover:border-cyan-400"
-          }`}
-        >
-          All Products
-        </button>
+        {/* Fetched categories */}
         {categories && categories.length > 0 ? (
           categories.map((category) => (
             <button
@@ -599,7 +590,7 @@ function CategoryMenu({
             </button>
           ))
         ) : (
-          <div className="text-white/60 text-sm">No categories available</div>
+          <div className="text-white/60 text-sm">Loading categories...</div>
         )}
       </div>
     </div>
@@ -610,11 +601,14 @@ function CategoryMenu({
 function CategoryHeaderSection({
   categoryInfo,
   selectedCategory,
+  categories,
 }: {
   categoryInfo: { name?: string; description?: string } | null;
   selectedCategory: string | null;
+  categories: any[];
 }) {
-  if (!selectedCategory || !categoryInfo) {
+  // Handle "All Products" case (when selectedCategory is null)
+  if (selectedCategory === null) {
     return (
       <div className="text-center mb-12">
         <h1 className="text-5xl font-bold text-white mb-4">
@@ -630,18 +624,28 @@ function CategoryHeaderSection({
     );
   }
 
+  // Find the selected category from the categories list
+  const currentCategory = categories.find(
+    (cat) => cat._id === selectedCategory
+  );
+
+  // Use category info from the fetched categories, fallback to categoryInfo from API
+  const displayName = currentCategory?.name || categoryInfo?.name || "Category";
+  const displayDescription =
+    currentCategory?.description ||
+    categoryInfo?.description ||
+    "Browse products in this category";
+
   return (
     <div className="text-center mb-12">
       <h1 className="text-5xl font-bold text-white mb-4">
         <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-          {categoryInfo.name}
+          {displayName}
         </span>
       </h1>
-      {categoryInfo.description && (
-        <p className="text-white/80 text-xl max-w-2xl mx-auto">
-          {categoryInfo.description}
-        </p>
-      )}
+      <p className="text-white/80 text-xl max-w-2xl mx-auto">
+        {displayDescription}
+      </p>
     </div>
   );
 }
@@ -677,26 +681,27 @@ export default function StoreExample2Page({
         />
         <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-6">
           <div className="max-w-7xl mx-auto">
-            {/* Category Menu */}
+            {/* Category Menu and Header */}
             <Collection.Categories>
               {({ categories, selectedCategory, setCategory }) => (
-                <CategoryMenu
-                  categories={categories}
-                  selectedCategory={selectedCategory}
-                  setCategory={setCategory}
-                />
+                <>
+                  <CategoryMenu
+                    categories={categories}
+                    selectedCategory={selectedCategory}
+                    setCategory={setCategory}
+                  />
+                  <Collection.CollectionHeader>
+                    {({ categoryInfo }) => (
+                      <CategoryHeaderSection
+                        categoryInfo={categoryInfo}
+                        selectedCategory={selectedCategory}
+                        categories={categories}
+                      />
+                    )}
+                  </Collection.CollectionHeader>
+                </>
               )}
             </Collection.Categories>
-
-            {/* Dynamic Header Section */}
-            <Collection.CollectionHeader>
-              {({ categoryInfo, selectedCategory }) => (
-                <CategoryHeaderSection
-                  categoryInfo={categoryInfo}
-                  selectedCategory={selectedCategory}
-                />
-              )}
-            </Collection.CollectionHeader>
 
             <Collection.Header>
               {withDocsWrapper(
