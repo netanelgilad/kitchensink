@@ -387,13 +387,13 @@ export const Sort = (props: SortProps) => {
  * Render props for Categories component
  */
 export interface CategoriesRenderProps {
-  /** Available collections/categories */
-  collections: any[];
-  /** Currently selected collection ID */
-  selectedCollection: string | null;
-  /** Function to set the selected collection */
-  setCollection: (collectionId: string | null) => void;
-  /** Loading state for collections */
+  /** Available categories */
+  categories: any[];
+  /** Currently selected category ID */
+  selectedCategory: string | null;
+  /** Function to set the selected category */
+  setCategory: (categoryId: string | null) => void;
+  /** Loading state for categories */
   isLoading: boolean;
 }
 
@@ -406,31 +406,31 @@ export interface CategoriesProps {
 }
 
 /**
- * Headless component for category/collection navigation
+ * Headless component for category navigation
  */
 export const Categories = (props: CategoriesProps) => {
   const service = useService(CollectionServiceDefinition) as ServiceAPI<
     typeof CollectionServiceDefinition
   >;
 
-  const collections = useSignal(service?.collections) || [];
-  const selectedCollection = useSignal(service?.selectedCollection) || null;
+  const categories = useSignal(service?.categories) || [];
+  const selectedCategory = useSignal(service?.selectedCategory) || null;
   const isLoading = useSignal(service?.isLoading) || false;
 
   if (!service) {
     console.error("CollectionService is undefined in Categories");
     return props.children({
-      collections: [],
-      selectedCollection: null,
-      setCollection: () => {},
+      categories: [],
+      selectedCategory: null,
+      setCategory: () => {},
       isLoading: false,
     });
   }
 
   return props.children({
-    collections,
-    selectedCollection,
-    setCollection: service.setCollection || (() => {}),
+    categories,
+    selectedCategory,
+    setCategory: service.setCategory || (() => {}),
     isLoading,
   });
 };
@@ -439,42 +439,42 @@ export const Categories = (props: CategoriesProps) => {
  * Render props for CollectionHeader component
  */
 export interface CollectionHeaderRenderProps {
-  /** Current collection information */
-  collectionInfo: { name?: string; description?: string } | null;
-  /** Selected collection ID */
-  selectedCollection: string | null;
+  /** Current category information */
+  categoryInfo: { name?: string; description?: string } | null;
+  /** Selected category ID */
+  selectedCategory: string | null;
 }
 
 /**
  * Props for CollectionHeader headless component
  */
 export interface CollectionHeaderProps {
-  /** Render prop function that receives collection header data */
+  /** Render prop function that receives category header data */
   children: (props: CollectionHeaderRenderProps) => React.ReactNode;
 }
 
 /**
- * Headless component for collection header information
+ * Headless component for category header information
  */
 export const CollectionHeader = (props: CollectionHeaderProps) => {
   const service = useService(CollectionServiceDefinition) as ServiceAPI<
     typeof CollectionServiceDefinition
   >;
 
-  const collectionInfo = useSignal(service?.currentCollectionInfo) || null;
-  const selectedCollection = useSignal(service?.selectedCollection) || null;
+  const categoryInfo = useSignal(service?.currentCategoryInfo) || null;
+  const selectedCategory = useSignal(service?.selectedCategory) || null;
 
   if (!service) {
     console.error("CollectionService is undefined in CollectionHeader");
     return props.children({
-      collectionInfo: null,
-      selectedCollection: null,
+      categoryInfo: null,
+      selectedCategory: null,
     });
   }
 
   return props.children({
-    collectionInfo,
-    selectedCollection,
+    categoryInfo,
+    selectedCategory,
   });
 };
 

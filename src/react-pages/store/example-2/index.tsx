@@ -560,55 +560,61 @@ function SortDropdown({
 
 // Category Menu Component
 function CategoryMenu({
-  collections,
-  selectedCollection,
-  setCollection,
+  categories,
+  selectedCategory,
+  setCategory,
 }: {
-  collections: any[];
-  selectedCollection: string | null;
-  setCollection: (id: string | null) => void;
+  categories: any[];
+  selectedCategory: string | null;
+  setCategory: (id: string | null) => void;
 }) {
+  console.log("CategoryMenu received categories:", categories);
+
   return (
     <div className="mb-8">
       <h2 className="text-xl font-bold text-white mb-4">Browse by Category</h2>
       <div className="flex flex-wrap gap-3">
         <button
-          onClick={() => setCollection(null)}
+          onClick={() => setCategory(null)}
           className={`px-6 py-2 rounded-full font-medium transition-all ${
-            selectedCollection === null
+            selectedCategory === null
               ? "bg-cyan-500 text-white shadow-lg"
               : "bg-white/10 text-white/80 border border-white/20 hover:bg-cyan-500/10 hover:border-cyan-400"
           }`}
         >
           All Products
         </button>
-        {collections.map((collection) => (
-          <button
-            key={collection._id}
-            onClick={() => setCollection(collection._id)}
-            className={`px-6 py-2 rounded-full font-medium transition-all ${
-              selectedCollection === collection._id
-                ? "bg-cyan-500 text-white shadow-lg"
-                : "bg-white/10 text-white/80 border border-white/20 hover:bg-cyan-500/10 hover:border-cyan-400"
-            }`}
-          >
-            {collection.name}
-          </button>
-        ))}
+        {categories && categories.length > 0 ? (
+          categories.map((category) => (
+            <button
+              key={category._id}
+              onClick={() => setCategory(category._id)}
+              className={`px-6 py-2 rounded-full font-medium transition-all ${
+                selectedCategory === category._id
+                  ? "bg-cyan-500 text-white shadow-lg"
+                  : "bg-white/10 text-white/80 border border-white/20 hover:bg-cyan-500/10 hover:border-cyan-400"
+              }`}
+            >
+              {category.name}
+            </button>
+          ))
+        ) : (
+          <div className="text-white/60 text-sm">No categories available</div>
+        )}
       </div>
     </div>
   );
 }
 
-// Collection Header Component
-function CollectionHeaderSection({
-  collectionInfo,
-  selectedCollection,
+// Category Header Component
+function CategoryHeaderSection({
+  categoryInfo,
+  selectedCategory,
 }: {
-  collectionInfo: { name?: string; description?: string } | null;
-  selectedCollection: string | null;
+  categoryInfo: { name?: string; description?: string } | null;
+  selectedCategory: string | null;
 }) {
-  if (!selectedCollection || !collectionInfo) {
+  if (!selectedCategory || !categoryInfo) {
     return (
       <div className="text-center mb-12">
         <h1 className="text-5xl font-bold text-white mb-4">
@@ -628,12 +634,12 @@ function CollectionHeaderSection({
     <div className="text-center mb-12">
       <h1 className="text-5xl font-bold text-white mb-4">
         <span className="bg-gradient-to-r from-teal-400 to-cyan-400 bg-clip-text text-transparent">
-          {collectionInfo.name}
+          {categoryInfo.name}
         </span>
       </h1>
-      {collectionInfo.description && (
+      {categoryInfo.description && (
         <p className="text-white/80 text-xl max-w-2xl mx-auto">
-          {collectionInfo.description}
+          {categoryInfo.description}
         </p>
       )}
     </div>
@@ -673,21 +679,21 @@ export default function StoreExample2Page({
           <div className="max-w-7xl mx-auto">
             {/* Category Menu */}
             <Collection.Categories>
-              {({ collections, selectedCollection, setCollection }) => (
+              {({ categories, selectedCategory, setCategory }) => (
                 <CategoryMenu
-                  collections={collections}
-                  selectedCollection={selectedCollection}
-                  setCollection={setCollection}
+                  categories={categories}
+                  selectedCategory={selectedCategory}
+                  setCategory={setCategory}
                 />
               )}
             </Collection.Categories>
 
             {/* Dynamic Header Section */}
             <Collection.CollectionHeader>
-              {({ collectionInfo, selectedCollection }) => (
-                <CollectionHeaderSection
-                  collectionInfo={collectionInfo}
-                  selectedCollection={selectedCollection}
+              {({ categoryInfo, selectedCategory }) => (
+                <CategoryHeaderSection
+                  categoryInfo={categoryInfo}
+                  selectedCategory={selectedCategory}
                 />
               )}
             </Collection.CollectionHeader>

@@ -6,6 +6,7 @@ import {
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../Signal";
 import { productsV3, collections } from "@wix/stores";
+import { categories as categoriesAPI } from "@wix/categories";
 import {
   URLParamsService,
   type FilterParams,
@@ -20,16 +21,16 @@ export interface CollectionServiceAPI {
   hasProducts: Signal<boolean>;
 
   // Category data
-  collections: Signal<any[]>;
-  selectedCollection: Signal<string | null>;
-  currentCollectionInfo: Signal<{ name?: string; description?: string } | null>;
+  categories: Signal<any[]>;
+  selectedCategory: Signal<string | null>;
+  currentCategoryInfo: Signal<{ name?: string; description?: string } | null>;
 
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
 
   setFilter: (newFilter: Record<string, any>) => void;
   setSort: (newSort: { field: string; order: "ASC" | "DESC" }) => void;
-  setCollection: (collectionId: string | null) => void;
+  setCategory: (categoryId: string | null) => void;
   filter: Signal<Record<string, any>>;
   sort: Signal<{ field: string; order: "ASC" | "DESC" }>;
 }
@@ -47,11 +48,11 @@ const ALLOWED_FILTER_FIELDS = [
 export const CollectionService = implementService.withConfig<{
   initialProducts?: productsV3.V3Product[];
   pageSize?: number;
-  collectionId?: string;
+  categoryId?: string;
   initialFilter?: Record<string, any>;
   initialSort?: { field: string; order: "ASC" | "DESC" };
   enableURLSync?: boolean;
-  initialCollections?: any[];
+  initialCategories?: any[];
 }>()(CollectionServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
 
@@ -77,13 +78,13 @@ export const CollectionService = implementService.withConfig<{
   );
 
   // Category/Collection signals
-  const collections: Signal<any[]> = signalsService.signal(
-    (config.initialCollections || []) as any
+  const categories: Signal<any[]> = signalsService.signal(
+    (config.initialCategories || []) as any
   );
-  const selectedCollection: Signal<string | null> = signalsService.signal(
-    (config.collectionId || null) as any
+  const selectedCategory: Signal<string | null> = signalsService.signal(
+    (config.categoryId || null) as any
   );
-  const currentCollectionInfo: Signal<{
+  const currentCategoryInfo: Signal<{
     name?: string;
     description?: string;
   } | null> = signalsService.signal(null as any);
@@ -259,32 +260,36 @@ export const CollectionService = implementService.withConfig<{
     applyFiltersAndSort();
   };
 
-  const setCollection = async (collectionId: string | null) => {
-    selectedCollection.set(collectionId);
+  const setCategory = async (categoryId: string | null) => {
+    selectedCategory.set(categoryId);
 
-    // Load collection info if collectionId is provided
-    if (collectionId) {
+    // Load category info if categoryId is provided
+    if (categoryId) {
       try {
-        // Use the imported collections module correctly
-        const { collections: storeCollections } = await import("@wix/stores");
-        const collectionResult = await storeCollections
-          .queryCollections()
-          .eq("_id", collectionId)
+        // Use the categories API correctly
+        const categoryResult = await categoriesAPI
+          .queryCategories({
+            treeReference: {
+              appNamespace: "@wix/stores",
+              treeKey: "",
+            },
+          })
+          .eq("_id", categoryId)
           .find();
-        const collection = collectionResult.items?.[0];
-        currentCollectionInfo.set({
-          name: collection?.name || undefined,
-          description: collection?.description || undefined,
+        const category = categoryResult.items?.[0];
+        currentCategoryInfo.set({
+          name: category?.name || undefined,
+          description: category?.description || undefined,
         });
       } catch (error) {
-        console.warn("Failed to load collection info:", error);
-        currentCollectionInfo.set(null);
+        console.warn("Failed to load category info:", error);
+        currentCategoryInfo.set(null);
       }
     } else {
-      currentCollectionInfo.set(null);
+      currentCategoryInfo.set(null);
     }
 
-    // Refresh products for the new collection
+    // Refresh products for the new category
     refresh();
   };
 
@@ -355,21 +360,21 @@ export const CollectionService = implementService.withConfig<{
     error,
     totalProducts,
     hasProducts,
-    collections,
-    selectedCollection,
-    currentCollectionInfo,
+    categories,
+    selectedCategory,
+    currentCategoryInfo,
     loadMore,
     refresh,
     setFilter,
     setSort,
-    setCollection,
+    setCategory,
     filter,
     sort,
   };
 });
 
 export async function loadCollectionServiceConfig(
-  collectionId?: string,
+  categoryId?: string,
   searchParams?: URLSearchParams
 ): Promise<ServiceFactoryConfig<typeof CollectionService>> {
   try {
@@ -386,22 +391,71 @@ export async function loadCollectionServiceConfig(
       initialSort = parsed.sort;
     }
 
-    // Load collections data
-    let collectionsData: any[] = [];
+    // Load categories data
+    let categoriesData: any[] = [];
     try {
-      const { collections: storeCollections } = await import("@wix/stores");
-      const collectionsResult = await storeCollections
-        .queryCollections()
-        .find();
-      collectionsData = collectionsResult.items || [];
+      console.log("Attempting to load categories...");
+
+      // Use searchCategories API
+      try {
+        const searchResult = await categoriesAPI.searchCategories({
+          treeReference: {
+            appNamespace: "@wix/stores",
+          },
+        });
+        console.log("Categories search result:", searchResult);
+        categoriesData = searchResult.categories || [];
+      } catch (treeError) {
+        console.warn(
+          "Failed with @wix/stores, trying different approaches:",
+          treeError
+        );
+
+        // Try with different treeKey
+        try {
+          const searchResult = await categoriesAPI.searchCategories({
+            treeReference: {
+              appNamespace: "@wix/stores",
+              treeKey: "",
+            },
+          });
+          console.log("Categories search result with treeKey:", searchResult);
+          categoriesData = searchResult.categories || [];
+        } catch (fallbackError) {
+          console.warn("All searchCategories attempts failed:", fallbackError);
+          // Try with legacy queryCategories as last resort
+          try {
+            const queryResult = await categoriesAPI
+              .queryCategories({
+                treeReference: {
+                  appNamespace: "@wix/stores",
+                  treeKey: "",
+                },
+              })
+              .find();
+            console.log("Legacy query result:", queryResult);
+            categoriesData = queryResult.items || [];
+          } catch (legacyError) {
+            console.warn("All category loading attempts failed:", legacyError);
+            categoriesData = [];
+          }
+        }
+      }
+
+      console.log(
+        "Final loaded categories:",
+        categoriesData.length,
+        categoriesData
+      );
     } catch (error) {
-      console.warn("Failed to load collections:", error);
+      console.error("Failed to load categories:", error);
+      categoriesData = [];
     }
 
     // Start with a basic query to get initial products
     let query = productsV3.queryProducts();
 
-    // Note: Collection filtering would be done client-side or via different API
+    // Note: Category filtering would be done client-side or via different API
     // For now, we'll get all products and filter client-side if needed
 
     // Only apply sorting that is known to work with the API
@@ -418,22 +472,22 @@ export async function loadCollectionServiceConfig(
     return {
       initialProducts: productResults.items || [],
       pageSize: 12,
-      collectionId,
+      categoryId,
       initialFilter,
       initialSort,
       enableURLSync: true,
-      initialCollections: collectionsData,
+      initialCategories: categoriesData,
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
     return {
       initialProducts: [],
       pageSize: 12,
-      collectionId,
+      categoryId,
       initialFilter: {},
       initialSort: { field: "_createdDate", order: "DESC" },
       enableURLSync: true,
-      initialCollections: [],
+      initialCategories: [],
     };
   }
 }
