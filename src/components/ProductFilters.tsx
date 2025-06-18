@@ -222,8 +222,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             </div>
 
             {/* Dual Range Slider */}
-            <div className="relative">
-              <div className="relative h-2 bg-white/20 rounded-full">
+            <div className="relative h-6">
+              <div className="absolute top-2 left-0 right-0 h-2 bg-white/20 rounded-full">
                 <div
                   className="absolute h-2 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full"
                   style={{
@@ -255,7 +255,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 }
                 onMouseUp={handlePriceRangeCommit}
                 onTouchEnd={handlePriceRangeCommit}
-                className="absolute inset-0 w-full h-2 bg-transparent appearance-none cursor-pointer range-slider"
+                className="absolute top-0 left-0 w-full h-6 bg-transparent appearance-none cursor-pointer range-slider range-slider-min"
+                style={{ zIndex: tempPriceRange.min > priceRange.min + (priceRange.max - priceRange.min) * 0.5 ? 2 : 1 }}
               />
 
               {/* Max Range Input */}
@@ -272,7 +273,8 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 }
                 onMouseUp={handlePriceRangeCommit}
                 onTouchEnd={handlePriceRangeCommit}
-                className="absolute inset-0 w-full h-2 bg-transparent appearance-none cursor-pointer range-slider"
+                className="absolute top-0 left-0 w-full h-6 bg-transparent appearance-none cursor-pointer range-slider range-slider-max"
+                style={{ zIndex: tempPriceRange.max < priceRange.min + (priceRange.max - priceRange.min) * 0.5 ? 2 : 1 }}
               />
             </div>
 
@@ -349,7 +351,12 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       </div>
 
       <style>{`
+        .range-slider {
+          pointer-events: none;
+        }
+        
         .range-slider::-webkit-slider-thumb {
+          pointer-events: all;
           appearance: none;
           width: 20px;
           height: 20px;
@@ -358,9 +365,11 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          position: relative;
         }
 
         .range-slider::-moz-range-thumb {
+          pointer-events: all;
           width: 20px;
           height: 20px;
           border-radius: 50%;
@@ -368,14 +377,34 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           cursor: pointer;
           border: 2px solid white;
           box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+          border: none;
         }
 
         .range-slider::-webkit-slider-track {
           background: transparent;
+          border: none;
         }
 
         .range-slider::-moz-range-track {
           background: transparent;
+          border: none;
+        }
+
+        /* Different colors for min and max sliders */
+        .range-slider-min::-webkit-slider-thumb {
+          background: linear-gradient(45deg, #10b981, #3b82f6);
+        }
+        
+        .range-slider-min::-moz-range-thumb {
+          background: linear-gradient(45deg, #10b981, #3b82f6);
+        }
+        
+        .range-slider-max::-webkit-slider-thumb {
+          background: linear-gradient(45deg, #3b82f6, #8b5cf6);
+        }
+        
+        .range-slider-max::-moz-range-thumb {
+          background: linear-gradient(45deg, #3b82f6, #8b5cf6);
         }
       `}</style>
     </div>
