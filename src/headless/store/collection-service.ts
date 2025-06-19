@@ -49,7 +49,16 @@ export const CollectionService = implementService.withConfig<{
       isLoading.set(true);
       error.set(null);
 
-      let query = productsV3.queryProducts();
+      let query = productsV3.queryProducts({
+        fields: [
+          'DESCRIPTION',
+          'MEDIA_ITEMS_INFO',
+          'VARIANT_OPTION_CHOICE_NAMES', 
+          'CURRENCY',
+          'URL',
+          'ALL_CATEGORIES_INFO'  // Critical for category filtering
+        ]
+      });
 
       const currentProducts = productsList.get();
       const productResults = await query.limit(pageSize).find();
@@ -72,7 +81,16 @@ export const CollectionService = implementService.withConfig<{
       isLoading.set(true);
       error.set(null);
 
-      let query = productsV3.queryProducts();
+      let query = productsV3.queryProducts({
+        fields: [
+          'DESCRIPTION',
+          'MEDIA_ITEMS_INFO',
+          'VARIANT_OPTION_CHOICE_NAMES', 
+          'CURRENCY',
+          'URL',
+          'ALL_CATEGORIES_INFO'  // Critical for category filtering
+        ]
+      });
 
       const productResults = await query.limit(pageSize).find();
 
@@ -103,7 +121,17 @@ export async function loadCollectionServiceConfig(
   collectionId?: string
 ): Promise<ServiceFactoryConfig<typeof CollectionService>> {
   try {
-    let query = productsV3.queryProducts();
+    // Query products with ALL_CATEGORIES_INFO field as required for category filtering
+    let query = productsV3.queryProducts({
+      fields: [
+        'DESCRIPTION',
+        'MEDIA_ITEMS_INFO',
+        'VARIANT_OPTION_CHOICE_NAMES', 
+        'CURRENCY',
+        'URL',
+        'ALL_CATEGORIES_INFO'  // Critical for category filtering
+      ]
+    });
 
     const productResults = await query.limit(12).find();
 

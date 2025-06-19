@@ -20,6 +20,8 @@ import {
 import { Collection } from "../../../headless/store/Collection";
 import WixMediaImage from "../../../headless/media/Image";
 import ProductFilters from "../../../components/ProductFilters";
+import CategoryFilter from "../../../components/CategoryFilter";
+import { filterProductsByCategory } from "../../../utils/productFiltering";
 import { productsV3 } from "@wix/stores";
 import { useState, useMemo } from "react";
 
@@ -29,6 +31,7 @@ interface StoreExample2PageProps {
 }
 
 const ProductGridContent = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     priceRange: { min: 0, max: 1000 },
     selectedOptions: {} as { [optionId: string]: string[] },
@@ -38,11 +41,14 @@ const ProductGridContent = () => {
     <Collection.Grid>
       {withDocsWrapper(
         ({ products, isLoading, error, isEmpty }) => {
-          // Filter products based on current filters
+          // Filter products based on current filters (category filtering applied first)
           const filteredProducts = useMemo(() => {
             if (!products || products.length === 0) return products;
 
-            return products.filter((product: productsV3.V3Product) => {
+            // First apply category filter as per recipe
+            let categoryFilteredProducts = filterProductsByCategory(products, selectedCategory);
+
+            return categoryFilteredProducts.filter((product: productsV3.V3Product) => {
               // Check price range
               const productPrice =
                 product.actualPriceRange?.minValue?.amount ||
@@ -75,9 +81,10 @@ const ProductGridContent = () => {
 
               return true;
             });
-          }, [products, filters]);
+          }, [products, filters, selectedCategory]);
 
           const isFiltered = 
+            selectedCategory !== null ||
             filters.priceRange.min !== 0 || 
             filters.priceRange.max !== 1000 || 
             Object.keys(filters.selectedOptions).length > 0;
@@ -87,6 +94,13 @@ const ProductGridContent = () => {
 
           return (
             <div className="min-h-screen">
+              {/* Category Filter - Full Width */}
+              <CategoryFilter 
+                onCategorySelect={setSelectedCategory}
+                selectedCategory={selectedCategory}
+                className="mb-6"
+              />
+
               {/* Main Layout with Sidebar and Content */}
               <div className="flex gap-8">
                 {/* Filters Sidebar */}
@@ -123,15 +137,16 @@ const ProductGridContent = () => {
                         </span>
                       </div>
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          setSelectedCategory(null);
                           setFilters({
                             priceRange: { min: 0, max: 1000 },
                             selectedOptions: {},
-                          })
-                        }
+                          });
+                        }}
                         className="text-teal-400 hover:text-teal-300 transition-colors text-sm"
                       >
-                        Clear Filters
+                        Clear All Filters
                       </button>
                     </div>
                   )}

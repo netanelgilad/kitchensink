@@ -13,7 +13,8 @@ interface ProductFiltersProps {
 interface ProductOption {
   id: string;
   name: string;
-  choices: { id: string; name: string }[];
+  choices: { id: string; name: string; colorCode?: string }[];
+  optionRenderType?: string;
 }
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
@@ -61,6 +62,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               id: option._id,
               name: option.name,
               choices: [],
+              optionRenderType: option.optionRenderType,
             });
           }
 
@@ -77,6 +79,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                 optionData.choices.push({
                   id: choice.choiceId,
                   name: choice.name,
+                  colorCode: choice.colorCode,
                 });
               }
             });
@@ -320,26 +323,63 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         {availableOptions.map((option) => (
           <div key={option.id}>
             <h4 className="text-white font-medium mb-3">{String(option.name)}</h4>
-            <div className="space-y-2 max-h-48 overflow-y-auto">
-              {option.choices.map((choice) => (
-                <label
-                  key={choice.id}
-                  className="flex items-center gap-3 cursor-pointer group"
-                >
-                  <input
-                    type="checkbox"
-                    checked={selectedOptions[option.id]?.includes(choice.id) || false}
-                    onChange={(e) =>
-                      handleOptionChange(option.id, choice.id, e.target.checked)
-                    }
-                    className="w-4 h-4 bg-white/10 border border-white/30 rounded text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
-                  />
-                  <span className="text-white/80 group-hover:text-white transition-colors text-sm">
-                    {String(choice.name)}
-                  </span>
-                </label>
-              ))}
-            </div>
+            
+            {/* Color Swatch Options */}
+            {option.optionRenderType === 'SWATCH_CHOICES' ? (
+              <div className="flex flex-wrap gap-4 mb-8">
+                {option.choices.map((choice) => (
+                  <label
+                    key={choice.id}
+                    className="cursor-pointer group relative mb-6"
+                    title={String(choice.name)}
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedOptions[option.id]?.includes(choice.id) || false}
+                      onChange={(e) =>
+                        handleOptionChange(option.id, choice.id, e.target.checked)
+                      }
+                      className="sr-only"
+                    />
+                    <div
+                      className={`w-5 h-5 rounded-full border-2 transition-all duration-200 ${
+                        selectedOptions[option.id]?.includes(choice.id)
+                          ? 'border-white shadow-lg scale-110 ring-2 ring-blue-500'
+                          : 'border-white/30 hover:border-white/60 hover:scale-105'
+                      }`}
+                      style={{
+                        backgroundColor: choice.colorCode || '#000000',
+                      }}
+                    />
+                    <span className="absolute -bottom-8 left-1/2 transform -translate-x-1/2 text-xs text-white/70 opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                      {String(choice.name)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            ) : (
+              /* Regular Text Options */
+              <div className="space-y-2 max-h-48 overflow-y-auto">
+                {option.choices.map((choice) => (
+                  <label
+                    key={choice.id}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={selectedOptions[option.id]?.includes(choice.id) || false}
+                      onChange={(e) =>
+                        handleOptionChange(option.id, choice.id, e.target.checked)
+                      }
+                      className="w-4 h-4 bg-white/10 border border-white/30 rounded text-blue-500 focus:ring-2 focus:ring-blue-500 focus:ring-offset-0"
+                    />
+                    <span className="text-white/80 group-hover:text-white transition-colors text-sm">
+                      {String(choice.name)}
+                    </span>
+                  </label>
+                ))}
+              </div>
+            )}
           </div>
         ))}
 
