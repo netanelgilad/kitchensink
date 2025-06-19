@@ -1,75 +1,24 @@
 import React, { useState, useEffect } from 'react';
 import { categories } from '@wix/categories';
+import { Category } from '../headless/store/Category';
 
 // Use the Wix SDK category type directly
 type Category = categories.Category;
 
-interface CategoryFilterProps {
+interface CategoryPickerProps {
   onCategorySelect: (categoryId: string | null) => void;
   selectedCategory: string | null;
+  categories: categories.Category[];
   className?: string;
 }
 
-export default function CategoryFilter({ 
+function CategoryPicker({ 
   onCategorySelect, 
-  selectedCategory, 
-  className = "" 
-}: CategoryFilterProps) {
-  const [categoriesList, setCategoriesList] = useState<Category[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  // 🚨 CRITICAL API PATTERN - exactly as specified in the recipe
-  const fetchCategories = async () => {
-    try {
-      setIsLoading(true);
-      setError(null);
-      
-      const categoriesResponse = await categories.queryCategories({
-        treeReference: {
-          appNamespace: '@wix/stores',
-          treeKey: null
-        }
-      }).eq('visible', true).find();
-      
-      const fetchedCategories = categoriesResponse.items || [];
-      
-      // Filter out "All Products" category as per recipe instructions
-      const filteredCategories = fetchedCategories.filter(
-        cat => cat.name?.toLowerCase() !== 'all products'
-      );
-      
-      setCategoriesList(filteredCategories);
-    } catch (categoriesError) {
-      console.error('Error fetching categories:', categoriesError);
-      setError('Failed to load categories');
-      setCategoriesList([]); // Continue without categories - graceful fallback
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  if (isLoading) {
-    return (
-      <div className={`${className} flex justify-center py-4`}>
-        <div className="animate-spin w-6 h-6 border-2 border-teal-500 border-t-transparent rounded-full"></div>
-      </div>
-    );
-  }
-
-  if (error) {
-    return (
-      <div className={`${className} text-red-400 text-center py-4`}>
-        {error}
-      </div>
-    );
-  }
-
-  if (categoriesList.length === 0) {
+  selectedCategory,
+  categories,
+  className = ""
+}: CategoryPickerProps) {
+  if (categories.length === 0) {
     return null; // No categories to show
   }
 
@@ -94,7 +43,7 @@ export default function CategoryFilter({
         </button>
         
         {/* Category buttons */}
-        {categoriesList.map((category) => (
+        {categories.map((category) => (
           <button
             key={category._id}
             onClick={() => onCategorySelect(category._id || null)}
@@ -114,10 +63,25 @@ export default function CategoryFilter({
         <div className="mt-3 text-sm text-white/60">
           Showing products in: {' '}
           <span className="text-teal-400 font-medium">
-            {categoriesList.find(cat => cat._id === selectedCategory)?.name || 'Selected Category'}
+            {categories.find(cat => cat._id === selectedCategory)?.name || 'Selected Category'}
           </span>
         </div>
       )}
     </div>
   );
-} 
+}
+
+export default function CategoryPickerWithContext({className}: {className?: string}) {
+  return (<Category.Provider>
+    <Category.List>
+      {({ categories, selectedCategory, setSelectedCategory }) => (
+        <CategoryPicker 
+          categories={categories} 
+          selectedCategory={selectedCategory} 
+          onCategorySelect={setSelectedCategory} 
+          className={className}
+        />
+      )}
+    </Category.List>
+  </Category.Provider>);
+}

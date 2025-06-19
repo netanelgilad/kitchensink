@@ -1,12 +1,18 @@
-import React, { createContext, useContext, ReactNode } from "react";
+import React, { createContext, useContext, type ReactNode } from "react";
 import {
-  FilteredCollectionServiceDefinition,
-  type FilteredCollectionServiceAPI,
-} from "./filtered-collection-service";
-import { useServiceInstance } from "@wix/services-manager";
+  FilterServiceDefinition,
+  type AvailableOptions,
+  type FilterServiceAPI,
+  type Filter,
+} from "./filter-service";
+import { useService } from "@wix/services-manager-react";
 import { productsV3 } from "@wix/stores";
+import { CollectionServiceDefinition, type CollectionServiceAPI } from "./collection-service";
 
-const FilteredCollectionContext = createContext<FilteredCollectionServiceAPI | null>(null);
+const FilteredCollectionContext = createContext<{
+  filter: FilterServiceAPI | null;
+  collection: CollectionServiceAPI | null
+}>({filter: null, collection: null});
 
 interface FilteredCollectionProviderProps {
   children: ReactNode;
@@ -15,10 +21,15 @@ interface FilteredCollectionProviderProps {
 export const FilteredCollectionProvider: React.FC<FilteredCollectionProviderProps> = ({
   children,
 }) => {
-  const serviceInstance = useServiceInstance(FilteredCollectionServiceDefinition);
+  const serviceInstance = useService(FilterServiceDefinition);
+  const collectionServiceInstance = useService(CollectionServiceDefinition);
+  const context = {
+    filter: serviceInstance,
+    collection: collectionServiceInstance,
+  }
 
   return (
-    <FilteredCollectionContext.Provider value={serviceInstance}>
+    <FilteredCollectionContext.Provider value={context}>
       {children}
     </FilteredCollectionContext.Provider>
   );
@@ -36,30 +47,33 @@ export const useFilteredCollection = () => {
 interface FilteredGridProps {
   children: (data: {
     products: productsV3.V3Product[];
-    allProducts: productsV3.V3Product[];
+    totalProducts: number;
     isLoading: boolean;
     error: string | null;
     isEmpty: boolean;
+    hasMoreProducts: boolean;
   }) => ReactNode;
 }
 
 export const FilteredGrid: React.FC<FilteredGridProps> = ({ children }) => {
-  const service = useFilteredCollection();
+  const { collection } = useFilteredCollection();
   
-  const products = service.products.use();
-  const allProducts = service.allProducts.use();
-  const isLoading = service.isLoading.use();
-  const error = service.error.use();
-  const hasProducts = service.hasProducts.use();
+  const products = collection!.products.get() || [];
+  const totalProducts = collection!.totalProducts.get();
+  const isLoading = collection!.isLoading.get();
+  const error = collection!.error.get();
+  const hasProducts = collection!.hasProducts.get();
+  const hasMoreProducts = collection!.hasMoreProducts.get();
 
   return (
     <>
       {children({
         products,
-        allProducts,
         isLoading,
         error,
         isEmpty: !hasProducts,
+        totalProducts,
+        hasMoreProducts,
       })}
     </>
   );
@@ -111,17 +125,19 @@ interface FilteredLoadMoreProps {
     isLoading: boolean;
     hasProducts: boolean;
     totalProducts: number;
+    hasMoreProducts: boolean;
   }) => ReactNode;
 }
 
 export const FilteredLoadMore: React.FC<FilteredLoadMoreProps> = ({ children }) => {
-  const service = useFilteredCollection();
+  const { collection } = useFilteredCollection();
   
-  const loadMore = service.loadMore;
-  const refresh = service.refresh;
-  const isLoading = service.isLoading.use();
-  const hasProducts = service.hasProducts.use();
-  const totalProducts = service.totalProducts.use();
+  const loadMore = collection!.loadMore;
+  const refresh = collection!.refresh;
+  const isLoading = collection!.isLoading.get();
+  const hasProducts = collection!.hasProducts.get();
+  const totalProducts = collection!.totalProducts.get();
+  const hasMoreProducts = collection!.hasMoreProducts.get();
 
   return (
     <>
@@ -131,6 +147,7 @@ export const FilteredLoadMore: React.FC<FilteredLoadMoreProps> = ({ children }) 
         isLoading,
         hasProducts,
         totalProducts,
+        hasMoreProducts,
       })}
     </>
   );
@@ -139,26 +156,27 @@ export const FilteredLoadMore: React.FC<FilteredLoadMoreProps> = ({ children }) 
 // Filters component for managing filters
 interface FilteredFiltersProps {
   children: (data: {
-    applyFilters: (filters: {
-      priceRange: { min: number; max: number };
-      selectedOptions: { [optionId: string]: string[] };
-    }) => void;
+    applyFilters: (filters: Filter) => void;
     clearFilters: () => void;
-    currentFilters: {
-      priceRange: { min: number; max: number };
-      selectedOptions: { [optionId: string]: string[] };
-    };
+    currentFilters: Filter;
     allProducts: productsV3.V3Product[];
+    availableOptions: AvailableOptions;
+    isFiltered: boolean;
   }) => ReactNode;
 }
 
 export const FilteredFilters: React.FC<FilteredFiltersProps> = ({ children }) => {
-  const service = useFilteredCollection();
+  const { collection, filter } = useFilteredCollection();
   
-  const applyFilters = service.applyFilters;
-  const clearFilters = service.clearFilters;
-  const currentFilters = service.currentFilters.use();
-  const allProducts = service.allProducts.use();
+  const applyFilters = filter!.applyFilters;
+  const clearFilters = filter!.clearFilters;
+  const currentFilters = filter!.currentFilters.get();
+  const allProducts = collection!.products.get();
+  const availableOptions = filter!.availableOptions.get();
+  const isFiltered =
+    currentFilters.priceRange.min !== availableOptions.priceRange.min ||
+    currentFilters.priceRange.max !== availableOptions.priceRange.max ||
+    Object.keys(currentFilters.selectedOptions).length > 0;;
 
   return (
     <>
@@ -167,6 +185,8 @@ export const FilteredFilters: React.FC<FilteredFiltersProps> = ({ children }) =>
         clearFilters,
         currentFilters,
         allProducts,
+        availableOptions,
+        isFiltered
       })}
     </>
   );

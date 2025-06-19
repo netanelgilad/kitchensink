@@ -1,14 +1,13 @@
-import React, { useState, useEffect, useCallback } from "react";
-import { productsV3 } from "@wix/stores";
+import React, { useState, useCallback, useEffect, useRef } from "react";
+import { type AvailableOptions, type Filter, defaultFilter } from "../headless/store/filter-service";
 
 interface ProductFiltersProps {
-  onFiltersChange: (filters: {
-    priceRange: { min: number; max: number };
-    selectedOptions: { [optionId: string]: string[] };
-    sortBy: 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc';
-  }) => void;
-  products: productsV3.V3Product[];
+  onFiltersChange: (filters: Filter) => void;
   className?: string;
+  availableOptions: AvailableOptions;
+  currentFilters: Filter;
+  clearFilters: () => void;
+  isFiltered: boolean;
 }
 
 interface ProductOption {
@@ -16,140 +15,24 @@ interface ProductOption {
   name: string;
   choices: { id: string; name: string; colorCode?: string }[];
   optionRenderType?: string;
+  availableOptions: AvailableOptions;
 }
-
-// Smart sorting function for filter choices
-const sortChoices = (choices: { id: string; name: string; colorCode?: string }[], optionName: string) => {
-  const sortedChoices = [...choices];
-  
-  // Check if all choices are numbers
-  const allNumbers = sortedChoices.every(choice => !isNaN(Number(choice.name)));
-  
-  if (allNumbers) {
-    // Sort numbers in descending order
-    return sortedChoices.sort((a, b) => Number(b.name) - Number(a.name));
-  }
-  
-  // Check if choices are sizes (common clothing/shoe sizes)
-  const sizeOrder = ['XXS', 'XS', 'S', 'SM', 'M', 'MD', 'L', 'LG', 'XL', 'XXL', 'XXXL', '2XL', '3XL', '4XL', '5XL'];
-  const shoeSizePattern = /^\d+(\.\d+)?$/; // Pattern for shoe sizes like "8", "8.5", "10"
-  const allSizes = sortedChoices.every(choice => 
-    sizeOrder.includes(choice.name.toUpperCase()) || shoeSizePattern.test(choice.name)
-  );
-  
-  if (allSizes) {
-    return sortedChoices.sort((a, b) => {
-      const aUpper = a.name.toUpperCase();
-      const bUpper = b.name.toUpperCase();
-      
-      // Handle shoe sizes (numeric)
-      if (shoeSizePattern.test(a.name) && shoeSizePattern.test(b.name)) {
-        return Number(a.name) - Number(b.name); // Ascending for shoe sizes
-      }
-      
-      // Handle clothing sizes
-      const aIndex = sizeOrder.indexOf(aUpper);
-      const bIndex = sizeOrder.indexOf(bUpper);
-      
-      if (aIndex !== -1 && bIndex !== -1) {
-        return aIndex - bIndex; // Ascending for clothing sizes
-      }
-      
-      // Fallback to alphabetical
-      return a.name.localeCompare(b.name);
-    });
-  }
-  
-  // For colors or other text, use alphabetical order
-  return sortedChoices.sort((a, b) => a.name.localeCompare(b.name));
-};
 
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
   onFiltersChange,
-  products,
   className = "",
+  availableOptions,
+  currentFilters,
+  clearFilters,
+  isFiltered,
 }) => {
-  const [priceRange, setPriceRange] = useState({ min: 0, max: 1000 });
-  const [tempPriceRange, setTempPriceRange] = useState({ min: 0, max: 1000 });
-  const [selectedOptions, setSelectedOptions] = useState<{
+  const { priceRange, productOptions } = availableOptions;
+  const [ tempPriceRange, setTempPriceRange ] = useState(priceRange);
+  const [ selectedOptions, setSelectedOptions ] = useState<{
     [optionId: string]: string[];
-  }>({});
-  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'price-asc' | 'price-desc'>('name-asc');
-  const [availableOptions, setAvailableOptions] = useState<ProductOption[]>([]);
+  }>(currentFilters.selectedOptions);
+  const [sortBy, setSortBy] = useState<Filter['sortBy']>(defaultFilter.sortBy);
   const [isExpanded, setIsExpanded] = useState(false);
-
-  // Extract price range and options from products
-  useEffect(() => {
-    if (!products || products.length === 0) return;
-
-    // Calculate price range
-    let minPrice = Infinity;
-    let maxPrice = 0;
-
-    // Extract all unique options
-    const optionsMap = new Map<string, ProductOption>();
-
-    products.forEach((product) => {
-      // Calculate price range
-      if (product.actualPriceRange?.minValue?.amount) {
-        const min = parseFloat(product.actualPriceRange.minValue.amount);
-        minPrice = Math.min(minPrice, min);
-      }
-      if (product.actualPriceRange?.maxValue?.amount) {
-        const max = parseFloat(product.actualPriceRange.maxValue.amount);
-        maxPrice = Math.max(maxPrice, max);
-      }
-
-      // Extract options
-      if (product.options) {
-        product.options.forEach((option) => {
-          if (!option._id || !option.name) return;
-
-          if (!optionsMap.has(option._id)) {
-            optionsMap.set(option._id, {
-              id: option._id,
-              name: option.name,
-              choices: [],
-              optionRenderType: option.optionRenderType,
-            });
-          }
-
-          const optionData = optionsMap.get(option._id)!;
-
-          // Add choices
-          if (option.choicesSettings?.choices) {
-            option.choicesSettings.choices.forEach((choice) => {
-              if (
-                choice.choiceId &&
-                choice.name &&
-                !optionData.choices.find((c) => c.id === choice.choiceId)
-              ) {
-                optionData.choices.push({
-                  id: choice.choiceId,
-                  name: choice.name,
-                  colorCode: choice.colorCode,
-                });
-              }
-            });
-          }
-        });
-      }
-    });
-
-    if (minPrice === Infinity) minPrice = 0;
-    if (maxPrice === 0) maxPrice = 1000;
-
-    setPriceRange({ min: minPrice, max: maxPrice });
-    setTempPriceRange({ min: minPrice, max: maxPrice });
-    
-    // Sort choices for each option before setting available options
-    const sortedOptions = Array.from(optionsMap.values()).map(option => ({
-      ...option,
-      choices: sortChoices(option.choices, option.name)
-    }));
-    
-    setAvailableOptions(sortedOptions);
-  }, [products]);
 
   // Handle price range change
   const handlePriceRangeChange = useCallback(
@@ -159,14 +42,36 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     []
   );
 
+  useEffect(() => {
+    setTempPriceRange(currentFilters.priceRange);
+    setSelectedOptions(currentFilters.selectedOptions);
+    setSortBy(currentFilters.sortBy);
+  }, [currentFilters.selectedOptions, currentFilters.sortBy, currentFilters.priceRange]);
+
   // Handle price range commit (when user releases slider)
   const handlePriceRangeCommit = useCallback(() => {
-    onFiltersChange({
-      priceRange: tempPriceRange,
-      selectedOptions,
-      sortBy,
-    });
-  }, [tempPriceRange, selectedOptions, sortBy, onFiltersChange]);
+    if (tempPriceRange.min !== currentFilters.priceRange.min || tempPriceRange.max !== currentFilters.priceRange.max) {
+      onFiltersChange({
+        priceRange: tempPriceRange,
+        selectedOptions,
+        sortBy,
+      });
+    }
+  }, [tempPriceRange, selectedOptions, sortBy, onFiltersChange, currentFilters.priceRange]);
+
+  // Setup document-level event listeners for proper drag handling
+  useEffect(() => {
+    const handleMouseUp = () => handlePriceRangeCommit();
+    const handleTouchEnd = () => handlePriceRangeCommit();
+
+    document.addEventListener('mouseup', handleMouseUp);
+    document.addEventListener('touchend', handleTouchEnd);
+
+    return () => {
+      document.removeEventListener('mouseup', handleMouseUp);
+      document.removeEventListener('touchend', handleTouchEnd);
+    };
+  }, [handlePriceRangeCommit]);
 
   // Handle option selection
   const handleOptionChange = useCallback(
@@ -203,24 +108,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     [tempPriceRange, onFiltersChange]
   );
 
-  // Clear all filters
-  const clearAllFilters = useCallback(() => {
-    const initialRange = { min: priceRange.min, max: priceRange.max };
-    setTempPriceRange(initialRange);
-    setSelectedOptions({});
-    setSortBy('name-asc');
-    onFiltersChange({
-      priceRange: initialRange,
-      selectedOptions: {},
-      sortBy: 'name-asc',
-    });
-  }, [priceRange, onFiltersChange]);
-
-  const hasActiveFilters =
-    tempPriceRange.min !== priceRange.min ||
-    tempPriceRange.max !== priceRange.max ||
-    Object.keys(selectedOptions).length > 0;
-
   return (
     <div className={`bg-white/5 backdrop-blur-sm rounded-xl p-6 border border-white/10 ${className}`}>
       <div className="flex items-center justify-between mb-6">
@@ -241,9 +128,9 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           Filters
         </h3>
         <div className="flex items-center gap-2">
-          {hasActiveFilters && (
+          {isFiltered && (
             <button
-              onClick={clearAllFilters}
+              onClick={clearFilters}
               className="text-sm text-white/60 hover:text-white transition-colors"
             >
               Clear All
@@ -315,8 +202,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                     min: Math.min(Number(e.target.value), tempPriceRange.max),
                   })
                 }
-                onMouseUp={handlePriceRangeCommit}
-                onTouchEnd={handlePriceRangeCommit}
                 className="absolute top-0 left-0 w-full h-6 bg-transparent appearance-none cursor-pointer range-slider range-slider-min"
                 style={{ zIndex: tempPriceRange.min > priceRange.min + (priceRange.max - priceRange.min) * 0.5 ? 2 : 1 }}
               />
@@ -333,8 +218,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
                     max: Math.max(Number(e.target.value), tempPriceRange.min),
                   })
                 }
-                onMouseUp={handlePriceRangeCommit}
-                onTouchEnd={handlePriceRangeCommit}
                 className="absolute top-0 left-0 w-full h-6 bg-transparent appearance-none cursor-pointer range-slider range-slider-max"
                 style={{ zIndex: tempPriceRange.max < priceRange.min + (priceRange.max - priceRange.min) * 0.5 ? 2 : 1 }}
               />
@@ -379,10 +262,10 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         </div>
 
         {/* Product Options Filters */}
-        {availableOptions.map((option) => (
+        {productOptions.map((option) => (
           <div key={option.id}>
             <h4 className="text-white font-medium mb-3">{String(option.name)}</h4>
-            
+
             {/* Color Swatch Options */}
             {option.optionRenderType === 'SWATCH_CHOICES' ? (
               <div className="flex flex-wrap gap-4 mb-8">
@@ -442,7 +325,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           </div>
         ))}
 
-        {availableOptions.length === 0 && (
+        {productOptions.length === 0 && (
           <div className="text-center py-4 text-white/60">
             <p>No filter options available</p>
           </div>
@@ -454,7 +337,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
           <select
             value={sortBy}
             onChange={(e) => {
-              const newSortBy = e.target.value as 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc';
+              const newSortBy = e.target.value as Filter['sortBy'];
               setSortBy(newSortBy);
               onFiltersChange({
                 priceRange: tempPriceRange,
@@ -470,6 +353,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
               backgroundSize: '16px',
             }}
           >
+            <option value="none" className="bg-gray-800 text-white">None</option>
             <option value="name-asc" className="bg-gray-800 text-white">Name (A-Z)</option>
             <option value="name-desc" className="bg-gray-800 text-white">Name (Z-A)</option>
             <option value="price-asc" className="bg-gray-800 text-white">Price (Low to High)</option>
@@ -539,4 +423,4 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   );
 };
 
-export default ProductFilters; 
+export default ProductFilters;
