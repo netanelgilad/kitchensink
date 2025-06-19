@@ -4,16 +4,17 @@ import {
   type ServiceFactoryConfig,
 } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
-import type { Signal } from "../Signal";
+import type { Signal, ReadOnlySignal } from "../Signal";
 import { productsV3 } from "@wix/stores";
+import { CollectionService, CollectionServiceDefinition } from "./collection-service";
 
 export interface FilteredCollectionServiceAPI {
   products: Signal<productsV3.V3Product[]>;
   allProducts: Signal<productsV3.V3Product[]>;
   isLoading: Signal<boolean>;
   error: Signal<string | null>;
-  totalProducts: Signal<number>;
-  hasProducts: Signal<boolean>;
+  totalProducts: ReadOnlySignal<number>;
+  hasProducts: ReadOnlySignal<boolean>;
   currentFilters: Signal<{
     priceRange: { min: number; max: number };
     selectedOptions: { [optionId: string]: string[] };
@@ -37,22 +38,10 @@ export const FilteredCollectionService = implementService.withConfig<{
   collectionId?: string;
 }>()(FilteredCollectionServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
+  const collectionService = getService(CollectionServiceDefinition);
 
-  const initialProducts = config.initialProducts || [];
-
-  const allProductsList: Signal<productsV3.V3Product[]> = signalsService.signal(
-    initialProducts as any
-  );
-  const productsList: Signal<productsV3.V3Product[]> = signalsService.signal(
-    initialProducts as any
-  );
-  const isLoading: Signal<boolean> = signalsService.signal(false as any);
-  const error: Signal<string | null> = signalsService.signal(null as any);
-  const totalProducts: Signal<number> = signalsService.signal(
-    initialProducts.length as any
-  );
-  const hasProducts: Signal<boolean> = signalsService.signal(
-    (initialProducts.length > 0) as any
+  const filteredProducts: Signal<productsV3.V3Product[]> = signalsService.signal(
+    [] as any
   );
   const currentFilters: Signal<{
     priceRange: { min: number; max: number };
@@ -62,7 +51,13 @@ export const FilteredCollectionService = implementService.withConfig<{
     selectedOptions: {},
   } as any);
 
-  const pageSize = config.pageSize || 12;
+  // Derived signals based on filtered products
+  const totalProducts: ReadOnlySignal<number> = signalsService.computed(() => 
+    filteredProducts.get().length
+  );
+  const hasProducts: ReadOnlySignal<boolean> = signalsService.computed(() => 
+    filteredProducts.get().length > 0
+  );
 
   // Helper function to check if a product matches the current filters
   const matchesFilters = (
@@ -113,14 +108,11 @@ export const FilteredCollectionService = implementService.withConfig<{
     selectedOptions: { [optionId: string]: string[] };
   }) => {
     currentFilters.set(filters);
-    const allProds = allProductsList.get();
-    const filteredProducts = allProds.filter((product) =>
+    const allProducts = collectionService.products.get();
+    const filtered = allProducts.filter((product) =>
       matchesFilters(product, filters)
     );
-
-    productsList.set(filteredProducts);
-    totalProducts.set(filteredProducts.length);
-    hasProducts.set(filteredProducts.length > 0);
+    filteredProducts.set(filtered);
   };
 
   // Clear all filters
@@ -130,65 +122,40 @@ export const FilteredCollectionService = implementService.withConfig<{
       selectedOptions: {},
     };
     currentFilters.set(initialFilters);
-    const allProds = allProductsList.get();
-    productsList.set(allProds);
-    totalProducts.set(allProds.length);
-    hasProducts.set(allProds.length > 0);
+    const allProducts = collectionService.products.get();
+    filteredProducts.set(allProducts);
   };
 
+  // Watch for changes in the collection service's products and re-apply filters
+  signalsService.effect(() => {
+    const allProducts = collectionService.products.get();
+    const filters = currentFilters.get();
+    const filtered = allProducts.filter((product) =>
+      matchesFilters(product, filters)
+    );
+    filteredProducts.set(filtered);
+  });
+
+  // Delegate loading operations to the collection service
   const loadMore = async () => {
-    try {
-      isLoading.set(true);
-      error.set(null);
-
-      let query = productsV3.queryProducts();
-
-      const currentProducts = allProductsList.get();
-      const productResults = await query.limit(pageSize).find();
-      const newProducts = [...currentProducts, ...(productResults.items || [])];
-      
-      allProductsList.set(newProducts);
-      
-      // Apply current filters to the new products
-      const filters = currentFilters.get();
-      applyFilters(filters);
-    } catch (err) {
-      error.set(
-        err instanceof Error ? err.message : "Failed to load more products"
-      );
-    } finally {
-      isLoading.set(false);
-    }
+    await collectionService.loadMore();
+    // The effect above will automatically re-apply filters to the new products
   };
 
   const refresh = async () => {
-    try {
-      isLoading.set(true);
-      error.set(null);
-
-      let query = productsV3.queryProducts();
-
-      const productResults = await query.limit(pageSize).find();
-
-      allProductsList.set(productResults.items || []);
-      
-      // Apply current filters
-      const filters = currentFilters.get();
-      applyFilters(filters);
-    } catch (err) {
-      error.set(
-        err instanceof Error ? err.message : "Failed to refresh products"
-      );
-    } finally {
-      isLoading.set(false);
-    }
+    await collectionService.refresh();
+    // The effect above will automatically re-apply filters to the refreshed products
   };
 
+  // Initialize filtered products with all products
+  const allProducts = collectionService.products.get();
+  filteredProducts.set(allProducts);
+
   return {
-    products: productsList,
-    allProducts: allProductsList,
-    isLoading,
-    error,
+    products: filteredProducts,
+    allProducts: collectionService.products,
+    isLoading: collectionService.isLoading,
+    error: collectionService.error,
     totalProducts,
     hasProducts,
     currentFilters,
@@ -202,22 +169,10 @@ export const FilteredCollectionService = implementService.withConfig<{
 export async function loadFilteredCollectionServiceConfig(
   collectionId?: string
 ): Promise<ServiceFactoryConfig<typeof FilteredCollectionService>> {
-  try {
-    let query = productsV3.queryProducts();
-
-    const productResults = await query.limit(12).find();
-
-    return {
-      initialProducts: productResults.items || [],
-      pageSize: 12,
-      collectionId,
-    };
-  } catch (error) {
-    console.warn("Failed to load initial products:", error);
-    return {
-      initialProducts: [],
-      pageSize: 12,
-      collectionId,
-    };
-  }
+  // Delegate to collection service config loading
+  return {
+    initialProducts: [],
+    pageSize: 12,
+    collectionId,
+  };
 } 
