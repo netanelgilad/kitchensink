@@ -13,6 +13,7 @@ export interface CollectionServiceAPI {
   error: Signal<string | null>;
   totalProducts: Signal<number>;
   hasProducts: Signal<boolean>;
+  hasMoreProducts: Signal<boolean>;
 
   loadMore: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -25,6 +26,8 @@ export const CollectionService = implementService.withConfig<{
   initialProducts?: productsV3.V3Product[];
   pageSize?: number;
   collectionId?: string;
+  initialCursor?: string;
+  initialHasMore?: boolean;
 }>()(CollectionServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
 
@@ -41,10 +44,17 @@ export const CollectionService = implementService.withConfig<{
   const hasProducts: Signal<boolean> = signalsService.signal(
     (initialProducts.length > 0) as any
   );
+  const hasMoreProducts: Signal<boolean> = signalsService.signal((config.initialHasMore ?? true) as any);
 
   const pageSize = config.pageSize || 12;
+  let nextCursor: string | undefined = config.initialCursor;
 
   const loadMore = async () => {
+    // Don't load more if there are no more products available
+    if (!hasMoreProducts.get()) {
+      return;
+    }
+
     try {
       isLoading.set(true);
       error.set(null);
@@ -60,8 +70,20 @@ export const CollectionService = implementService.withConfig<{
         ]
       });
 
+      // Apply cursor pagination if we have a next cursor
+      if (nextCursor) {
+        query = query.skipTo(nextCursor);
+      }
+
       const currentProducts = productsList.get();
       const productResults = await query.limit(pageSize).find();
+
+      // Update cursor for next pagination
+      nextCursor = productResults.cursors?.next || undefined;
+      
+      // Check if there are more products to load
+      const hasMore = Boolean(nextCursor && productResults.items && productResults.items.length === pageSize);
+      hasMoreProducts.set(hasMore);
 
       const newProducts = [...currentProducts, ...(productResults.items || [])];
       productsList.set(newProducts);
@@ -94,6 +116,11 @@ export const CollectionService = implementService.withConfig<{
 
       const productResults = await query.limit(pageSize).find();
 
+      // Reset pagination state
+      nextCursor = productResults.cursors?.next || undefined;
+      const hasMore = Boolean(productResults.cursors?.next && productResults.items && productResults.items.length === pageSize);
+      hasMoreProducts.set(hasMore);
+
       productsList.set(productResults.items || []);
       totalProducts.set((productResults.items || []).length);
       hasProducts.set((productResults.items || []).length > 0);
@@ -112,6 +139,7 @@ export const CollectionService = implementService.withConfig<{
     error,
     totalProducts,
     hasProducts,
+    hasMoreProducts,
     loadMore,
     refresh,
   };
@@ -119,7 +147,7 @@ export const CollectionService = implementService.withConfig<{
 
 export async function loadCollectionServiceConfig(
   collectionId?: string
-): Promise<ServiceFactoryConfig<typeof CollectionService>> {
+): Promise<ServiceFactoryConfig<typeof CollectionService> & { initialCursor?: string; initialHasMore?: boolean }> {
   try {
     // Query products with ALL_CATEGORIES_INFO field as required for category filtering
     let query = productsV3.queryProducts({
@@ -139,6 +167,8 @@ export async function loadCollectionServiceConfig(
       initialProducts: productResults.items || [],
       pageSize: 12,
       collectionId,
+      initialCursor: productResults.cursors?.next || undefined,
+      initialHasMore: Boolean(productResults.cursors?.next && productResults.items && productResults.items.length === 12),
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
@@ -146,6 +176,7 @@ export async function loadCollectionServiceConfig(
       initialProducts: [],
       pageSize: 12,
       collectionId,
+      initialHasMore: false,
     };
   }
 }

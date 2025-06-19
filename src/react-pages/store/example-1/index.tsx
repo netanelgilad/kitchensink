@@ -20,6 +20,8 @@ import {
 } from "../../../components/DocsMode";
 import WixMediaImage from "../../../headless/media/Image";
 import ProductFilters from "../../../components/ProductFilters";
+import CategoryFilter from "../../../components/CategoryFilter";
+import { filterProductsByCategory } from "../../../utils/productFiltering";
 import { productsV3 } from "@wix/stores";
 import { useState, useMemo } from "react";
 
@@ -29,20 +31,26 @@ interface StoreCollectionPageProps {
 }
 
 const ProductGridContent = () => {
+  const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
   const [filters, setFilters] = useState({
     priceRange: { min: 0, max: 1000 },
     selectedOptions: {} as { [optionId: string]: string[] },
+    sortBy: 'name-asc' as 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc',
   });
 
   return (
     <Collection.Grid>
       {withDocsWrapper(
         ({ products, isLoading, error, isEmpty }) => {
-          // Filter products based on current filters
+          // Filter and sort products based on current filters (category filtering applied first)
           const filteredProducts = useMemo(() => {
             if (!products || products.length === 0) return products;
 
-            return products.filter((product: productsV3.V3Product) => {
+            // First apply category filter as per recipe
+            let categoryFilteredProducts = filterProductsByCategory(products, selectedCategory);
+
+            // Then apply other filters
+            const filtered = categoryFilteredProducts.filter((product: productsV3.V3Product) => {
               // Check price range
               const productPrice =
                 product.actualPriceRange?.minValue?.amount ||
@@ -75,18 +83,51 @@ const ProductGridContent = () => {
 
               return true;
             });
-          }, [products, filters]);
+
+            // Finally, sort the filtered products
+            const sorted = [...filtered].sort((a, b) => {
+              switch (filters.sortBy) {
+                case 'name-asc':
+                  return (a.name || '').localeCompare(b.name || '');
+                case 'name-desc':
+                  return (b.name || '').localeCompare(a.name || '');
+                case 'price-asc': {
+                  const priceA = parseFloat(a.actualPriceRange?.minValue?.amount || '0');
+                  const priceB = parseFloat(b.actualPriceRange?.minValue?.amount || '0');
+                  return priceA - priceB;
+                }
+                case 'price-desc': {
+                  const priceA = parseFloat(a.actualPriceRange?.minValue?.amount || '0');
+                  const priceB = parseFloat(b.actualPriceRange?.minValue?.amount || '0');
+                  return priceB - priceA;
+                }
+                default:
+                  return 0;
+              }
+            });
+
+            return sorted;
+          }, [products, filters, selectedCategory]);
 
           const isFiltered = 
+            selectedCategory !== null ||
             filters.priceRange.min !== 0 || 
             filters.priceRange.max !== 1000 || 
-            Object.keys(filters.selectedOptions).length > 0;
+            Object.keys(filters.selectedOptions).length > 0 ||
+            filters.sortBy !== 'name-asc';
 
           const displayProducts = filteredProducts || products;
           const actualIsEmpty = isEmpty || (isFiltered && displayProducts.length === 0);
 
           return (
             <div className="min-h-screen">
+              {/* Category Filter - Full Width */}
+              <CategoryFilter 
+                onCategorySelect={setSelectedCategory}
+                selectedCategory={selectedCategory}
+                className="mb-6"
+              />
+
               {/* Main Layout with Sidebar and Content */}
               <div className="flex gap-8">
                 {/* Filters Sidebar */}
@@ -123,15 +164,17 @@ const ProductGridContent = () => {
                         </span>
                       </div>
                       <button
-                        onClick={() =>
+                        onClick={() => {
+                          setSelectedCategory(null);
                           setFilters({
                             priceRange: { min: 0, max: 1000 },
                             selectedOptions: {},
-                          })
-                        }
+                            sortBy: 'name-asc',
+                          });
+                        }}
                         className="text-blue-400 hover:text-blue-300 transition-colors text-sm"
                       >
-                        Clear Filters
+                        Clear All Filters
                       </button>
                     </div>
                   )}
@@ -225,10 +268,59 @@ const ProductGridContent = () => {
                                   {title}
                                 </h3>
 
-                                {description && (
-                                  <p className="text-white/60 text-sm mb-3 line-clamp-2">
-                                    {description}
-                                  </p>
+                                {/* Product Options */}
+                                {product.options && product.options.length > 0 && (
+                                  <div className="mb-3 space-y-2">
+                                    {product.options.map((option: any) => (
+                                      <div key={option._id} className="space-y-1">
+                                        <span className="text-white/80 text-xs font-medium">
+                                          {String(option.name)}:
+                                        </span>
+                                        <div className="flex flex-wrap gap-1">
+                                          {option.choicesSettings?.choices?.slice(0, 3).map((choice: any) => {
+                                            // Check if this is a color option and if choice has color data
+                                            const isColorOption = String(option.name).toLowerCase().includes('color');
+                                            const hasColorCode = choice.colorCode || (choice.media?.image);
+                                            
+                                            if (isColorOption && (choice.colorCode || hasColorCode)) {
+                                              return (
+                                                <div
+                                                  key={choice.choiceId}
+                                                  className="relative group"
+                                                  title={String(choice.name)}
+                                                >
+                                                  <div
+                                                    className="w-6 h-6 rounded-full border-2 border-white/30 hover:border-white/60 transition-colors cursor-pointer"
+                                                    style={{ 
+                                                      backgroundColor: choice.colorCode || '#000000'
+                                                    }}
+                                                  />
+                                                  {/* Tooltip */}
+                                                  <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                    {String(choice.name)}
+                                                  </div>
+                                                </div>
+                                              );
+                                            } else {
+                                              return (
+                                                <span
+                                                  key={choice.choiceId}
+                                                  className="inline-flex items-center px-2 py-1 bg-white/10 text-white/90 text-xs rounded border border-white/20"
+                                                >
+                                                  {String(choice.name)}
+                                                </span>
+                                              );
+                                            }
+                                          })}
+                                          {option.choicesSettings?.choices?.length > 3 && (
+                                            <span className="text-white/60 text-xs">
+                                              +{option.choicesSettings.choices.length - 3} more
+                                            </span>
+                                          )}
+                                        </div>
+                                      </div>
+                                    ))}
+                                  </div>
                                 )}
 
                                 <div className="flex items-center justify-between">
@@ -295,58 +387,65 @@ const LoadMoreSection = () => {
   return (
     <Collection.LoadMore>
       {withDocsWrapper(
-        ({ loadMore, isLoading, totalProducts }) => (
+        ({ loadMore, isLoading, totalProducts, hasMoreProducts }) => (
           <div className="text-center mt-12">
-            <button
-              onClick={loadMore}
-              disabled={isLoading}
-              className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
-            >
-              {isLoading ? (
-                <>
-                  <svg
-                    className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
-                    xmlns="http://www.w3.org/2000/svg"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                  >
-                    <circle
-                      className="opacity-25"
-                      cx="12"
-                      cy="12"
-                      r="10"
+            {hasMoreProducts && (
+              <button
+                onClick={loadMore}
+                disabled={isLoading}
+                className="bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:from-gray-600 disabled:to-gray-700 text-white font-semibold py-3 px-8 rounded-lg transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2 mx-auto"
+              >
+                {isLoading ? (
+                  <>
+                    <svg
+                      className="animate-spin -ml-1 mr-3 h-5 w-5 text-white"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                      ></circle>
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                      ></path>
+                    </svg>
+                    Loading...
+                  </>
+                ) : (
+                  <>
+                    Load More Products
+                    <svg
+                      className="w-4 h-4"
+                      fill="none"
+                      viewBox="0 0 24 24"
                       stroke="currentColor"
-                      strokeWidth="4"
-                    ></circle>
-                    <path
-                      className="opacity-75"
-                      fill="currentColor"
-                      d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                    ></path>
-                  </svg>
-                  Loading...
-                </>
-              ) : (
-                <>
-                  Load More Products
-                  <svg
-                    className="w-4 h-4"
-                    fill="none"
-                    viewBox="0 0 24 24"
-                    stroke="currentColor"
-                  >
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth="2"
-                      d="M19 14l-7 7m0 0l-7-7m7 7V3"
-                    />
-                  </svg>
-                </>
-              )}
-            </button>
+                    >
+                      <path
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        strokeWidth="2"
+                        d="M19 14l-7 7m0 0l-7-7m7 7V3"
+                      />
+                    </svg>
+                  </>
+                )}
+              </button>
+            )}
             <p className="text-white/60 text-sm mt-4">
               {totalProducts} products loaded
+              {!hasMoreProducts && totalProducts > 0 && (
+                <span className="block text-white/40 text-xs mt-1">
+                  All products loaded
+                </span>
+              )}
             </p>
           </div>
         ),

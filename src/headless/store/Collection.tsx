@@ -161,6 +161,8 @@ export interface LoadMoreRenderProps {
   isLoading: boolean;
   /** Whether there are products */
   hasProducts: boolean;
+  /** Whether there are more products to load */
+  hasMoreProducts: boolean;
   /** Total number of products currently loaded */
   totalProducts: number;
 }
@@ -182,6 +184,7 @@ export const LoadMore = (props: LoadMoreProps) => {
       refresh: async () => {},
       isLoading: false,
       hasProducts: false,
+      hasMoreProducts: false,
       totalProducts: 0,
     });
   }
@@ -189,6 +192,7 @@ export const LoadMore = (props: LoadMoreProps) => {
   try {
     const isLoading = service.isLoading?.get() || false;
     const hasProducts = service.hasProducts?.get() || false;
+    const hasMoreProducts = service.hasMoreProducts?.get() || false;
     const totalProducts = service.totalProducts?.get() || 0;
 
     return props.children({
@@ -196,6 +200,7 @@ export const LoadMore = (props: LoadMoreProps) => {
       refresh: service.refresh || (async () => {}),
       isLoading,
       hasProducts,
+      hasMoreProducts,
       totalProducts,
     });
   } catch (err) {
@@ -205,6 +210,7 @@ export const LoadMore = (props: LoadMoreProps) => {
       refresh: async () => {},
       isLoading: false,
       hasProducts: false,
+      hasMoreProducts: false,
       totalProducts: 0,
     });
   }

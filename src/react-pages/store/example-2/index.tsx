@@ -35,20 +35,22 @@ const ProductGridContent = () => {
   const [filters, setFilters] = useState({
     priceRange: { min: 0, max: 1000 },
     selectedOptions: {} as { [optionId: string]: string[] },
+    sortBy: 'name-asc' as 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc',
   });
 
   return (
     <Collection.Grid>
       {withDocsWrapper(
         ({ products, isLoading, error, isEmpty }) => {
-          // Filter products based on current filters (category filtering applied first)
+          // Filter and sort products based on current filters (category filtering applied first)
           const filteredProducts = useMemo(() => {
             if (!products || products.length === 0) return products;
 
             // First apply category filter as per recipe
             let categoryFilteredProducts = filterProductsByCategory(products, selectedCategory);
 
-            return categoryFilteredProducts.filter((product: productsV3.V3Product) => {
+            // Then apply other filters
+            const filtered = categoryFilteredProducts.filter((product: productsV3.V3Product) => {
               // Check price range
               const productPrice =
                 product.actualPriceRange?.minValue?.amount ||
@@ -81,13 +83,38 @@ const ProductGridContent = () => {
 
               return true;
             });
+
+            // Finally, sort the filtered products
+            const sorted = [...filtered].sort((a, b) => {
+              switch (filters.sortBy) {
+                case 'name-asc':
+                  return (a.name || '').localeCompare(b.name || '');
+                case 'name-desc':
+                  return (b.name || '').localeCompare(a.name || '');
+                case 'price-asc': {
+                  const priceA = parseFloat(a.actualPriceRange?.minValue?.amount || '0');
+                  const priceB = parseFloat(b.actualPriceRange?.minValue?.amount || '0');
+                  return priceA - priceB;
+                }
+                case 'price-desc': {
+                  const priceA = parseFloat(a.actualPriceRange?.minValue?.amount || '0');
+                  const priceB = parseFloat(b.actualPriceRange?.minValue?.amount || '0');
+                  return priceB - priceA;
+                }
+                default:
+                  return 0;
+              }
+            });
+
+            return sorted;
           }, [products, filters, selectedCategory]);
 
           const isFiltered = 
             selectedCategory !== null ||
             filters.priceRange.min !== 0 || 
             filters.priceRange.max !== 1000 || 
-            Object.keys(filters.selectedOptions).length > 0;
+            Object.keys(filters.selectedOptions).length > 0 ||
+            filters.sortBy !== 'name-asc';
 
           const displayProducts = filteredProducts || products;
           const actualIsEmpty = isEmpty || (isFiltered && displayProducts.length === 0);
@@ -142,6 +169,7 @@ const ProductGridContent = () => {
                           setFilters({
                             priceRange: { min: 0, max: 1000 },
                             selectedOptions: {},
+                            sortBy: 'name-asc',
                           });
                         }}
                         className="text-teal-400 hover:text-teal-300 transition-colors text-sm"
@@ -246,10 +274,59 @@ const ProductGridContent = () => {
                               {title}
                             </h3>
 
-                            {description && (
-                              <p className="text-white/60 text-sm mb-3 line-clamp-2">
-                                {description}
-                              </p>
+                            {/* Product Options */}
+                            {product.options && product.options.length > 0 && (
+                              <div className="mb-3 space-y-2">
+                                {product.options.map((option: any) => (
+                                  <div key={option._id} className="space-y-1">
+                                    <span className="text-white/80 text-xs font-medium">
+                                      {String(option.name)}:
+                                    </span>
+                                    <div className="flex flex-wrap gap-1">
+                                      {option.choicesSettings?.choices?.slice(0, 3).map((choice: any) => {
+                                        // Check if this is a color option and if choice has color data
+                                        const isColorOption = String(option.name).toLowerCase().includes('color');
+                                        const hasColorCode = choice.colorCode || (choice.media?.image);
+                                        
+                                        if (isColorOption && (choice.colorCode || hasColorCode)) {
+                                          return (
+                                            <div
+                                              key={choice.choiceId}
+                                              className="relative group"
+                                              title={String(choice.name)}
+                                            >
+                                              <div
+                                                className="w-6 h-6 rounded-full border-2 border-teal-300/40 hover:border-teal-300/80 transition-colors cursor-pointer"
+                                                style={{ 
+                                                  backgroundColor: choice.colorCode || '#000000'
+                                                }}
+                                              />
+                                              {/* Tooltip */}
+                                              <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 bg-black/80 text-white text-xs px-2 py-1 rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap pointer-events-none z-10">
+                                                {String(choice.name)}
+                                              </div>
+                                            </div>
+                                          );
+                                        } else {
+                                          return (
+                                            <span
+                                              key={choice.choiceId}
+                                              className="inline-flex items-center px-2 py-1 bg-teal-500/20 text-teal-300 text-xs rounded border border-teal-500/30"
+                                            >
+                                              {String(choice.name)}
+                                            </span>
+                                          );
+                                        }
+                                      })}
+                                      {option.choicesSettings?.choices?.length > 3 && (
+                                        <span className="text-white/60 text-xs">
+                                          +{option.choicesSettings.choices.length - 3} more
+                                        </span>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
                             )}
 
                             <div className="flex items-center justify-between mb-3">
@@ -320,43 +397,45 @@ const LoadMoreSection = () => {
   return (
     <Collection.LoadMore>
       {withDocsWrapper(
-        ({ loadMore, refresh, isLoading, hasProducts, totalProducts }) => (
+        ({ loadMore, refresh, isLoading, hasProducts, totalProducts, hasMoreProducts }) => (
           <>
             {hasProducts && totalProducts > 0 && (
               <div className="text-center mt-12">
                 <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                  <button
-                    onClick={loadMore}
-                    disabled={isLoading}
-                    className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105"
-                  >
-                    {isLoading ? (
-                      <span className="flex items-center gap-2">
-                        <svg
-                          className="animate-spin w-5 h-5"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                        >
-                          <circle
-                            className="opacity-25"
-                            cx="12"
-                            cy="12"
-                            r="10"
-                            stroke="currentColor"
-                            strokeWidth="4"
-                          ></circle>
-                          <path
-                            className="opacity-75"
-                            fill="currentColor"
-                            d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                          ></path>
-                        </svg>
-                        Loading...
-                      </span>
-                    ) : (
-                      "Load More Products"
-                    )}
-                  </button>
+                  {hasMoreProducts && (
+                    <button
+                      onClick={loadMore}
+                      disabled={isLoading}
+                      className="bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-8 rounded-xl transition-all duration-200 transform hover:scale-105"
+                    >
+                      {isLoading ? (
+                        <span className="flex items-center gap-2">
+                          <svg
+                            className="animate-spin w-5 h-5"
+                            fill="none"
+                            viewBox="0 0 24 24"
+                          >
+                            <circle
+                              className="opacity-25"
+                              cx="12"
+                              cy="12"
+                              r="10"
+                              stroke="currentColor"
+                              strokeWidth="4"
+                            ></circle>
+                            <path
+                              className="opacity-75"
+                              fill="currentColor"
+                              d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                            ></path>
+                          </svg>
+                          Loading...
+                        </span>
+                      ) : (
+                        "Load More Products"
+                      )}
+                    </button>
+                  )}
 
                   <button
                     onClick={refresh}
@@ -369,6 +448,11 @@ const LoadMoreSection = () => {
 
                 <p className="text-white/60 text-sm mt-4">
                   Advanced store experience • {totalProducts} products loaded
+                  {!hasMoreProducts && totalProducts > 0 && (
+                    <span className="block text-white/40 text-xs mt-1">
+                      All products loaded
+                    </span>
+                  )}
                 </p>
               </div>
             )}

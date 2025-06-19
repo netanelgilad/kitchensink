@@ -5,6 +5,7 @@ interface ProductFiltersProps {
   onFiltersChange: (filters: {
     priceRange: { min: number; max: number };
     selectedOptions: { [optionId: string]: string[] };
+    sortBy: 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc';
   }) => void;
   products: productsV3.V3Product[];
   className?: string;
@@ -17,6 +18,52 @@ interface ProductOption {
   optionRenderType?: string;
 }
 
+// Smart sorting function for filter choices
+const sortChoices = (choices: { id: string; name: string; colorCode?: string }[], optionName: string) => {
+  const sortedChoices = [...choices];
+  
+  // Check if all choices are numbers
+  const allNumbers = sortedChoices.every(choice => !isNaN(Number(choice.name)));
+  
+  if (allNumbers) {
+    // Sort numbers in descending order
+    return sortedChoices.sort((a, b) => Number(b.name) - Number(a.name));
+  }
+  
+  // Check if choices are sizes (common clothing/shoe sizes)
+  const sizeOrder = ['XXS', 'XS', 'S', 'SM', 'M', 'MD', 'L', 'LG', 'XL', 'XXL', 'XXXL', '2XL', '3XL', '4XL', '5XL'];
+  const shoeSizePattern = /^\d+(\.\d+)?$/; // Pattern for shoe sizes like "8", "8.5", "10"
+  const allSizes = sortedChoices.every(choice => 
+    sizeOrder.includes(choice.name.toUpperCase()) || shoeSizePattern.test(choice.name)
+  );
+  
+  if (allSizes) {
+    return sortedChoices.sort((a, b) => {
+      const aUpper = a.name.toUpperCase();
+      const bUpper = b.name.toUpperCase();
+      
+      // Handle shoe sizes (numeric)
+      if (shoeSizePattern.test(a.name) && shoeSizePattern.test(b.name)) {
+        return Number(a.name) - Number(b.name); // Ascending for shoe sizes
+      }
+      
+      // Handle clothing sizes
+      const aIndex = sizeOrder.indexOf(aUpper);
+      const bIndex = sizeOrder.indexOf(bUpper);
+      
+      if (aIndex !== -1 && bIndex !== -1) {
+        return aIndex - bIndex; // Ascending for clothing sizes
+      }
+      
+      // Fallback to alphabetical
+      return a.name.localeCompare(b.name);
+    });
+  }
+  
+  // For colors or other text, use alphabetical order
+  return sortedChoices.sort((a, b) => a.name.localeCompare(b.name));
+};
+
 export const ProductFilters: React.FC<ProductFiltersProps> = ({
   onFiltersChange,
   products,
@@ -27,6 +74,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
   const [selectedOptions, setSelectedOptions] = useState<{
     [optionId: string]: string[];
   }>({});
+  const [sortBy, setSortBy] = useState<'name-asc' | 'name-desc' | 'price-asc' | 'price-desc'>('name-asc');
   const [availableOptions, setAvailableOptions] = useState<ProductOption[]>([]);
   const [isExpanded, setIsExpanded] = useState(false);
 
@@ -93,7 +141,14 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
 
     setPriceRange({ min: minPrice, max: maxPrice });
     setTempPriceRange({ min: minPrice, max: maxPrice });
-    setAvailableOptions(Array.from(optionsMap.values()));
+    
+    // Sort choices for each option before setting available options
+    const sortedOptions = Array.from(optionsMap.values()).map(option => ({
+      ...option,
+      choices: sortChoices(option.choices, option.name)
+    }));
+    
+    setAvailableOptions(sortedOptions);
   }, [products]);
 
   // Handle price range change
@@ -109,8 +164,9 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     onFiltersChange({
       priceRange: tempPriceRange,
       selectedOptions,
+      sortBy,
     });
-  }, [tempPriceRange, selectedOptions, onFiltersChange]);
+  }, [tempPriceRange, selectedOptions, sortBy, onFiltersChange]);
 
   // Handle option selection
   const handleOptionChange = useCallback(
@@ -138,6 +194,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         onFiltersChange({
           priceRange: tempPriceRange,
           selectedOptions: newOptions,
+          sortBy,
         });
 
         return newOptions;
@@ -151,9 +208,11 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     const initialRange = { min: priceRange.min, max: priceRange.max };
     setTempPriceRange(initialRange);
     setSelectedOptions({});
+    setSortBy('name-asc');
     onFiltersChange({
       priceRange: initialRange,
       selectedOptions: {},
+      sortBy: 'name-asc',
     });
   }, [priceRange, onFiltersChange]);
 
@@ -388,6 +447,35 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
             <p>No filter options available</p>
           </div>
         )}
+
+        {/* Sort Options */}
+        <div>
+          <h4 className="text-white font-medium mb-3">Sort By</h4>
+          <select
+            value={sortBy}
+            onChange={(e) => {
+              const newSortBy = e.target.value as 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc';
+              setSortBy(newSortBy);
+              onFiltersChange({
+                priceRange: tempPriceRange,
+                selectedOptions,
+                sortBy: newSortBy,
+              });
+            }}
+            className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 appearance-none"
+            style={{
+              backgroundImage: `url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e")`,
+              backgroundPosition: 'right 8px center',
+              backgroundRepeat: 'no-repeat',
+              backgroundSize: '16px',
+            }}
+          >
+            <option value="name-asc" className="bg-gray-800 text-white">Name (A-Z)</option>
+            <option value="name-desc" className="bg-gray-800 text-white">Name (Z-A)</option>
+            <option value="price-asc" className="bg-gray-800 text-white">Price (Low to High)</option>
+            <option value="price-desc" className="bg-gray-800 text-white">Price (High to Low)</option>
+          </select>
+        </div>
       </div>
 
       <style>{`
