@@ -183,11 +183,8 @@ export const CollectionService = implementService.withConfig<{
       isLoading.set(true);
       error.set(null);
 
-      const filters = collectionFilters.currentFilters.get();
-      const selectedCategory = categoryService.selectedCategory.get();
-      const sortBy = sortService.currentSort.get();
-      const categories = config.categories || categoryService.categories.get();
-      const searchOptions = buildSearchOptions(filters, selectedCategory, sortBy, categories);
+      // For loadMore, use no filters or sorting to work with cursor pagination
+      const searchOptions = buildSearchOptions(undefined, undefined, undefined, undefined);
 
       // Add pagination
       searchOptions.paging = { limit: pageSize };
@@ -222,9 +219,8 @@ export const CollectionService = implementService.withConfig<{
       allProducts = [...allProducts, ...(productResults.products || []
       )];
 
-      // All filtering is handled server-side
+      // Add new products to the list
       const newProducts = productResults.products || [];
-
       productsList.set([...currentProducts, ...newProducts]);
       totalProducts.set(currentProducts.length + newProducts.length);
       hasProducts.set((currentProducts.length + newProducts.length) > 0);
@@ -330,13 +326,14 @@ function parseURLParams(
   searchParams?: URLSearchParams,
   products: productsV3.V3Product[] = []
 ) {
-  const initialFilters: Filter = {
+  const defaultFilters: Filter = {
     priceRange: { min: 0, max: 1000 },
     selectedOptions: {},
   };
-  let initialSort: SortBy = "";
-
-  if (!searchParams) return { initialSort, initialFilters };
+  
+  if (!searchParams) {
+    return { initialSort: "" as SortBy, initialFilters: defaultFilters };
+  }
 
   const urlParams = URLParamsUtils.parseSearchParams(searchParams);
 
@@ -347,27 +344,23 @@ function parseURLParams(
     price_asc: "price-asc",
     price_desc: "price-desc",
   };
-  initialSort = sortMap[urlParams.sort as string] || "";
+  const initialSort = sortMap[urlParams.sort as string] || ("" as SortBy);
 
-  // If no filter parameters in URL, return defaults without calculating from products
-  const hasFilterParams = Object.keys(urlParams).some(key => 
-    !['sort'].includes(key)
-  );
+  // Check if there are any filter parameters (excluding sort)
+  const filterParams = Object.keys(urlParams).filter(key => key !== 'sort');
   
-  if (!hasFilterParams || products.length === 0) return { initialSort, initialFilters };
+  if (filterParams.length === 0 || products.length === 0) {
+    return { initialSort, initialFilters: defaultFilters };
+  }
 
-  // Calculate price range from products
-  let minPrice = 0,
-    maxPrice = 1000;
-  products.forEach((product) => {
-    const min = parseFloat(product.actualPriceRange?.minValue?.amount || "0");
-    const max = parseFloat(product.actualPriceRange?.maxValue?.amount || "0");
-    if (min > 0) minPrice = minPrice === 0 ? min : Math.min(minPrice, min);
-    if (max > 0) maxPrice = Math.max(maxPrice, max);
-  });
-  initialFilters.priceRange = { min: minPrice, max: maxPrice };
+  // Calculate available price range from products
+  const priceRange = calculatePriceRange(products);
+  const initialFilters: Filter = {
+    priceRange,
+    selectedOptions: {},
+  };
 
-  // Parse price filters from URL
+  // Apply price filters from URL
   if (urlParams.minPrice) {
     const min = parseFloat(urlParams.minPrice as string);
     if (!isNaN(min)) initialFilters.priceRange.min = min;
@@ -377,48 +370,71 @@ function parseURLParams(
     if (!isNaN(max)) initialFilters.priceRange.max = max;
   }
 
-  // Build options map and parse option filters
-  const optionsMap = new Map<
-    string,
-    { id: string; choices: { id: string; name: string }[] }
-  >();
+  // Parse option filters
+  const optionsMap = buildOptionsMap(products);
+  parseOptionFilters(urlParams, optionsMap, initialFilters);
+
+  return { initialSort, initialFilters };
+}
+
+// Helper function to calculate price range from products
+function calculatePriceRange(products: productsV3.V3Product[]): { min: number; max: number } {
+  let minPrice = 0;
+  let maxPrice = 1000;
+  
+  products.forEach((product) => {
+    const min = parseFloat(product.actualPriceRange?.minValue?.amount || "0");
+    const max = parseFloat(product.actualPriceRange?.maxValue?.amount || "0");
+    if (min > 0) minPrice = minPrice === 0 ? min : Math.min(minPrice, min);
+    if (max > 0) maxPrice = Math.max(maxPrice, max);
+  });
+  
+  return { min: minPrice, max: maxPrice };
+}
+
+// Helper function to build options map from products
+function buildOptionsMap(products: productsV3.V3Product[]) {
+  const optionsMap = new Map<string, { id: string; choices: { id: string; name: string }[] }>();
+  
   products.forEach((product) => {
     product.options?.forEach((option) => {
       if (!option._id || !option.name) return;
+      
       if (!optionsMap.has(option.name)) {
         optionsMap.set(option.name, { id: option._id, choices: [] });
       }
+      
       const optionData = optionsMap.get(option.name)!;
       option.choicesSettings?.choices?.forEach((choice) => {
-        if (
-          choice.choiceId &&
-          choice.name &&
-          !optionData.choices.find((c) => c.id === choice.choiceId)
-        ) {
+        if (choice.choiceId && choice.name && !optionData.choices.find(c => c.id === choice.choiceId)) {
           optionData.choices.push({ id: choice.choiceId, name: choice.name });
         }
       });
     });
   });
+  
+  return optionsMap;
+}
 
-  // Parse option filters from URL
+// Helper function to parse option filters from URL parameters
+function parseOptionFilters(
+  urlParams: Record<string, string | string[]>,
+  optionsMap: Map<string, { id: string; choices: { id: string; name: string }[] }>,
+  filters: Filter
+) {
   Object.entries(urlParams).forEach(([key, value]) => {
     if (["sort", "minPrice", "maxPrice"].includes(key)) return;
+    
     const option = optionsMap.get(key);
     if (option) {
       const values = Array.isArray(value) ? value : [value];
-      const matchingChoices = option.choices.filter((choice) =>
-        values.includes(choice.name)
-      );
+      const matchingChoices = option.choices.filter(choice => values.includes(choice.name));
+      
       if (matchingChoices.length > 0) {
-        initialFilters.selectedOptions[option.id] = matchingChoices.map(
-          (c) => c.id
-        );
+        filters.selectedOptions[option.id] = matchingChoices.map(c => c.id);
       }
     }
   });
-
-  return { initialSort, initialFilters };
 }
 
 export async function loadCollectionServiceConfig(
@@ -433,22 +449,13 @@ export async function loadCollectionServiceConfig(
   }
 > {
   try {
-    // Load categories to check if categoryId is "All Products"
+    // Load categories for service configuration
     const { loadCategoriesConfig } = await import('./category-service');
     const categoriesConfig = await loadCategoriesConfig();
     const categories = categoriesConfig.categories;
-    
-    // Check if the selected category is "All Products"
-    const allProductsCategory = categories.find((cat: any) => 
-      cat.name?.toLowerCase() === "all products"
-    );
-    
-    // If categoryId is the "All Products" category, treat it as no category filter
-    const effectiveCategoryId = (allProductsCategory && categoryId === allProductsCategory._id) 
-      ? undefined 
-      : categoryId;
 
-    const searchOptions = buildSearchOptions(undefined, effectiveCategoryId, undefined, categories);
+    // Build search options with category filter
+    const searchOptions = buildSearchOptions(undefined, categoryId, undefined, categories);
     const pageSize = 12;
     searchOptions.paging = { limit: pageSize };
 
