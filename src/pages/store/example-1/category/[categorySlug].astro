@@ -1,0 +1,42 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import StoreCollectionPage from "../../../../react-pages/store/example-1/index";
+import { loadCollectionServiceConfig } from "../../../../headless/store/services/collection-service";
+import { loadCurrentCartServiceConfig } from "../../../../headless/store/services/current-cart-service";
+import { loadCategoriesConfig } from "../../../../headless/store/services/category-service";
+
+// Get category slug from URL params
+const { categorySlug } = Astro.params;
+
+// Load categories to find the matching category ID
+const categoriesConfig = await loadCategoriesConfig();
+
+// Helper function to create slug from category name (matching CategoryPicker logic)
+const createCategorySlug = (categoryName: string) => {
+  return categoryName
+    .toLowerCase()
+    .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+    .replace(/\s+/g, '-') // Replace spaces with dashes
+    .replace(/-+/g, '-') // Replace multiple dashes with single dash
+    .trim();
+};
+
+const selectedCategory = categoriesConfig.categories.find(
+  (cat: any) => {
+    const slug = cat.slug || createCategorySlug(cat.name || '');
+    return slug === categorySlug;
+  }
+);
+
+// Load initial data for services with selected category
+const filteredCollectionServiceConfig = await loadCollectionServiceConfig(
+  selectedCategory?._id || undefined,
+  Astro.url.searchParams
+);
+const currentCartServiceConfig = await loadCurrentCartServiceConfig();
+
+// If category not found, return 404
+if (!selectedCategory) {
+  return Astro.redirect('/404');
+}
+---

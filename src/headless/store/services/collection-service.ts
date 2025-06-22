@@ -37,7 +37,7 @@ export interface CollectionServiceAPI {
 }
 
 // Helper to build search options with supported filters
-const buildSearchOptions = (filters?: Filter, selectedCategory?: string | null, sortBy?: SortBy) => {
+const buildSearchOptions = (filters?: Filter, selectedCategory?: string | null, sortBy?: SortBy, categories?: any[]) => {
   const searchOptions: any = {
     search: {},
     fields: [
@@ -138,6 +138,7 @@ export const CollectionService = implementService.withConfig<{
   pageSize?: number;
   initialCursor?: string;
   initialHasMore?: boolean;
+  categories?: any[];
 }>()(CollectionServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
   const collectionFilters = getService(FilterServiceDefinition);
@@ -172,7 +173,8 @@ export const CollectionService = implementService.withConfig<{
       const filters = collectionFilters.currentFilters.get();
       const selectedCategory = categoryService.selectedCategory.get();
       const sortBy = sortService.currentSort.get();
-      const searchOptions = buildSearchOptions(filters, selectedCategory, sortBy);
+      const categories = config.categories || categoryService.categories.get();
+      const searchOptions = buildSearchOptions(filters, selectedCategory, sortBy, categories);
 
       // Add pagination
       searchOptions.paging = { limit: pageSize };
@@ -224,7 +226,8 @@ export const CollectionService = implementService.withConfig<{
       const filters = collectionFilters.currentFilters.get();
       const selectedCategory = categoryService.selectedCategory.get();
       const sortBy = sortService.currentSort.get();
-      const searchOptions = buildSearchOptions(filters, selectedCategory, sortBy);
+      const categories = config.categories || categoryService.categories.get();
+      const searchOptions = buildSearchOptions(filters, selectedCategory, sortBy, categories);
 
       // Add pagination
       searchOptions.paging = { limit: pageSize };
@@ -324,7 +327,12 @@ function parseURLParams(
   };
   initialSort = sortMap[urlParams.sort as string] || "";
 
-  if (products.length === 0) return { initialSort, initialFilters };
+  // If no filter parameters in URL, return defaults without calculating from products
+  const hasFilterParams = Object.keys(urlParams).some(key => 
+    !['sort'].includes(key)
+  );
+  
+  if (!hasFilterParams || products.length === 0) return { initialSort, initialFilters };
 
   // Calculate price range from products
   let minPrice = 0,
@@ -392,7 +400,7 @@ function parseURLParams(
 }
 
 export async function loadCollectionServiceConfig(
-  collectionId?: string,
+  categoryId?: string,
   searchParams?: URLSearchParams
 ): Promise<
   ServiceFactoryConfig<typeof CollectionService> & {
@@ -403,7 +411,22 @@ export async function loadCollectionServiceConfig(
   }
 > {
   try {
-    const searchOptions = buildSearchOptions();
+    // Load categories to check if categoryId is "All Products"
+    const { loadCategoriesConfig } = await import('./category-service');
+    const categoriesConfig = await loadCategoriesConfig();
+    const categories = categoriesConfig.categories;
+    
+    // Check if the selected category is "All Products"
+    const allProductsCategory = categories.find((cat: any) => 
+      cat.name?.toLowerCase() === "all products"
+    );
+    
+    // If categoryId is the "All Products" category, treat it as no category filter
+    const effectiveCategoryId = (allProductsCategory && categoryId === allProductsCategory._id) 
+      ? undefined 
+      : categoryId;
+
+    const searchOptions = buildSearchOptions(undefined, effectiveCategoryId, undefined, categories);
     const pageSize = 12;
     searchOptions.paging = { limit: pageSize };
 
@@ -426,6 +449,7 @@ export async function loadCollectionServiceConfig(
       ),
       initialSort,
       initialFilters,
+      categories,
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
@@ -436,6 +460,7 @@ export async function loadCollectionServiceConfig(
       initialHasMore: false,
       initialSort,
       initialFilters,
+      categories: [],
     };
   }
 }
