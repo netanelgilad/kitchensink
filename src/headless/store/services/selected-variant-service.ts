@@ -16,6 +16,7 @@ export interface SelectedVariantServiceAPI {
   selectedVariantId: ReadOnlySignal<string | null>;
   currentVariant: ReadOnlySignal<productsV3.Variant | null>;
   currentPrice: ReadOnlySignal<string>;
+  currentCompareAtPrice: ReadOnlySignal<string | null>;
   isInStock: ReadOnlySignal<boolean>;
   isLoading: Signal<boolean>;
   error: Signal<string | null>;
@@ -238,6 +239,31 @@ export const SelectedVariantService = implementService.withConfig<{
     return rawAmount ? `$${rawAmount}` : "$0.00";
   });
 
+  const currentCompareAtPrice: ReadOnlySignal<string | null> = signalsService.computed(() => {
+    const variant = currentVariant.get();
+    const prod = v3Product.get();
+
+    // Try to get formatted compare-at price first
+    if (variant?.price?.compareAtPrice?.formattedAmount) {
+      return variant.price.compareAtPrice.formattedAmount;
+    }
+
+    if (prod?.compareAtPriceRange?.minValue?.formattedAmount) {
+      return prod.compareAtPriceRange.minValue.formattedAmount;
+    }
+
+    // Fallback: create our own formatted price from amount
+    let rawAmount = null;
+
+    if (variant?.price?.compareAtPrice?.amount) {
+      rawAmount = variant.price.compareAtPrice.amount;
+    } else if (prod?.compareAtPriceRange?.minValue?.amount) {
+      rawAmount = prod.compareAtPriceRange.minValue.amount;
+    }
+
+    return rawAmount ? `$${rawAmount}` : null;
+  });
+
   const isInStock: ReadOnlySignal<boolean> = signalsService.computed(() => {
     const variant = currentVariant.get();
     const prod = v3Product.get();
@@ -385,6 +411,7 @@ export const SelectedVariantService = implementService.withConfig<{
     selectedVariantId,
     currentVariant,
     currentPrice,
+    currentCompareAtPrice,
     isInStock,
     isLoading,
     error,

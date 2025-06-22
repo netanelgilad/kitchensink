@@ -270,11 +270,14 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
 
       <ProductVariantSelector.Price>
         {withDocsWrapper(
-          ({ price, isVariantPrice, currency }) => (
-            <div className="space-y-2">
-              <div className="flex items-center gap-3">
-                <span className="text-3xl font-bold text-white">{price}</span>
-              </div>
+          ({ price, compareAtPrice, isVariantPrice, currency }) => (
+            <div className="space-y-1">
+              <div className="text-3xl font-bold text-white">{price}</div>
+              {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 && (
+                <div className="text-lg font-medium text-white/50 line-through">
+                  {compareAtPrice}
+                </div>
+              )}
               {currency && (
                 <p className="text-white/60 text-sm">Currency: {currency}</p>
               )}

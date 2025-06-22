@@ -235,6 +235,8 @@ export interface PriceProps {
 export interface PriceRenderProps {
   /** Current price (formatted) */
   price: string;
+  /** Compare at price (formatted) - null if no compare price */
+  compareAtPrice: string | null;
   /** Whether price is for a variant */
   isVariantPrice: boolean;
   /** Currency code */
@@ -250,6 +252,7 @@ export const Price = (props: PriceProps) => {
   ) as ServiceAPI<typeof SelectedVariantServiceDefinition>;
 
   const price = variantService.currentPrice.get();
+  const compareAtPrice = variantService.currentCompareAtPrice.get();
   const currentVariant = variantService.currentVariant.get();
   const currency = variantService.currency.get();
 
@@ -257,6 +260,7 @@ export const Price = (props: PriceProps) => {
 
   return props.children({
     price,
+    compareAtPrice,
     isVariantPrice,
     currency,
   });
