@@ -44,6 +44,11 @@ export interface SelectedVariantServiceAPI {
   selectVariantById: (id: string) => void;
   loadProductVariants: (data: productsV3.Variant[]) => void;
   resetSelections: () => void;
+  
+  // New methods for smart variant selection
+  getAvailableChoicesForOption: (optionName: string) => string[];
+  isChoiceAvailable: (optionName: string, choiceValue: string) => boolean;
+  hasAnySelections: () => boolean;
 }
 
 export const SelectedVariantServiceDefinition =
@@ -341,6 +346,40 @@ export const SelectedVariantService = implementService.withConfig<{
     updateQuantityFromVariant(defaultVariant);
   };
 
+  // New methods for smart variant selection
+  const getAvailableChoicesForOption = (optionName: string): string[] => {
+    const currentChoices = selectedChoices.get();
+    const variantsList = variants.get();
+    
+    // Get all possible choices for this option that result in valid variants
+    const availableChoices = new Set<string>();
+    
+    variantsList.forEach(variant => {
+      const variantChoices = processVariantChoices(variant);
+      
+      // Check if this variant matches all currently selected choices (except for the option we're checking)
+      const matchesOtherChoices = Object.entries(currentChoices)
+        .filter(([key]) => key !== optionName)
+        .every(([key, value]) => variantChoices[key] === value);
+      
+      if (matchesOtherChoices && variantChoices[optionName]) {
+        availableChoices.add(variantChoices[optionName]);
+      }
+    });
+    
+    return Array.from(availableChoices);
+  };
+
+  const isChoiceAvailable = (optionName: string, choiceValue: string): boolean => {
+    const availableChoices = getAvailableChoicesForOption(optionName);
+    return availableChoices.includes(choiceValue);
+  };
+
+  const hasAnySelections = (): boolean => {
+    const currentChoices = selectedChoices.get();
+    return Object.keys(currentChoices).length > 0;
+  };
+
   return {
     selectedChoices,
     selectedVariantId,
@@ -367,6 +406,11 @@ export const SelectedVariantService = implementService.withConfig<{
     selectVariantById,
     loadProductVariants,
     resetSelections,
+    
+    // New methods for smart variant selection
+    getAvailableChoicesForOption,
+    isChoiceAvailable,
+    hasAnySelections,
 
     selectedVariant,
     finalPrice,
