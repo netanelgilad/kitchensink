@@ -60,18 +60,6 @@ export const CollectionService = implementService.withConfig<{
 
   void collectionFilters.calculateAvailableOptions(initialProducts);
 
-  const productsList: Signal<productsV3.V3Product[]> = signalsService.signal(
-    initialProducts as any
-  );
-  const isLoading: Signal<boolean> = signalsService.signal(false as any);
-  const error: Signal<string | null> = signalsService.signal(null as any);
-  const totalProducts: Signal<number> = signalsService.signal(
-    initialProducts.length as any
-  );
-  const hasProducts: Signal<boolean> = signalsService.signal(
-    (initialProducts.length > 0) as any
-  );
-
   const pageSize = config.pageSize || 12;
   let allProducts: productsV3.V3Product[] = initialProducts;
 
@@ -157,6 +145,29 @@ export const CollectionService = implementService.withConfig<{
       }
     });
   };
+
+  // Apply initial filters and sorting to products immediately
+  const initialFilters = collectionFilters.currentFilters.get();
+  const initialSort = sortService.currentSort.get();
+  const selectedCategory = categoryService.selectedCategory.get();
+  const initialFilteredProducts = applyClientSideFilters(
+    initialProducts,
+    initialFilters,
+    selectedCategory,
+    initialSort
+  );
+
+  const productsList: Signal<productsV3.V3Product[]> = signalsService.signal(
+    initialFilteredProducts as any
+  );
+  const isLoading: Signal<boolean> = signalsService.signal(false as any);
+  const error: Signal<string | null> = signalsService.signal(null as any);
+  const totalProducts: Signal<number> = signalsService.signal(
+    initialFilteredProducts.length as any
+  );
+  const hasProducts: Signal<boolean> = signalsService.signal(
+    (initialFilteredProducts.length > 0) as any
+  );
 
   const loadMore = async () => {
     // Don't load more if there are no more products available
