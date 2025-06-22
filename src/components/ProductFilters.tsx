@@ -57,10 +57,9 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       tempPriceRange.min !== currentFilters.priceRange.min ||
       tempPriceRange.max !== currentFilters.priceRange.max
     ) {
-      onFiltersChange({
+      ({
         priceRange: tempPriceRange,
         selectedOptions,
-        sortBy: currentFilters.sortBy,
       });
     }
   }, [
@@ -68,7 +67,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
     selectedOptions,
     onFiltersChange,
     currentFilters.priceRange,
-    currentFilters.sortBy
     ]);
 
   // Setup document-level event listeners for proper drag handling
@@ -111,13 +109,12 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         onFiltersChange({
           priceRange: tempPriceRange,
           selectedOptions: newOptions,
-          sortBy: currentFilters.sortBy,
         });
 
         return newOptions;
       });
     },
-    [tempPriceRange, onFiltersChange, currentFilters.sortBy]
+    [tempPriceRange, onFiltersChange]
   );
 
   return (

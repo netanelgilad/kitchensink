@@ -206,24 +206,14 @@ export const CollectionService = implementService.withConfig<{
       );
       hasMoreProducts.set(hasMore);
 
-      const newProducts = [...currentProducts, ...(productResults.items || [])];
-      const filters = collectionFilters.currentFilters.get();
-      const sortBy = sortService.currentSort.get();
-      const filteredProducts = applyClientSideFilters(
-        newProducts,
-        filters,
-        selectedCategory,
-        sortBy
-      );
       // Update allProducts with the new data
-      allProducts = [...allProducts, ...(productResults.products || []
-      )];
+      allProducts = [...allProducts, ...(productResults.products || [])];
 
       // Add new products to the list
-      const newProducts = productResults.products || [];
-      productsList.set([...currentProducts, ...newProducts]);
-      totalProducts.set(currentProducts.length + newProducts.length);
-      hasProducts.set((currentProducts.length + newProducts.length) > 0);
+      const additionalProducts = productResults.products || [];
+      productsList.set([...currentProducts, ...additionalProducts]);
+      totalProducts.set(currentProducts.length + additionalProducts.length);
+      hasProducts.set((currentProducts.length + additionalProducts.length) > 0);
     } catch (err) {
       error.set(
         err instanceof Error ? err.message : "Failed to load more products"
