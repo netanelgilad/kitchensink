@@ -2,7 +2,7 @@ import { defineService, implementService } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
 import { productsV3 } from "@wix/stores";
-import { URLParamsService } from "./url-params-service";
+import { URLParamsService } from "../utils/url-params";
 
 export interface ProductOption {
   id: string;

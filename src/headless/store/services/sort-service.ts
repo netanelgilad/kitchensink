@@ -1,7 +1,7 @@
 import { defineService, implementService } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
-import { URLParamsService } from "./url-params-service";
+import { URLParamsService } from "../utils/url-params";
 
 export type SortBy = "" | "name-asc" | "name-desc" | "price-asc" | "price-desc";
 
