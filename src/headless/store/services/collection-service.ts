@@ -270,94 +270,8 @@ export const CollectionService = implementService.withConfig<{
     refresh(false);
   });
 
-  // Initialize from URL parameters after a short delay to ensure services are ready
+  // Listen for browser navigation events (client-side only)
   if (typeof window !== "undefined") {
-    setTimeout(() => {
-      try {
-        const urlParams = URLParamsService.getURLParams();
-
-        // Initialize sort from URL
-        if (urlParams.sort) {
-          let sortBy: SortBy = "";
-          switch (urlParams.sort) {
-            case "name_asc":
-              sortBy = "name-asc";
-              break;
-            case "name_desc":
-              sortBy = "name-desc";
-              break;
-            case "price_asc":
-              sortBy = "price-asc";
-              break;
-            case "price_desc":
-              sortBy = "price-desc";
-              break;
-            default:
-              sortBy = "";
-          }
-          if (sortBy) {
-            sortService.setSortBy(sortBy);
-          }
-        }
-
-        // Initialize filters from URL
-        const availableOpts = collectionFilters.availableOptions.get();
-        if (availableOpts && availableOpts.productOptions) {
-          const filterToApply: Filter = {
-            priceRange: { ...availableOpts.priceRange },
-            selectedOptions: {},
-          };
-
-          let hasFilters = false;
-
-          // Parse price filters
-          if (urlParams.minPrice && typeof urlParams.minPrice === "string") {
-            const minPrice = parseFloat(urlParams.minPrice);
-            if (!isNaN(minPrice)) {
-              filterToApply.priceRange.min = minPrice;
-              hasFilters = true;
-            }
-          }
-          if (urlParams.maxPrice && typeof urlParams.maxPrice === "string") {
-            const maxPrice = parseFloat(urlParams.maxPrice);
-            if (!isNaN(maxPrice)) {
-              filterToApply.priceRange.max = maxPrice;
-              hasFilters = true;
-            }
-          }
-
-          // Parse option filters (like Size=100ml from the example)
-          Object.entries(urlParams).forEach(([key, value]) => {
-            if (key === "sort" || key === "minPrice" || key === "maxPrice")
-              return;
-
-            const option = availableOpts.productOptions.find(
-              (opt) => opt.name === key
-            );
-            if (option) {
-              const values = Array.isArray(value) ? value : [value];
-              const matchingChoices = option.choices.filter((choice) =>
-                values.includes(choice.name)
-              );
-              if (matchingChoices.length > 0) {
-                filterToApply.selectedOptions[option.id] = matchingChoices.map(
-                  (c) => c.id
-                );
-                hasFilters = true;
-              }
-            }
-          });
-
-          if (hasFilters) {
-            collectionFilters.applyFilters(filterToApply);
-          }
-        }
-      } catch (error) {
-        console.warn("Failed to initialize from URL parameters:", error);
-      }
-    }, 100);
-
-    // Listen for browser navigation events
     const handlePopState = () => {
       window.location.reload(); // Simple approach to handle back/forward
     };
@@ -384,6 +298,8 @@ export async function loadCollectionServiceConfig(
   ServiceFactoryConfig<typeof CollectionService> & {
     initialCursor?: string;
     initialHasMore?: boolean;
+    initialSort?: SortBy;
+    initialFilters?: Filter;
   }
 > {
   try {
@@ -391,6 +307,129 @@ export async function loadCollectionServiceConfig(
     let query = buildQuery();
 
     const productResults = await query.limit(100).find();
+
+    // Parse URL parameters for initial state
+    let initialSort: SortBy = "";
+    let initialFilters: Filter = {
+      priceRange: { min: 0, max: 1000 },
+      selectedOptions: {},
+    };
+
+    if (searchParams) {
+      const urlParams = URLParamsService.parseSearchParams(searchParams);
+
+      // Parse sort parameter
+      if (urlParams.sort) {
+        switch (urlParams.sort) {
+          case "name_asc":
+            initialSort = "name-asc";
+            break;
+          case "name_desc":
+            initialSort = "name-desc";
+            break;
+          case "price_asc":
+            initialSort = "price-asc";
+            break;
+          case "price_desc":
+            initialSort = "price-desc";
+            break;
+          default:
+            initialSort = "";
+        }
+      }
+
+      // Calculate available options from products to parse filter parameters
+      if (productResults.items && productResults.items.length > 0) {
+        // Calculate price range
+        let minPrice = 0;
+        let maxPrice = 1000;
+
+        productResults.items.forEach((product) => {
+          if (product.actualPriceRange?.minValue?.amount) {
+            const min = parseFloat(product.actualPriceRange.minValue.amount);
+            minPrice = Math.min(minPrice === 0 ? min : minPrice, min);
+          }
+          if (product.actualPriceRange?.maxValue?.amount) {
+            const max = parseFloat(product.actualPriceRange.maxValue.amount);
+            maxPrice = Math.max(maxPrice, max);
+          }
+        });
+
+        initialFilters.priceRange = { min: minPrice, max: maxPrice };
+
+        // Parse price filters from URL
+        if (urlParams.minPrice && typeof urlParams.minPrice === "string") {
+          const urlMinPrice = parseFloat(urlParams.minPrice);
+          if (!isNaN(urlMinPrice)) {
+            initialFilters.priceRange.min = urlMinPrice;
+          }
+        }
+        if (urlParams.maxPrice && typeof urlParams.maxPrice === "string") {
+          const urlMaxPrice = parseFloat(urlParams.maxPrice);
+          if (!isNaN(urlMaxPrice)) {
+            initialFilters.priceRange.max = urlMaxPrice;
+          }
+        }
+
+        // Build options map for filter parsing
+        const optionsMap = new Map<
+          string,
+          { id: string; name: string; choices: { id: string; name: string }[] }
+        >();
+
+        productResults.items.forEach((product) => {
+          if (product.options) {
+            product.options.forEach((option) => {
+              if (!option._id || !option.name) return;
+
+              if (!optionsMap.has(option.name)) {
+                optionsMap.set(option.name, {
+                  id: option._id,
+                  name: option.name,
+                  choices: [],
+                });
+              }
+
+              const optionData = optionsMap.get(option.name)!;
+
+              if (option.choicesSettings?.choices) {
+                option.choicesSettings.choices.forEach((choice) => {
+                  if (
+                    choice.choiceId &&
+                    choice.name &&
+                    !optionData.choices.find((c) => c.id === choice.choiceId)
+                  ) {
+                    optionData.choices.push({
+                      id: choice.choiceId,
+                      name: choice.name,
+                    });
+                  }
+                });
+              }
+            });
+          }
+        });
+
+        // Parse option filters from URL
+        Object.entries(urlParams).forEach(([key, value]) => {
+          if (key === "sort" || key === "minPrice" || key === "maxPrice")
+            return;
+
+          const option = optionsMap.get(key);
+          if (option) {
+            const values = Array.isArray(value) ? value : [value];
+            const matchingChoices = option.choices.filter((choice) =>
+              values.includes(choice.name)
+            );
+            if (matchingChoices.length > 0) {
+              initialFilters.selectedOptions[option.id] = matchingChoices.map(
+                (c) => c.id
+              );
+            }
+          }
+        });
+      }
+    }
 
     return {
       initialProducts: productResults.items || [],
@@ -402,6 +441,8 @@ export async function loadCollectionServiceConfig(
           productResults.items &&
           productResults.items.length === 12
       ),
+      initialSort,
+      initialFilters,
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
@@ -410,6 +451,11 @@ export async function loadCollectionServiceConfig(
       pageSize: 12,
       collectionId,
       initialHasMore: false,
+      initialSort: "",
+      initialFilters: {
+        priceRange: { min: 0, max: 1000 },
+        selectedOptions: {},
+      },
     };
   }
 }

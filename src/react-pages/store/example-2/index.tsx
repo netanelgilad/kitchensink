@@ -454,18 +454,19 @@ export default function StoreExample2Page({
         CollectionService,
         filteredCollectionServiceConfig
       )
-      .addService(
-        FilterServiceDefinition,
-        FilterService,
-        filteredCollectionServiceConfig
-      )
+      .addService(FilterServiceDefinition, FilterService, {
+        ...filteredCollectionServiceConfig,
+        initialFilters: filteredCollectionServiceConfig.initialFilters,
+      })
       .addService(
         CurrentCartServiceDefinition,
         CurrentCartService,
         currentCartServiceConfig
       )
       .addService(CategoryServiceDefinition, CategoryService, categoriesConfig)
-      .addService(SortServiceDefinition, SortService, {})
+      .addService(SortServiceDefinition, SortService, {
+        initialSort: filteredCollectionServiceConfig.initialSort,
+      })
   );
 
   return (
