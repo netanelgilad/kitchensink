@@ -1,0 +1,31 @@
+---
+import BaseLayout from "../../../../layouts/BaseLayout.astro";
+import StoreCollectionPage from "../../../../react-pages/store/example-1/index";
+import { loadCollectionServiceConfig } from "../../../../headless/store/services/collection-service";
+import { loadCurrentCartServiceConfig } from "../../../../headless/store/services/current-cart-service";
+import { loadCategoriesConfig } from "../../../../headless/store/services/category-service";
+
+// Load initial data for services with no category filtering (all products)
+const filteredCollectionServiceConfig = await loadCollectionServiceConfig(
+  undefined,
+  Astro.url.searchParams
+);
+const currentCartServiceConfig = await loadCurrentCartServiceConfig();
+const categoriesConfig = await loadCategoriesConfig();
+---
+
+<BaseLayout>
+  <title>Store Example 1 - All Products</title>
+  <meta
+    name="description"
+    content="Browse all our amazing products with traditional grid layout"
+  />
+
+  <StoreCollectionPage
+    client:load
+    filteredCollectionServiceConfig={filteredCollectionServiceConfig}
+    currentCartServiceConfig={currentCartServiceConfig}
+    categoriesConfig={{...categoriesConfig, initialCategoryId: null}}
+    slot="body"
+  />
+</BaseLayout>
