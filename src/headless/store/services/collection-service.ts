@@ -154,6 +154,10 @@ export const CollectionService = implementService.withConfig<{
 
   const pageSize = config.pageSize || 12;
   let allProducts: productsV3.V3Product[] = initialProducts;
+  
+  // Debouncing mechanism to prevent multiple simultaneous refreshes
+  let refreshTimeout: NodeJS.Timeout | null = null;
+  let isRefreshing = false;
 
   const loadMore = async () => {
     // Don't load more if there are no more products available
@@ -219,7 +223,10 @@ export const CollectionService = implementService.withConfig<{
   };
 
   const refresh = async (setTotalProducts: boolean = true) => {
+    if (isRefreshing) return;
+    
     try {
+      isRefreshing = true;
       isLoading.set(true);
       error.set(null);
 
@@ -258,21 +265,36 @@ export const CollectionService = implementService.withConfig<{
       );
     } finally {
       isLoading.set(false);
+      isRefreshing = false;
     }
+  };
+  
+  // Debounced refresh function
+  const debouncedRefresh = async (setTotalProducts: boolean = true): Promise<void> => {
+    if (refreshTimeout) {
+      clearTimeout(refreshTimeout);
+    }
+    
+    return new Promise<void>((resolve) => {
+      refreshTimeout = setTimeout(async () => {
+        await refresh(setTotalProducts);
+        resolve();
+      }, 50); // 50ms debounce delay
+    });
   };
 
   // Refresh with server-side filtering when any filters change
   collectionFilters.currentFilters.subscribe(() => {
     // All filtering (categories, price, options) is now handled server-side
-    refresh(false);
+    debouncedRefresh(false);
   });
 
   categoryService.selectedCategory.subscribe(() => {
-    refresh(false);
+    debouncedRefresh(false);
   });
 
   sortService.currentSort.subscribe(() => {
-    refresh(false);
+    debouncedRefresh(false);
   });
 
   return {
@@ -283,7 +305,7 @@ export const CollectionService = implementService.withConfig<{
     hasProducts,
     hasMoreProducts,
     loadMore,
-    refresh,
+    refresh: debouncedRefresh,
   };
 });
 
