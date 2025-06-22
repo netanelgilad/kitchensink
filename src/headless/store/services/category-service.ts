@@ -60,8 +60,11 @@ export const CategoryService =
             // No category selected - fallback to base path
             newPath = basePath;
           } else {
-            // Find category to get its slug
+            // Find category to get its real slug
             const category = config.categories.find((cat) => cat._id === categoryId);
+            if (!category?.slug) {
+              console.warn(`Category ${categoryId} has no slug, using category ID as fallback`);
+            }
             const categorySlug = category?.slug || categoryId;
             newPath = `${basePath}/category/${categorySlug}`;
           }

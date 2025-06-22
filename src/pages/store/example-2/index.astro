@@ -9,15 +9,12 @@ if (!firstCategory) {
   throw new Error("No categories found");
 }
 
-// Generate slug from category name if no slug exists
-const generateSlug = (name: string) => 
-  name.toLowerCase()
-    .replace(/[^a-z0-9\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .trim();
+// Use the real category slug from Wix API
+if (!firstCategory.slug) {
+  throw new Error(`Category "${firstCategory.name}" has no slug`);
+}
 
-const categorySlug = firstCategory.slug || generateSlug(firstCategory.name || 'all-products');
+const categorySlug = firstCategory.slug;
 const redirectUrl = `/store/example-2/category/${categorySlug}${Astro.url.search}`;
 
 return Astro.redirect(redirectUrl);
