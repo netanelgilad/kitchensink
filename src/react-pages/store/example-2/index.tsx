@@ -111,7 +111,7 @@ const ProductGridContent = () => {
                                 }}
                                 className="text-teal-400 hover:text-teal-300 transition-colors text-sm"
                               >
-                                Clear All Filters
+                                Clear Filters
                               </button>
                             </div>
                           )}
