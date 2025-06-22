@@ -74,7 +74,7 @@ export const CatalogPriceRangeService = implementService.withConfig<{}>()(
           };
 
           // Add category filter if specified (using the correct $matchItems format)
-          if (categoryId && categoryId !== 'all-products') {
+          if (categoryId) {
             searchOptions.search.filter = {
               "allCategoriesInfo.categories": {
                 $matchItems: [

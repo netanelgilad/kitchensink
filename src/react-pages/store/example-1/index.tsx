@@ -37,6 +37,10 @@ import {
   CatalogPriceRangeService,
   CatalogPriceRangeServiceDefinition,
 } from "../../../headless/store/services/catalog-price-range-service";
+import {
+  CatalogOptionsService,
+  CatalogOptionsServiceDefinition,
+} from "../../../headless/store/services/catalog-options-service";
 
 interface StoreCollectionPageProps {
   filteredCollectionServiceConfig: any;
@@ -510,6 +514,7 @@ export default function StoreCollectionPage({
         initialSort: filteredCollectionServiceConfig.initialSort,
       })
       .addService(CatalogPriceRangeServiceDefinition, CatalogPriceRangeService, {})
+      .addService(CatalogOptionsServiceDefinition, CatalogOptionsService, {})
   );
 
   return (

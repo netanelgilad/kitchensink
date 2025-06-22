@@ -164,11 +164,11 @@ export const CollectionService = implementService.withConfig<{
     (initialProducts.length > 0) as any
   );
 
-  // Load catalog-wide price range first, then calculate available options
+  // Load catalog-wide price range and options
   const initializeFilters = async () => {
     const selectedCategory = categoryService.selectedCategory.get();
     await collectionFilters.loadCatalogPriceRange(selectedCategory || undefined);
-    await collectionFilters.calculateAvailableOptions(initialProducts);
+    await collectionFilters.loadCatalogOptions(selectedCategory || undefined);
   };
   
   void initializeFilters();
@@ -299,9 +299,10 @@ export const CollectionService = implementService.withConfig<{
   });
 
   categoryService.selectedCategory.subscribe(async () => {
-    // Reload catalog price range for the new category
+    // Reload catalog price range and options for the new category
     const selectedCategory = categoryService.selectedCategory.get();
     await collectionFilters.loadCatalogPriceRange(selectedCategory || undefined);
+    await collectionFilters.loadCatalogOptions(selectedCategory || undefined);
     debouncedRefresh(false);
   });
 

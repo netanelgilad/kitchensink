@@ -4,6 +4,7 @@ import type { Signal } from "../../Signal";
 import { productsV3 } from "@wix/stores";
 import { URLParamsUtils } from "../utils/url-params";
 import { CatalogPriceRangeServiceDefinition } from "./catalog-price-range-service";
+import { CatalogOptionsServiceDefinition } from "./catalog-options-service";
 
 export interface ProductOption {
   id: string;
@@ -39,6 +40,7 @@ export interface FilterServiceAPI {
     products: productsV3.V3Product[]
   ) => Promise<void>;
   loadCatalogPriceRange: (categoryId?: string) => Promise<void>;
+  loadCatalogOptions: (categoryId?: string) => Promise<void>;
 }
 
 export const FilterServiceDefinition = defineService<FilterServiceAPI>(
@@ -55,6 +57,7 @@ export const FilterService = implementService.withConfig<{
 }>()(FilterServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
   const catalogPriceRangeService = getService(CatalogPriceRangeServiceDefinition);
+  const catalogOptionsService = getService(CatalogOptionsServiceDefinition);
 
   const currentFilters: Signal<Filter> = signalsService.signal(
     (config.initialFilters || defaultFilter) as any
@@ -92,6 +95,18 @@ export const FilterService = implementService.withConfig<{
           priceRange
         });
       }
+    }
+  });
+
+  // Subscribe to catalog options changes and automatically update our signals
+  catalogOptionsService.catalogOptions.subscribe((catalogOptions) => {
+    if (catalogOptions && catalogOptions.length > 0) {
+      // Update available options with catalog options
+      const currentAvailableOptions = availableOptions.get();
+      availableOptions.set({
+        ...currentAvailableOptions,
+        productOptions: catalogOptions
+      });
     }
   });
 
@@ -230,66 +245,10 @@ export const FilterService = implementService.withConfig<{
   const calculateAvailableOptions = async (
     products: productsV3.V3Product[]
   ) => {
-    if (!products || products.length === 0) return;
-
-    // Extract all unique options from products (but NOT price range)
-    const optionsMap = new Map<string, ProductOption>();
-
-    products.forEach((product) => {
-      // Extract options
-      if (product.options) {
-        product.options.forEach((option) => {
-          if (!option._id || !option.name) return;
-
-          if (!optionsMap.has(option._id)) {
-            optionsMap.set(option._id, {
-              id: option._id,
-              name: option.name,
-              choices: [],
-              optionRenderType: option.optionRenderType,
-            });
-          }
-
-          const optionData = optionsMap.get(option._id)!;
-
-          // Add choices
-          if (option.choicesSettings?.choices) {
-            option.choicesSettings.choices.forEach((choice) => {
-              if (
-                choice.choiceId &&
-                choice.name &&
-                !optionData.choices.find((c) => c.id === choice.choiceId)
-              ) {
-                optionData.choices.push({
-                  id: choice.choiceId,
-                  name: choice.name,
-                  colorCode: choice.colorCode,
-                });
-              }
-            });
-          }
-        });
-      }
-    });
-
-    const sortedOptions = Array.from(optionsMap.values()).map((option) => ({
-      ...option,
-      choices: sortChoices(option.choices, option.name),
-    }));
-
-    // Update ONLY the product options, preserve the existing price range
-    const currentAvailableOptions = availableOptions.get();
-    availableOptions.set({
-      productOptions: Array.from(sortedOptions.values()),
-      priceRange: currentAvailableOptions.priceRange, // Keep existing catalog-wide price range
-    });
-    
-    // Only update currentFilters price range if it's still at default values
-    const currentFiltersValue = currentFilters.get();
-    if (currentFiltersValue.priceRange.min === 0 && currentFiltersValue.priceRange.max === 0) {
-      // Keep the catalog-wide price range that was set by loadCatalogPriceRange
-      // Don't override it with page-based calculations
-    }
+    // No longer calculating options from current page products
+    // Options are now loaded from the catalog-wide service
+    // This function is kept for backward compatibility but does nothing
+    console.log('🔄 calculateAvailableOptions called but using catalog-wide options instead');
   };
 
   const loadCatalogPriceRange = async (categoryId?: string) => {
@@ -321,6 +280,22 @@ export const FilterService = implementService.withConfig<{
     }
   };
 
+  const loadCatalogOptions = async (categoryId?: string) => {
+    await catalogOptionsService.loadCatalogOptions(categoryId);
+    
+    // Wait for the catalog options to be loaded and then update our signals
+    const catalogOptions = catalogOptionsService.catalogOptions.get();
+    
+    if (catalogOptions && catalogOptions.length > 0) {
+      // Update available options with catalog options
+      const currentAvailableOptions = availableOptions.get();
+      availableOptions.set({
+        ...currentAvailableOptions,
+        productOptions: catalogOptions
+      });
+    }
+  };
+
   return {
     currentFilters,
     applyFilters,
@@ -328,5 +303,6 @@ export const FilterService = implementService.withConfig<{
     availableOptions,
     calculateAvailableOptions,
     loadCatalogPriceRange,
+    loadCatalogOptions,
   };
 });
