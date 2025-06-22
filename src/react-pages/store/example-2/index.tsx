@@ -166,11 +166,12 @@ const ProductGridContent = () => {
                                       title,
                                       image,
                                       price,
+                                      compareAtPrice,
                                       available,
                                       href,
                                       description,
                                     }) => (
-                                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-105 group">
+                                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-105 group h-full flex flex-col">
                                         <div className="aspect-square bg-white/10 rounded-lg mb-4 overflow-hidden relative">
                                           {image ? (
                                             <WixMediaImage
@@ -303,21 +304,51 @@ const ProductGridContent = () => {
                                           </p>
                                         )}
 
-                                        <div className="flex items-center justify-between mb-3">
-                                          <span className="text-xl font-bold text-white">
-                                            {price}
-                                          </span>
-                                          <div className="flex items-center gap-2">
-                                            {available ? (
-                                              <span className="text-green-400 text-sm flex items-center gap-1">
-                                                <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                                In Stock
-                                              </span>
+                                        <div className="mt-auto mb-3">
+                                          <div className="space-y-1">
+                                            {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 ? (
+                                              <>
+                                                <div className="text-xl font-bold text-white">
+                                                  {price}
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                  <div className="text-sm font-medium text-white/50 line-through">
+                                                    {compareAtPrice}
+                                                  </div>
+                                                  <div className="flex items-center gap-2">
+                                                    {available ? (
+                                                      <span className="text-green-400 text-sm flex items-center gap-1">
+                                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                        In Stock
+                                                      </span>
+                                                    ) : (
+                                                      <span className="text-red-400 text-sm flex items-center gap-1">
+                                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                        Out of Stock
+                                                      </span>
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              </>
                                             ) : (
-                                              <span className="text-red-400 text-sm flex items-center gap-1">
-                                                <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                                Out of Stock
-                                              </span>
+                                              <div className="flex items-center justify-between">
+                                                <div className="text-xl font-bold text-white">
+                                                  {price}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  {available ? (
+                                                    <span className="text-green-400 text-sm flex items-center gap-1">
+                                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                      In Stock
+                                                    </span>
+                                                  ) : (
+                                                    <span className="text-red-400 text-sm flex items-center gap-1">
+                                                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
+                                                      Out of Stock
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </div>
                                             )}
                                           </div>
                                         </div>

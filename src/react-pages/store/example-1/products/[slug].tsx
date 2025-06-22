@@ -302,13 +302,15 @@ export default function ProductDetailPage({
                   </Product.Name>
                   <ProductVariantSelector.Price>
                     {withDocsWrapper(
-                      ({ price, isVariantPrice }) => (
-                        <div className="text-3xl font-bold text-white">
-                          {price}
-                          {isVariantPrice && (
-                            <span className="text-sm text-white/60 ml-2">
-                              (variant price)
-                            </span>
+                      ({ price, compareAtPrice, isVariantPrice }) => (
+                        <div className="space-y-1">
+                          <div className="text-3xl font-bold text-white">
+                            {price}
+                          </div>
+                          {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 && (
+                            <div className="text-lg font-medium text-white/50 line-through">
+                              {compareAtPrice}
+                            </div>
                           )}
                         </div>
                       ),

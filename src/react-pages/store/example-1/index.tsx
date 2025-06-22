@@ -166,11 +166,12 @@ const ProductGridContent = () => {
                                       title,
                                       image,
                                       price,
+                                      compareAtPrice,
                                       available,
                                       href,
                                       description,
                                     }) => (
-                                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-105 group">
+                                      <div className="bg-white/5 backdrop-blur-sm rounded-xl p-4 border border-white/10 hover:border-white/20 transition-all duration-200 hover:scale-105 group h-full flex flex-col">
                                         <div className="aspect-square bg-white/10 rounded-lg mb-4 overflow-hidden">
                                           {image ? (
                                             <WixMediaImage
@@ -299,25 +300,51 @@ const ProductGridContent = () => {
 
                                         {description && (
                                           <p className="text-white/60 text-sm mb-3 line-clamp-2">
-                                            {description}
+                                            {description.replace(/<[^>]*>/g, '')}
                                           </p>
                                         )}
 
-                                        <div className="flex items-center justify-between">
-                                          <span className="text-xl font-bold text-white">
-                                            {price}
-                                          </span>
-                                          <div className="flex items-center gap-2">
-                                            {available ? (
-                                              <span className="text-green-400 text-sm">
-                                                In Stock
-                                              </span>
-                                            ) : (
-                                              <span className="text-red-400 text-sm">
-                                                Out of Stock
-                                              </span>
-                                            )}
-                                          </div>
+                                        <div className="space-y-1 mt-auto">
+                                          {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 ? (
+                                            <>
+                                              <div className="text-xl font-bold text-white">
+                                                {price}
+                                              </div>
+                                              <div className="flex items-center justify-between">
+                                                <div className="text-sm font-medium text-white/50 line-through">
+                                                  {compareAtPrice}
+                                                </div>
+                                                <div className="flex items-center gap-2">
+                                                  {available ? (
+                                                    <span className="text-green-400 text-sm">
+                                                      In Stock
+                                                    </span>
+                                                  ) : (
+                                                    <span className="text-red-400 text-sm">
+                                                      Out of Stock
+                                                    </span>
+                                                  )}
+                                                </div>
+                                              </div>
+                                            </>
+                                          ) : (
+                                            <div className="flex items-center justify-between">
+                                              <div className="text-xl font-bold text-white">
+                                                {price}
+                                              </div>
+                                              <div className="flex items-center gap-2">
+                                                {available ? (
+                                                  <span className="text-green-400 text-sm">
+                                                    In Stock
+                                                  </span>
+                                                ) : (
+                                                  <span className="text-red-400 text-sm">
+                                                    Out of Stock
+                                                  </span>
+                                                )}
+                                              </div>
+                                            </div>
+                                          )}
                                         </div>
 
                                         <div className="flex gap-2">
