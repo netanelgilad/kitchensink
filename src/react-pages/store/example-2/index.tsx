@@ -454,10 +454,11 @@ export default function StoreExample2Page({
         CollectionService,
         filteredCollectionServiceConfig
       )
-      .addService(FilterServiceDefinition, FilterService, {
-        ...filteredCollectionServiceConfig,
-        initialFilters: filteredCollectionServiceConfig.initialFilters,
-      })
+      .addService(
+        FilterServiceDefinition,
+        FilterService,
+        filteredCollectionServiceConfig
+      )
       .addService(
         CurrentCartServiceDefinition,
         CurrentCartService,

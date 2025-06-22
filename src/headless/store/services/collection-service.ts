@@ -281,15 +281,6 @@ export const CollectionService = implementService.withConfig<{
     refresh(false);
   });
 
-  // Listen for browser navigation events (client-side only)
-  if (typeof window !== "undefined") {
-    const handlePopState = () => {
-      window.location.reload(); // Simple approach to handle back/forward
-    };
-
-    window.addEventListener("popstate", handlePopState);
-  }
-
   return {
     products: productsList,
     isLoading,
@@ -301,6 +292,97 @@ export const CollectionService = implementService.withConfig<{
     refresh,
   };
 });
+
+// Helper function to parse URL parameters
+function parseURLParams(
+  searchParams?: URLSearchParams,
+  products: productsV3.V3Product[] = []
+) {
+  const initialFilters: Filter = {
+    priceRange: { min: 0, max: 1000 },
+    selectedOptions: {},
+  };
+  let initialSort: SortBy = "";
+
+  if (!searchParams) return { initialSort, initialFilters };
+
+  const urlParams = URLParamsService.parseSearchParams(searchParams);
+
+  // Parse sort parameter
+  const sortMap: Record<string, SortBy> = {
+    name_asc: "name-asc",
+    name_desc: "name-desc",
+    price_asc: "price-asc",
+    price_desc: "price-desc",
+  };
+  initialSort = sortMap[urlParams.sort as string] || "";
+
+  if (products.length === 0) return { initialSort, initialFilters };
+
+  // Calculate price range from products
+  let minPrice = 0,
+    maxPrice = 1000;
+  products.forEach((product) => {
+    const min = parseFloat(product.actualPriceRange?.minValue?.amount || "0");
+    const max = parseFloat(product.actualPriceRange?.maxValue?.amount || "0");
+    if (min > 0) minPrice = minPrice === 0 ? min : Math.min(minPrice, min);
+    if (max > 0) maxPrice = Math.max(maxPrice, max);
+  });
+  initialFilters.priceRange = { min: minPrice, max: maxPrice };
+
+  // Parse price filters from URL
+  if (urlParams.minPrice) {
+    const min = parseFloat(urlParams.minPrice as string);
+    if (!isNaN(min)) initialFilters.priceRange.min = min;
+  }
+  if (urlParams.maxPrice) {
+    const max = parseFloat(urlParams.maxPrice as string);
+    if (!isNaN(max)) initialFilters.priceRange.max = max;
+  }
+
+  // Build options map and parse option filters
+  const optionsMap = new Map<
+    string,
+    { id: string; choices: { id: string; name: string }[] }
+  >();
+  products.forEach((product) => {
+    product.options?.forEach((option) => {
+      if (!option._id || !option.name) return;
+      if (!optionsMap.has(option.name)) {
+        optionsMap.set(option.name, { id: option._id, choices: [] });
+      }
+      const optionData = optionsMap.get(option.name)!;
+      option.choicesSettings?.choices?.forEach((choice) => {
+        if (
+          choice.choiceId &&
+          choice.name &&
+          !optionData.choices.find((c) => c.id === choice.choiceId)
+        ) {
+          optionData.choices.push({ id: choice.choiceId, name: choice.name });
+        }
+      });
+    });
+  });
+
+  // Parse option filters from URL
+  Object.entries(urlParams).forEach(([key, value]) => {
+    if (["sort", "minPrice", "maxPrice"].includes(key)) return;
+    const option = optionsMap.get(key);
+    if (option) {
+      const values = Array.isArray(value) ? value : [value];
+      const matchingChoices = option.choices.filter((choice) =>
+        values.includes(choice.name)
+      );
+      if (matchingChoices.length > 0) {
+        initialFilters.selectedOptions[option.id] = matchingChoices.map(
+          (c) => c.id
+        );
+      }
+    }
+  });
+
+  return { initialSort, initialFilters };
+}
 
 export async function loadCollectionServiceConfig(
   collectionId?: string,
@@ -320,127 +402,10 @@ export async function loadCollectionServiceConfig(
     const productResults = await query.limit(100).find();
 
     // Parse URL parameters for initial state
-    let initialSort: SortBy = "";
-    let initialFilters: Filter = {
-      priceRange: { min: 0, max: 1000 },
-      selectedOptions: {},
-    };
-
-    if (searchParams) {
-      const urlParams = URLParamsService.parseSearchParams(searchParams);
-
-      // Parse sort parameter
-      if (urlParams.sort) {
-        switch (urlParams.sort) {
-          case "name_asc":
-            initialSort = "name-asc";
-            break;
-          case "name_desc":
-            initialSort = "name-desc";
-            break;
-          case "price_asc":
-            initialSort = "price-asc";
-            break;
-          case "price_desc":
-            initialSort = "price-desc";
-            break;
-          default:
-            initialSort = "";
-        }
-      }
-
-      // Calculate available options from products to parse filter parameters
-      if (productResults.items && productResults.items.length > 0) {
-        // Calculate price range
-        let minPrice = 0;
-        let maxPrice = 1000;
-
-        productResults.items.forEach((product) => {
-          if (product.actualPriceRange?.minValue?.amount) {
-            const min = parseFloat(product.actualPriceRange.minValue.amount);
-            minPrice = Math.min(minPrice === 0 ? min : minPrice, min);
-          }
-          if (product.actualPriceRange?.maxValue?.amount) {
-            const max = parseFloat(product.actualPriceRange.maxValue.amount);
-            maxPrice = Math.max(maxPrice, max);
-          }
-        });
-
-        initialFilters.priceRange = { min: minPrice, max: maxPrice };
-
-        // Parse price filters from URL
-        if (urlParams.minPrice && typeof urlParams.minPrice === "string") {
-          const urlMinPrice = parseFloat(urlParams.minPrice);
-          if (!isNaN(urlMinPrice)) {
-            initialFilters.priceRange.min = urlMinPrice;
-          }
-        }
-        if (urlParams.maxPrice && typeof urlParams.maxPrice === "string") {
-          const urlMaxPrice = parseFloat(urlParams.maxPrice);
-          if (!isNaN(urlMaxPrice)) {
-            initialFilters.priceRange.max = urlMaxPrice;
-          }
-        }
-
-        // Build options map for filter parsing
-        const optionsMap = new Map<
-          string,
-          { id: string; name: string; choices: { id: string; name: string }[] }
-        >();
-
-        productResults.items.forEach((product) => {
-          if (product.options) {
-            product.options.forEach((option) => {
-              if (!option._id || !option.name) return;
-
-              if (!optionsMap.has(option.name)) {
-                optionsMap.set(option.name, {
-                  id: option._id,
-                  name: option.name,
-                  choices: [],
-                });
-              }
-
-              const optionData = optionsMap.get(option.name)!;
-
-              if (option.choicesSettings?.choices) {
-                option.choicesSettings.choices.forEach((choice) => {
-                  if (
-                    choice.choiceId &&
-                    choice.name &&
-                    !optionData.choices.find((c) => c.id === choice.choiceId)
-                  ) {
-                    optionData.choices.push({
-                      id: choice.choiceId,
-                      name: choice.name,
-                    });
-                  }
-                });
-              }
-            });
-          }
-        });
-
-        // Parse option filters from URL
-        Object.entries(urlParams).forEach(([key, value]) => {
-          if (key === "sort" || key === "minPrice" || key === "maxPrice")
-            return;
-
-          const option = optionsMap.get(key);
-          if (option) {
-            const values = Array.isArray(value) ? value : [value];
-            const matchingChoices = option.choices.filter((choice) =>
-              values.includes(choice.name)
-            );
-            if (matchingChoices.length > 0) {
-              initialFilters.selectedOptions[option.id] = matchingChoices.map(
-                (c) => c.id
-              );
-            }
-          }
-        });
-      }
-    }
+    const { initialSort, initialFilters } = parseURLParams(
+      searchParams,
+      productResults.items || []
+    );
 
     return {
       initialProducts: productResults.items || [],
@@ -457,16 +422,14 @@ export async function loadCollectionServiceConfig(
     };
   } catch (error) {
     console.warn("Failed to load initial products:", error);
+    const { initialSort, initialFilters } = parseURLParams(searchParams);
     return {
       initialProducts: [],
       pageSize: 12,
       collectionId,
       initialHasMore: false,
-      initialSort: "",
-      initialFilters: {
-        priceRange: { min: 0, max: 1000 },
-        selectedOptions: {},
-      },
+      initialSort,
+      initialFilters,
     };
   }
 }
