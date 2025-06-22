@@ -8,7 +8,6 @@ import {
 import { Collection } from "../../../headless/store/components/Collection";
 import WixMediaImage from "../../../headless/media/components/Image";
 import ProductFilters from "../../../components/ProductFilters";
-import SortDropdown from "../../../components/SortDropdown";
 import { FilteredCollection } from "../../../headless/store/components/FilteredCollection";
 import {
   CollectionService,

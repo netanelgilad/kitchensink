@@ -27,38 +27,42 @@ export const SortService = implementService.withConfig<{}>()(
       currentSort.set(sortBy);
 
       // Update URL with sort parameter
-      const currentParams = URLParamsService.getURLParams();
+      try {
+        const currentParams = URLParamsService.getURLParams();
 
-      // Convert SortBy to URL format (like Wix site)
-      let sortParam = "";
-      switch (sortBy) {
-        case "name-asc":
-          sortParam = "name_asc";
-          break;
-        case "name-desc":
-          sortParam = "name_desc";
-          break;
-        case "price-asc":
-          sortParam = "price_asc";
-          break;
-        case "price-desc":
-          sortParam = "price_desc";
-          break;
-        case "":
-          sortParam = "newest"; // Default like Wix site
-          break;
-        default:
-          sortParam = "newest";
+        // Convert SortBy to URL format (like Wix site)
+        let sortParam = "";
+        switch (sortBy) {
+          case "name-asc":
+            sortParam = "name_asc";
+            break;
+          case "name-desc":
+            sortParam = "name_desc";
+            break;
+          case "price-asc":
+            sortParam = "price_asc";
+            break;
+          case "price-desc":
+            sortParam = "price_desc";
+            break;
+          case "":
+            sortParam = "newest"; // Default like Wix site
+            break;
+          default:
+            sortParam = "newest";
+        }
+
+        const urlParams = { ...currentParams };
+        if (sortParam && sortParam !== "newest") {
+          urlParams.sort = sortParam;
+        } else {
+          delete urlParams.sort; // Remove default sort from URL
+        }
+
+        URLParamsService.updateURL(urlParams);
+      } catch (error) {
+        console.warn("Failed to update URL with sort parameter:", error);
       }
-
-      const urlParams = { ...currentParams };
-      if (sortParam && sortParam !== "newest") {
-        urlParams.sort = sortParam;
-      } else {
-        delete urlParams.sort; // Remove default sort from URL
-      }
-
-      URLParamsService.updateURL(urlParams);
     };
 
     return {

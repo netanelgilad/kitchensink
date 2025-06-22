@@ -138,43 +138,51 @@ export const FilterService = implementService.withConfig<{}>()(
       currentFilters.set(filters);
 
       // Update URL with filter parameters
-      const urlParams: Record<string, string | string[]> = {};
+      try {
+        const urlParams: Record<string, string | string[]> = {};
 
-      // Add price filters if different from defaults
-      const availableOpts = availableOptions.get();
-      if (filters.priceRange.min > availableOpts.priceRange.min) {
-        urlParams.minPrice = filters.priceRange.min.toString();
-      }
-      if (filters.priceRange.max < availableOpts.priceRange.max) {
-        urlParams.maxPrice = filters.priceRange.max.toString();
-      }
-
-      // Add option filters using option names as keys
-      Object.entries(filters.selectedOptions).forEach(
-        ([optionId, choiceIds]) => {
-          const option = availableOpts.productOptions.find(
-            (opt) => opt.id === optionId
-          );
-          if (option && choiceIds.length > 0) {
-            const selectedChoices = option.choices.filter((choice) =>
-              choiceIds.includes(choice.id)
-            );
-            if (selectedChoices.length > 0) {
-              urlParams[option.name] = selectedChoices.map(
-                (choice) => choice.name
-              );
-            }
+        // Add price filters if different from defaults
+        const availableOpts = availableOptions.get();
+        if (availableOpts && availableOpts.priceRange) {
+          if (filters.priceRange.min > availableOpts.priceRange.min) {
+            urlParams.minPrice = filters.priceRange.min.toString();
+          }
+          if (filters.priceRange.max < availableOpts.priceRange.max) {
+            urlParams.maxPrice = filters.priceRange.max.toString();
           }
         }
-      );
 
-      // Preserve existing sort parameter
-      const currentParams = URLParamsService.getURLParams();
-      if (currentParams.sort) {
-        urlParams.sort = currentParams.sort;
+        // Add option filters using option names as keys
+        if (availableOpts && availableOpts.productOptions) {
+          Object.entries(filters.selectedOptions).forEach(
+            ([optionId, choiceIds]) => {
+              const option = availableOpts.productOptions.find(
+                (opt) => opt.id === optionId
+              );
+              if (option && choiceIds.length > 0) {
+                const selectedChoices = option.choices.filter((choice) =>
+                  choiceIds.includes(choice.id)
+                );
+                if (selectedChoices.length > 0) {
+                  urlParams[option.name] = selectedChoices.map(
+                    (choice) => choice.name
+                  );
+                }
+              }
+            }
+          );
+        }
+
+        // Preserve existing sort parameter
+        const currentParams = URLParamsService.getURLParams();
+        if (currentParams.sort) {
+          urlParams.sort = currentParams.sort;
+        }
+
+        URLParamsService.updateURL(urlParams);
+      } catch (error) {
+        console.warn("Failed to update URL parameters:", error);
       }
-
-      URLParamsService.updateURL(urlParams);
     };
 
     // Clear all filters by applying default filter state
