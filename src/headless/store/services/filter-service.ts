@@ -191,6 +191,21 @@ export const FilterService = implementService.withConfig<{
       ...defaultFilter,
       priceRange: availableOptions.get()?.priceRange || { min: 0, max: 1000 },
     });
+
+    // Clear filter parameters from URL, keeping only sort parameter
+    try {
+      const currentParams = URLParamsService.getURLParams();
+      const urlParams: Record<string, string | string[]> = {};
+
+      // Preserve only the sort parameter
+      if (currentParams.sort) {
+        urlParams.sort = currentParams.sort;
+      }
+
+      URLParamsService.updateURL(urlParams);
+    } catch (error) {
+      console.warn("Failed to clear filter parameters from URL:", error);
+    }
   };
   const calculateAvailableOptions = async (
     products: productsV3.V3Product[]
