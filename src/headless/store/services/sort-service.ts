@@ -3,7 +3,7 @@ import {
   implementService,
 } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
-import type { Signal } from "../Signal";
+import type { Signal } from "../../Signal";
 
 export type SortBy = '' | 'name-asc' | 'name-desc' | 'price-asc' | 'price-desc';
 
