@@ -164,7 +164,14 @@ export const CollectionService = implementService.withConfig<{
     (initialProducts.length > 0) as any
   );
 
-  void collectionFilters.calculateAvailableOptions(initialProducts);
+  // Load catalog-wide price range first, then calculate available options
+  const initializeFilters = async () => {
+    const selectedCategory = categoryService.selectedCategory.get();
+    await collectionFilters.loadCatalogPriceRange(selectedCategory || undefined);
+    await collectionFilters.calculateAvailableOptions(initialProducts);
+  };
+  
+  void initializeFilters();
 
   const pageSize = config.pageSize || 12;
   let allProducts: productsV3.V3Product[] = initialProducts;
@@ -291,7 +298,10 @@ export const CollectionService = implementService.withConfig<{
     debouncedRefresh(false);
   });
 
-  categoryService.selectedCategory.subscribe(() => {
+  categoryService.selectedCategory.subscribe(async () => {
+    // Reload catalog price range for the new category
+    const selectedCategory = categoryService.selectedCategory.get();
+    await collectionFilters.loadCatalogPriceRange(selectedCategory || undefined);
     debouncedRefresh(false);
   });
 

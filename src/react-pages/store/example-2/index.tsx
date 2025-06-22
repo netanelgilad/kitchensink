@@ -33,6 +33,10 @@ import {
   SortService,
   SortServiceDefinition,
 } from "../../../headless/store/services/sort-service";
+import {
+  CatalogPriceRangeService,
+  CatalogPriceRangeServiceDefinition,
+} from "../../../headless/store/services/catalog-price-range-service";
 
 interface StoreExample2PageProps {
   filteredCollectionServiceConfig: any;
@@ -70,6 +74,7 @@ const ProductGridContent = () => {
                               clearFilters={clearFilters}
                               currentFilters={currentFilters}
                               isFiltered={isFiltered}
+                              categoryId={undefined}
                             />
                           </div>
                         </div>
@@ -505,6 +510,7 @@ export default function StoreExample2Page({
       .addService(SortServiceDefinition, SortService, {
         initialSort: filteredCollectionServiceConfig.initialSort,
       })
+      .addService(CatalogPriceRangeServiceDefinition, CatalogPriceRangeService, {})
   );
 
   return (

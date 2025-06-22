@@ -3,6 +3,7 @@ import { SignalsServiceDefinition } from "@wix/services-definitions/core-service
 import type { Signal } from "../../Signal";
 import { productsV3 } from "@wix/stores";
 import { URLParamsUtils } from "../utils/url-params";
+import { CatalogPriceRangeServiceDefinition } from "./catalog-price-range-service";
 
 export interface ProductOption {
   id: string;
@@ -37,6 +38,7 @@ export interface FilterServiceAPI {
   calculateAvailableOptions: (
     products: productsV3.V3Product[]
   ) => Promise<void>;
+  loadCatalogPriceRange: (categoryId?: string) => Promise<void>;
 }
 
 export const FilterServiceDefinition = defineService<FilterServiceAPI>(
@@ -44,7 +46,7 @@ export const FilterServiceDefinition = defineService<FilterServiceAPI>(
 );
 
 export const defaultFilter: Filter = {
-  priceRange: { min: 0, max: 1000 },
+  priceRange: { min: 0, max: 0 },
   selectedOptions: {},
 };
 
@@ -52,10 +54,46 @@ export const FilterService = implementService.withConfig<{
   initialFilters?: Filter;
 }>()(FilterServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
+  const catalogPriceRangeService = getService(CatalogPriceRangeServiceDefinition);
 
   const currentFilters: Signal<Filter> = signalsService.signal(
     (config.initialFilters || defaultFilter) as any
   );
+
+  const availableOptions: Signal<{
+    productOptions: ProductOption[];
+    priceRange: { min: number; max: number };
+  }> = signalsService.signal({
+    productOptions: [],
+    priceRange: { min: 0, max: 0 },
+  } as any);
+
+  // Subscribe to catalog price range changes and automatically update our signals
+  catalogPriceRangeService.catalogPriceRange.subscribe((catalogPriceRange) => {
+    if (catalogPriceRange && catalogPriceRange.minPrice < catalogPriceRange.maxPrice) {
+      const priceRange = {
+        min: catalogPriceRange.minPrice,
+        max: catalogPriceRange.maxPrice
+      };
+      
+      // Update available options with catalog price range
+      const currentAvailableOptions = availableOptions.get();
+      availableOptions.set({
+        ...currentAvailableOptions,
+        priceRange
+      });
+      
+      // Update current filters to use catalog price range
+      const currentFiltersValue = currentFilters.get();
+      // Only update if current filter range is at defaults or if it's the first time setting it
+      if (currentFiltersValue.priceRange.min === 0 && currentFiltersValue.priceRange.max === 0) {
+        currentFilters.set({
+          ...currentFiltersValue,
+          priceRange
+        });
+      }
+    }
+  });
 
   const sortChoices = (
     choices: { id: string; name: string; colorCode?: string }[],
@@ -125,14 +163,6 @@ export const FilterService = implementService.withConfig<{
     return sortedChoices.sort((a, b) => a.name.localeCompare(b.name));
   };
 
-  const availableOptions: Signal<{
-    productOptions: ProductOption[];
-    priceRange: { min: number; max: number };
-  }> = signalsService.signal({
-    productOptions: [],
-    priceRange: { min: 0, max: 1000 },
-  } as any);
-
   // Apply filters by delegating to the collection service
   const applyFilters = async (filters: Filter) => {
     currentFilters.set(filters);
@@ -183,9 +213,10 @@ export const FilterService = implementService.withConfig<{
 
   // Clear all filters by applying default filter state
   const clearFilters = async () => {
+    const availablePriceRange = availableOptions.get()?.priceRange;
     currentFilters.set({
       ...defaultFilter,
-      priceRange: availableOptions.get()?.priceRange || { min: 0, max: 1000 },
+      priceRange: availablePriceRange || { min: 0, max: 0 },
     });
 
     // Clear filter parameters from URL, keeping only sort parameter
@@ -201,24 +232,10 @@ export const FilterService = implementService.withConfig<{
   ) => {
     if (!products || products.length === 0) return;
 
-    // Calculate price range
-    let minPrice = Infinity;
-    let maxPrice = 0;
-
-    // Extract all unique options
+    // Extract all unique options from products (but NOT price range)
     const optionsMap = new Map<string, ProductOption>();
 
     products.forEach((product) => {
-      // Calculate price range
-      if (product.actualPriceRange?.minValue?.amount) {
-        const min = parseFloat(product.actualPriceRange.minValue.amount);
-        minPrice = Math.min(minPrice, min);
-      }
-      if (product.actualPriceRange?.maxValue?.amount) {
-        const max = parseFloat(product.actualPriceRange.maxValue.amount);
-        maxPrice = Math.max(maxPrice, max);
-      }
-
       // Extract options
       if (product.options) {
         product.options.forEach((option) => {
@@ -255,22 +272,53 @@ export const FilterService = implementService.withConfig<{
       }
     });
 
-    if (minPrice === Infinity) minPrice = 0;
-    if (maxPrice === 0) maxPrice = 1000;
-
     const sortedOptions = Array.from(optionsMap.values()).map((option) => ({
       ...option,
       choices: sortChoices(option.choices, option.name),
     }));
 
+    // Update ONLY the product options, preserve the existing price range
+    const currentAvailableOptions = availableOptions.get();
     availableOptions.set({
       productOptions: Array.from(sortedOptions.values()),
-      priceRange: { min: minPrice, max: maxPrice },
+      priceRange: currentAvailableOptions.priceRange, // Keep existing catalog-wide price range
     });
-    currentFilters.set({
-      ...currentFilters.get(),
-      priceRange: { min: minPrice, max: maxPrice },
-    });
+    
+    // Only update currentFilters price range if it's still at default values
+    const currentFiltersValue = currentFilters.get();
+    if (currentFiltersValue.priceRange.min === 0 && currentFiltersValue.priceRange.max === 0) {
+      // Keep the catalog-wide price range that was set by loadCatalogPriceRange
+      // Don't override it with page-based calculations
+    }
+  };
+
+  const loadCatalogPriceRange = async (categoryId?: string) => {
+    await catalogPriceRangeService.loadCatalogPriceRange(categoryId);
+    
+    // Wait for the catalog price range to be loaded and then update our signals
+    // We need to get the result after the async operation completes
+    const catalogPriceRange = catalogPriceRangeService.catalogPriceRange.get();
+    
+    if (catalogPriceRange && catalogPriceRange.minPrice < catalogPriceRange.maxPrice) {
+      const priceRange = {
+        min: catalogPriceRange.minPrice,
+        max: catalogPriceRange.maxPrice
+      };
+      
+      // Update available options with catalog price range
+      const currentAvailableOptions = availableOptions.get();
+      availableOptions.set({
+        ...currentAvailableOptions,
+        priceRange
+      });
+      
+      // Update current filters to use catalog price range (always set it to the full range initially)
+      const currentFiltersValue = currentFilters.get();
+      currentFilters.set({
+        ...currentFiltersValue,
+        priceRange
+      });
+    }
   };
 
   return {
@@ -279,5 +327,6 @@ export const FilterService = implementService.withConfig<{
     clearFilters,
     availableOptions,
     calculateAvailableOptions,
+    loadCatalogPriceRange,
   };
 });
