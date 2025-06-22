@@ -5,13 +5,14 @@ import { withDocsWrapper, PageDocsRegistration } from "../../../components/DocsM
 import { Collection } from "../../../headless/store/Collection";
 import WixMediaImage from "../../../headless/media/Image";
 import ProductFilters from "../../../components/ProductFilters";
-import CategoryFilter from "../../../components/CategoryPicker";
 import { FilteredCollection } from "../../../headless/store/FilteredCollection";
 import { CollectionService, CollectionServiceDefinition } from "../../../headless/store/collection-service";
 import { createServicesManager, createServicesMap } from "@wix/services-manager";
 import { FilterService, FilterServiceDefinition } from "../../../headless/store/filter-service";
 import { CurrentCartService, CurrentCartServiceDefinition } from "../../../headless/store/current-cart-service";
 import { CategoryService, CategoryServiceDefinition } from "../../../headless/store/category-service";
+import StoreHeader from "../../../components/StoreHeader";
+import { SortService, SortServiceDefinition } from "../../../headless/store/sort-service";
 
 interface StoreExample2PageProps {
   filteredCollectionServiceConfig: any;
@@ -30,17 +31,7 @@ const ProductGridContent = () => {
                 ({ currentFilters, applyFilters, clearFilters, availableOptions, isFiltered }) => {
                   return (
                     <div className="min-h-screen">
-                      {/* Category Filter with Sort - Full Width */}
-                      <CategoryFilter 
-                        className="mb-6"
-                        sortBy={currentFilters.sortBy}
-                        onSortChange={(newSortBy) => {
-                          applyFilters({
-                            ...currentFilters,
-                            sortBy: newSortBy,
-                          });
-                        }}
-                      />
+                      <StoreHeader className="mb-6" />
 
                       {/* Main Layout with Sidebar and Content */}
                       <div className="flex gap-8">
@@ -401,6 +392,11 @@ export default function StoreExample2Page({
         CategoryServiceDefinition,
         CategoryService,
         categoriesConfig
+      )
+      .addService(
+        SortServiceDefinition,
+        SortService,
+        {}
       )
   );
 

@@ -8,8 +8,9 @@ import { FilteredCollection } from "../../../headless/store/FilteredCollection";
 import { withDocsWrapper } from "../../../components/DocsMode";
 import WixMediaImage from "../../../headless/media/Image";
 import ProductFilters from "../../../components/ProductFilters";
-import CategoryFilter from "../../../components/CategoryPicker";
+import StoreHeader from "../../../components/StoreHeader";
 import { CategoryService, CategoryServiceDefinition } from "../../../headless/store/category-service";
+import { SortService, SortServiceDefinition } from "../../../headless/store/sort-service";
 
 interface StoreCollectionPageProps {
   filteredCollectionServiceConfig: any;
@@ -29,17 +30,7 @@ const ProductGridContent = () => {
 
                   return (
                     <div className="min-h-screen">
-                      {/* Category Filter with Sort - Full Width */}
-                      <CategoryFilter 
-                        className="mb-6"
-                        sortBy={currentFilters.sortBy}
-                        onSortChange={(newSortBy) => {
-                          applyFilters({
-                            ...currentFilters,
-                            sortBy: newSortBy,
-                          });
-                        }}
-                      />
+                      <StoreHeader className="mb-6" />
 
                       {/* Main Layout with Sidebar and Content */}
                       <div className="flex gap-8">
@@ -397,6 +388,11 @@ export default function StoreCollectionPage({
         CategoryServiceDefinition,
         CategoryService,
         categoriesConfig
+      )
+      .addService(
+        SortServiceDefinition,
+        SortService,
+        {}
       )
   );
 

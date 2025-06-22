@@ -53,7 +53,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       onFiltersChange({
         priceRange: tempPriceRange,
         selectedOptions,
-        sortBy: currentFilters.sortBy,
       });
     }
   }, [tempPriceRange, selectedOptions, onFiltersChange, currentFilters.priceRange]);
@@ -98,7 +97,6 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
         onFiltersChange({
           priceRange: tempPriceRange,
           selectedOptions: newOptions,
-          sortBy: currentFilters.sortBy,
         });
 
         return newOptions;
