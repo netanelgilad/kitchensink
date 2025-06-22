@@ -1,8 +1,35 @@
 ---
-// Redirect to the all-products category for consistent URL structure
+import { loadCategoriesConfig } from "../../../headless/store/services/category-service";
+
+// Redirect to the "All Products" category for consistent URL structure
+const categoriesConfig = await loadCategoriesConfig();
+const allProductsCategory = categoriesConfig.categories.find((cat: any) => 
+  cat.name?.toLowerCase() === "all products"
+);
+
 const queryString = Astro.url.search;
-const redirectUrl = queryString 
-  ? `/store/example-2/category/all-products${queryString}`
-  : '/store/example-2/category/all-products';
+let redirectUrl;
+
+if (allProductsCategory) {
+  const createCategorySlug = (categoryName: string) => {
+    return categoryName
+      .toLowerCase()
+      .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+      .replace(/\s+/g, '-') // Replace spaces with dashes
+      .replace(/-+/g, '-') // Replace multiple dashes with single dash
+      .trim();
+  };
+  
+  const categorySlug = allProductsCategory.slug || createCategorySlug(allProductsCategory.name || 'all-products');
+  redirectUrl = queryString 
+    ? `/store/example-2/category/${categorySlug}${queryString}`
+    : `/store/example-2/category/${categorySlug}`;
+} else {
+  // Fallback if All Products category not found
+  redirectUrl = queryString 
+    ? `/store/example-2/category/all-products${queryString}`
+    : '/store/example-2/category/all-products';
+}
+
 return Astro.redirect(redirectUrl);
 ---

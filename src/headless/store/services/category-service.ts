@@ -36,7 +36,6 @@ export const CategoryService =
         // Update URL based on current path and category selection
         if (typeof window !== "undefined") {
           const currentPath = window.location.pathname;
-          const searchParams = new URLSearchParams(window.location.search);
           
           // Determine the base path (example-1 or example-2)
           const isExample1 = currentPath.includes('/example-1');
@@ -46,8 +45,8 @@ export const CategoryService =
           let newPath;
           
           if (categoryId === null) {
-            // Navigate to "All Products" - use dedicated all-products route
-            newPath = `${basePath}/category/all-products`;
+            // No category selected - fallback to base path
+            newPath = basePath;
           } else {
             // Find category to get its slug
             const category = config.categories.find((cat) => cat._id === categoryId);
@@ -55,12 +54,8 @@ export const CategoryService =
             newPath = `${basePath}/category/${categorySlug}`;
           }
           
-          // Preserve existing query parameters
-          const queryString = searchParams.toString();
-          const fullUrl = queryString ? `${newPath}?${queryString}` : newPath;
-          
-          // Navigate to the new URL
-          window.location.href = fullUrl;
+          // Clear all filters when changing categories - only navigate to the clean category URL
+          window.location.href = newPath;
         }
       };
 
@@ -86,13 +81,16 @@ export async function loadCategoriesConfig() {
 
     const fetchedCategories = categoriesResponse.items || [];
 
-    // Filter out "All Products" category as per recipe instructions
-    const filteredCategories = fetchedCategories.filter(
-      (cat) => cat.name?.toLowerCase() !== "all products"
-    );
+    // Sort categories to put "all-products" first, keep the rest in original order
+    const allProductsCategory = fetchedCategories.find(cat => cat.slug === "all-products");
+    const otherCategories = fetchedCategories.filter(cat => cat.slug !== "all-products");
+    
+    const allCategories = allProductsCategory 
+      ? [allProductsCategory, ...otherCategories]
+      : fetchedCategories;
 
     return {
-      categories: filteredCategories,
+      categories: allCategories,
     };
   } catch (error) {
     console.warn("Failed to load categories:", error);

@@ -8,17 +8,6 @@ import { loadCategoriesConfig } from "../../../../headless/store/services/catego
 // Get category slug from URL params
 const { categorySlug } = Astro.params;
 
-// Special case: if categorySlug is "all-products", this request should be handled 
-// by the dedicated all-products.astro page, so we should not reach here in normal flow.
-// However, if we do reach here, we redirect to ensure consistency
-if (categorySlug === "all-products") {
-  const queryString = Astro.url.search;
-  const redirectUrl = queryString 
-    ? `/store/example-1/category/all-products${queryString}`
-    : '/store/example-1/category/all-products';
-  return Astro.redirect(redirectUrl);
-}
-
 // Load categories to find the matching category ID
 const categoriesConfig = await loadCategoriesConfig();
 
