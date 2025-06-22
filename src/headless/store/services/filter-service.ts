@@ -2,7 +2,7 @@ import { defineService, implementService } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
 import { productsV3 } from "@wix/stores";
-import { URLParamsService } from "../utils/url-params";
+import { URLParamsUtils } from "../utils/url-params";
 
 export interface ProductOption {
   id: string;
@@ -173,12 +173,12 @@ export const FilterService = implementService.withConfig<{
     }
 
     // Preserve existing sort parameter
-    const currentParams = URLParamsService.getURLParams();
+    const currentParams = URLParamsUtils.getURLParams();
     if (currentParams.sort) {
       urlParams.sort = currentParams.sort;
     }
 
-    URLParamsService.updateURL(urlParams);
+    URLParamsUtils.updateURL(urlParams);
   };
 
   // Clear all filters by applying default filter state
@@ -189,12 +189,12 @@ export const FilterService = implementService.withConfig<{
     });
 
     // Clear filter parameters from URL, keeping only sort parameter
-    const currentParams = URLParamsService.getURLParams();
+    const currentParams = URLParamsUtils.getURLParams();
     const urlParams: Record<string, string | string[]> = {};
     if (currentParams.sort) {
       urlParams.sort = currentParams.sort;
     }
-    URLParamsService.updateURL(urlParams);
+    URLParamsUtils.updateURL(urlParams);
   };
   const calculateAvailableOptions = async (
     products: productsV3.V3Product[]

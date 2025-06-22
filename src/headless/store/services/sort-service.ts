@@ -1,7 +1,7 @@
 import { defineService, implementService } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
-import { URLParamsService } from "../utils/url-params";
+import { URLParamsUtils } from "../utils/url-params";
 
 export type SortBy = "" | "name-asc" | "name-desc" | "price-asc" | "price-desc";
 
@@ -27,7 +27,7 @@ export const SortService = implementService.withConfig<{
     currentSort.set(sortBy);
 
     // Update URL with sort parameter
-    const currentParams = URLParamsService.getURLParams();
+    const currentParams = URLParamsUtils.getURLParams();
     const sortMap: Record<SortBy, string> = {
       "name-asc": "name_asc",
       "name-desc": "name_desc",
@@ -45,7 +45,7 @@ export const SortService = implementService.withConfig<{
       delete urlParams.sort;
     }
 
-    URLParamsService.updateURL(urlParams);
+    URLParamsUtils.updateURL(urlParams);
   };
 
   return {

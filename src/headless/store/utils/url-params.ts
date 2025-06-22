@@ -1,4 +1,4 @@
-export class URLParamsService {
+export class URLParamsUtils {
   static parseSearchParams(searchParams: URLSearchParams) {
     const params: Record<string, string | string[]> = {};
 

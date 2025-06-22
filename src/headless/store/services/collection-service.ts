@@ -9,7 +9,7 @@ import { productsV3 } from "@wix/stores";
 import { FilterServiceDefinition, type Filter } from "./filter-service";
 import { CategoryServiceDefinition } from "./category-service";
 import { SortServiceDefinition, type SortBy } from "./sort-service";
-import { URLParamsService } from "../utils/url-params";
+import { URLParamsUtils } from "../utils/url-params";
 
 export interface CollectionServiceAPI {
   products: Signal<productsV3.V3Product[]>;
@@ -306,7 +306,7 @@ function parseURLParams(
 
   if (!searchParams) return { initialSort, initialFilters };
 
-  const urlParams = URLParamsService.parseSearchParams(searchParams);
+  const urlParams = URLParamsUtils.parseSearchParams(searchParams);
 
   // Parse sort parameter
   const sortMap: Record<string, SortBy> = {
