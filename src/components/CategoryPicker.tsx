@@ -59,11 +59,11 @@ export default function CategoryPickerWithContext({
   return (
     <Category.Provider>
       <Category.List>
-        {({ categories, selectedCategory, navigateToCategory }) => (
+        {({ categories, selectedCategory, setSelectedCategory }) => (
           <CategoryPicker
             categories={categories}
             selectedCategory={selectedCategory}
-            onCategorySelect={navigateToCategory}
+            onCategorySelect={setSelectedCategory}
             className={className}
           />
         )}

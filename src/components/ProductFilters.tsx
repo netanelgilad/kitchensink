@@ -57,7 +57,7 @@ export const ProductFilters: React.FC<ProductFiltersProps> = ({
       tempPriceRange.min !== currentFilters.priceRange.min ||
       tempPriceRange.max !== currentFilters.priceRange.max
     ) {
-      ({
+      onFiltersChange({
         priceRange: tempPriceRange,
         selectedOptions,
       });

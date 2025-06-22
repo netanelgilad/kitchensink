@@ -6,7 +6,7 @@ import { categories } from "@wix/categories";
 export interface CategoryServiceAPI {
   selectedCategory: Signal<string | null>;
   categories: Signal<categories.Category[]>;
-  navigateToCategory: (categoryId: string | null) => void;
+  setSelectedCategory: (categoryId: string | null) => void;
 }
 
 export const CategoryServiceDefinition =
@@ -30,9 +30,21 @@ export const CategoryService =
         config.categories as any
       );
 
-      const navigateToCategory = (categoryId: string | null) => {
+      // Track if this is the initial load to prevent navigation on service creation
+      let isInitialLoad = true;
+
+      const setSelectedCategory = (categoryId: string | null) => {
         selectedCategory.set(categoryId);
-        
+      };
+
+      // Subscribe to category changes and handle navigation as a side effect
+      selectedCategory.subscribe((categoryId) => {
+        // Skip navigation on initial load (when service is first created)
+        if (isInitialLoad) {
+          isInitialLoad = false;
+          return;
+        }
+
         // Update URL based on current path and category selection
         if (typeof window !== "undefined") {
           const currentPath = window.location.pathname;
@@ -57,12 +69,12 @@ export const CategoryService =
           // Clear all filters when changing categories - only navigate to the clean category URL
           window.location.href = newPath;
         }
-      };
+      });
 
       return {
         selectedCategory,
         categories,
-        navigateToCategory,
+        setSelectedCategory,
       };
     }
   );

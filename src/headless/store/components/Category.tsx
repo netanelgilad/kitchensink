@@ -43,7 +43,6 @@ interface CategoryListProps {
     categories: categories.Category[];
     selectedCategory: string | null;
     setSelectedCategory: (categoryId: string | null) => void;
-    navigateToCategory: (categoryId: string | null) => void;
   }) => ReactNode;
 }
 
@@ -64,10 +63,7 @@ export const CategoryList: React.FC<CategoryListProps> = ({ children }) => {
       {children({
         selectedCategory,
         categories,
-        setSelectedCategory: (categoryId: string | null) => {
-          service.selectedCategory.set(categoryId);
-        },
-        navigateToCategory: service.navigateToCategory,
+        setSelectedCategory: service.setSelectedCategory,
       })}
     </>
   );
