@@ -57,7 +57,7 @@ export async function loadProductServiceConfig(
         "WEIGHT_MEASUREMENT_UNIT_INFO" as any,
       ],
     });
-    
+
     if (!productResponse.product) {
       return { type: "notFound" };
     }

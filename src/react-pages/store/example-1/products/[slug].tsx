@@ -304,8 +304,8 @@ export default function ProductDetailPage({
                     {withDocsWrapper(
                       ({ price, compareAtPrice, isVariantPrice }) => (
                         <div className="space-y-1">
-                          <div className="text-3xl font-bold text-white">
-                            {price}
+                        <div className="text-3xl font-bold text-white">
+                          {price}
                           </div>
                           {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 && (
                             <div className="text-lg font-medium text-white/50 line-through">
@@ -392,24 +392,24 @@ export default function ProductDetailPage({
                                                   choice={choice}
                                                 >
                                                   {withDocsWrapper(
-                                                                                        ({
-                                      value,
-                                      isSelected,
+                                                    ({
+                                                      value,
+                                                      isSelected,
                                       isAvailable,
-                                      onSelect,
-                                    }) => (
-                                      <>
-                                        {isColorOption &&
-                                        hasColorCode ? (
-                                          // Color Swatch
+                                                      onSelect,
+                                                    }) => (
+                                                      <>
+                                                        {isColorOption &&
+                                                        hasColorCode ? (
+                                                          // Color Swatch
                                           <div className="relative">
-                                            <button
-                                              onClick={onSelect}
+                                                          <button
+                                                            onClick={onSelect}
                                               disabled={!isAvailable}
-                                              title={value}
-                                              className={`w-10 h-10 rounded-full border-4 transition-all duration-200 ${
-                                                isSelected
-                                                  ? "border-blue-400 shadow-lg scale-110 ring-2 ring-blue-500/30"
+                                                            title={value}
+                                                            className={`w-10 h-10 rounded-full border-4 transition-all duration-200 ${
+                                                              isSelected
+                                                                ? "border-blue-400 shadow-lg scale-110 ring-2 ring-blue-500/30"
                                                   : isAvailable
                                                   ? "border-white/30 hover:border-white/60 hover:scale-105"
                                                   : "border-white/10 opacity-50 cursor-not-allowed"
@@ -417,13 +417,13 @@ export default function ProductDetailPage({
                                                 !isAvailable
                                                   ? "grayscale"
                                                   : ""
-                                              }`}
-                                              style={{
-                                                backgroundColor:
-                                                  choice.colorCode ||
-                                                  "#000000",
-                                              }}
-                                            />
+                                                            }`}
+                                                            style={{
+                                                              backgroundColor:
+                                                                choice.colorCode ||
+                                                                "#000000",
+                                                            }}
+                                                          />
                                             {!isAvailable && (
                                               <div className="absolute inset-0 flex items-center justify-center">
                                                 <svg
@@ -442,22 +442,22 @@ export default function ProductDetailPage({
                                               </div>
                                             )}
                                           </div>
-                                        ) : (
-                                          // Regular Text Button
+                                                        ) : (
+                                                          // Regular Text Button
                                           <div className="relative">
-                                            <button
-                                              onClick={onSelect}
+                                                          <button
+                                                            onClick={onSelect}
                                               disabled={!isAvailable}
-                                              className={`px-4 py-2 border rounded-lg transition-all duration-200 ${
-                                                isSelected
-                                                  ? "bg-blue-500/20 border-blue-400/50 text-blue-300"
+                                                            className={`px-4 py-2 border rounded-lg transition-all duration-200 ${
+                                                              isSelected
+                                                                ? "bg-blue-500/20 border-blue-400/50 text-blue-300"
                                                   : isAvailable
                                                   ? "bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
                                                   : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
-                                              }`}
-                                            >
-                                              {value}
-                                            </button>
+                                                            }`}
+                                                          >
+                                                            {value}
+                                                          </button>
                                             {!isAvailable && (
                                               <div className="absolute inset-0 flex items-center justify-center">
                                                 <svg
@@ -476,9 +476,9 @@ export default function ProductDetailPage({
                                               </div>
                                             )}
                                           </div>
-                                        )}
-                                      </>
-                                    ),
+                                                        )}
+                                                      </>
+                                                    ),
                                                     "ProductVariantSelector.Choice",
                                                     "/docs/components/product-variant-selector#choice"
                                                   )}

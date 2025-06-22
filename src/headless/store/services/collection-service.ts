@@ -150,6 +150,19 @@ export const CollectionService = implementService.withConfig<{
 
   const initialProducts = config.initialProducts || [];
 
+  // Signal declarations
+  const productsList: Signal<productsV3.V3Product[]> = signalsService.signal(
+    initialProducts as any
+  );
+  const isLoading: Signal<boolean> = signalsService.signal(false as any);
+  const error: Signal<string | null> = signalsService.signal(null as any);
+  const totalProducts: Signal<number> = signalsService.signal(
+    initialProducts.length as any
+  );
+  const hasProducts: Signal<boolean> = signalsService.signal(
+    (initialProducts.length > 0) as any
+  );
+
   void collectionFilters.calculateAvailableOptions(initialProducts);
 
   const pageSize = config.pageSize || 12;
@@ -421,7 +434,7 @@ export async function loadCollectionServiceConfig(
     // Parse URL parameters for initial state
     const { initialSort, initialFilters } = parseURLParams(
       searchParams,
-      productResults.items || []
+      productResults.products || []
     );
 
     return {
