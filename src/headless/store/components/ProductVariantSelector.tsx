@@ -139,19 +139,17 @@ export const Choice = (props: ChoiceProps) => {
 
   const isSelected = selectedChoices[optionName] === choiceValue;
 
-  // Check if this choice would result in an available variant
-  const testChoices = {
-    ...selectedChoices,
-    [optionName]: choiceValue,
-  };
-
-  // Simple availability check - in a real implementation, this would check against actual variants
-  const isAvailable = true; // Simplified for now
+  // Check if this choice is available based on current selections
+  const isAvailable = variantService.isChoiceAvailable(optionName, choiceValue);
 
   const value = choiceValue;
 
   const onSelect = () => {
-    variantService.setSelectedChoices(testChoices);
+    const newChoices = {
+      ...selectedChoices,
+      [optionName]: choiceValue,
+    };
+    variantService.setSelectedChoices(newChoices);
   };
 
   return props.children({
