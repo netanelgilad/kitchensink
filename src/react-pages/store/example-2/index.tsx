@@ -8,6 +8,7 @@ import {
 import { Collection } from "../../../headless/store/components/Collection";
 import WixMediaImage from "../../../headless/media/components/Image";
 import ProductFilters from "../../../components/ProductFilters";
+import SortDropdown from "../../../components/SortDropdown";
 import { FilteredCollection } from "../../../headless/store/components/FilteredCollection";
 import {
   CollectionService,
@@ -77,6 +78,21 @@ const ProductGridContent = () => {
 
                         {/* Main Content Area */}
                         <div className="flex-1 min-w-0">
+                          {/* Sort Controls */}
+                          <div className="flex items-center justify-between mb-6">
+                            <div className="flex items-center gap-4">
+                              <h2 className="text-white text-lg font-semibold">
+                                All Products
+                              </h2>
+                              <span className="text-white/60 text-sm">
+                                {totalProducts} products
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-4">
+                              <SortDropdown />
+                            </div>
+                          </div>
+
                           {/* Filter Status Bar */}
                           {isFiltered && (
                             <div className="flex items-center justify-between bg-teal-500/10 border border-teal-500/20 rounded-xl p-4 mb-6">

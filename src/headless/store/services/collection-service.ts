@@ -9,6 +9,7 @@ import { productsV3 } from "@wix/stores";
 import { FilterServiceDefinition, type Filter } from "./filter-service";
 import { CategoryServiceDefinition } from "./category-service";
 import { SortServiceDefinition, type SortBy } from "./sort-service";
+import { URLParamsService } from "./url-params-service";
 
 export interface CollectionServiceAPI {
   products: Signal<productsV3.V3Product[]>;
@@ -269,6 +270,92 @@ export const CollectionService = implementService.withConfig<{
     refresh(false);
   });
 
+  // Initialize from URL parameters if provided
+  if (typeof window !== "undefined") {
+    const urlParams = URLParamsService.getURLParams();
+
+    // Initialize sort from URL
+    if (urlParams.sort) {
+      let sortBy: SortBy = "";
+      switch (urlParams.sort) {
+        case "name_asc":
+          sortBy = "name-asc";
+          break;
+        case "name_desc":
+          sortBy = "name-desc";
+          break;
+        case "price_asc":
+          sortBy = "price-asc";
+          break;
+        case "price_desc":
+          sortBy = "price-desc";
+          break;
+        default:
+          sortBy = "";
+      }
+      if (sortBy) {
+        sortService.setSortBy(sortBy);
+      }
+    }
+
+    // Initialize filters from URL
+    const availableOpts = collectionFilters.availableOptions.get();
+    const filterToApply: Filter = {
+      priceRange: { ...availableOpts.priceRange },
+      selectedOptions: {},
+    };
+
+    let hasFilters = false;
+
+    // Parse price filters
+    if (urlParams.minPrice && typeof urlParams.minPrice === "string") {
+      const minPrice = parseFloat(urlParams.minPrice);
+      if (!isNaN(minPrice)) {
+        filterToApply.priceRange.min = minPrice;
+        hasFilters = true;
+      }
+    }
+    if (urlParams.maxPrice && typeof urlParams.maxPrice === "string") {
+      const maxPrice = parseFloat(urlParams.maxPrice);
+      if (!isNaN(maxPrice)) {
+        filterToApply.priceRange.max = maxPrice;
+        hasFilters = true;
+      }
+    }
+
+    // Parse option filters (like Size=100ml from the example)
+    Object.entries(urlParams).forEach(([key, value]) => {
+      if (key === "sort" || key === "minPrice" || key === "maxPrice") return;
+
+      const option = availableOpts.productOptions.find(
+        (opt) => opt.name === key
+      );
+      if (option) {
+        const values = Array.isArray(value) ? value : [value];
+        const matchingChoices = option.choices.filter((choice) =>
+          values.includes(choice.name)
+        );
+        if (matchingChoices.length > 0) {
+          filterToApply.selectedOptions[option.id] = matchingChoices.map(
+            (c) => c.id
+          );
+          hasFilters = true;
+        }
+      }
+    });
+
+    if (hasFilters) {
+      collectionFilters.applyFilters(filterToApply);
+    }
+
+    // Listen for browser navigation events
+    const handlePopState = () => {
+      window.location.reload(); // Simple approach to handle back/forward
+    };
+
+    window.addEventListener("popstate", handlePopState);
+  }
+
   return {
     products: productsList,
     isLoading,
@@ -282,7 +369,8 @@ export const CollectionService = implementService.withConfig<{
 });
 
 export async function loadCollectionServiceConfig(
-  collectionId?: string
+  collectionId?: string,
+  searchParams?: URLSearchParams
 ): Promise<
   ServiceFactoryConfig<typeof CollectionService> & {
     initialCursor?: string;

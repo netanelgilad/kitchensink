@@ -2,6 +2,7 @@ import { defineService, implementService } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
 import { productsV3 } from "@wix/stores";
+import { URLParamsService } from "./url-params-service";
 
 export interface ProductOption {
   id: string;
@@ -135,6 +136,45 @@ export const FilterService = implementService.withConfig<{}>()(
     // Apply filters by delegating to the collection service
     const applyFilters = async (filters: Filter) => {
       currentFilters.set(filters);
+
+      // Update URL with filter parameters
+      const urlParams: Record<string, string | string[]> = {};
+
+      // Add price filters if different from defaults
+      const availableOpts = availableOptions.get();
+      if (filters.priceRange.min > availableOpts.priceRange.min) {
+        urlParams.minPrice = filters.priceRange.min.toString();
+      }
+      if (filters.priceRange.max < availableOpts.priceRange.max) {
+        urlParams.maxPrice = filters.priceRange.max.toString();
+      }
+
+      // Add option filters using option names as keys
+      Object.entries(filters.selectedOptions).forEach(
+        ([optionId, choiceIds]) => {
+          const option = availableOpts.productOptions.find(
+            (opt) => opt.id === optionId
+          );
+          if (option && choiceIds.length > 0) {
+            const selectedChoices = option.choices.filter((choice) =>
+              choiceIds.includes(choice.id)
+            );
+            if (selectedChoices.length > 0) {
+              urlParams[option.name] = selectedChoices.map(
+                (choice) => choice.name
+              );
+            }
+          }
+        }
+      );
+
+      // Preserve existing sort parameter
+      const currentParams = URLParamsService.getURLParams();
+      if (currentParams.sort) {
+        urlParams.sort = currentParams.sort;
+      }
+
+      URLParamsService.updateURL(urlParams);
     };
 
     // Clear all filters by applying default filter state
