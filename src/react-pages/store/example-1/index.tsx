@@ -42,6 +42,7 @@ import {
   CatalogOptionsServiceDefinition,
 } from "../../../headless/store/services/catalog-options-service";
 import { FiltersLoading } from "../../../headless/store/components/FilteredCollection";
+import { getStockStatus } from "../../../headless/store/utils/stock-status";
 
 interface StoreCollectionPageProps {
   filteredCollectionServiceConfig: any;
@@ -49,37 +50,10 @@ interface StoreCollectionPageProps {
   categoriesConfig: any;
 }
 
-// Utility function to determine stock status
-const getStockStatus = (product: any) => {
+// Helper to get stock status for product items
+const getProductStockStatus = (product: any) => {
   const availabilityStatus = product?.inventory?.availabilityStatus;
-
-  switch (availabilityStatus) {
-    case "IN_STOCK":
-      return {
-        status: "In Stock",
-        color: "text-green-400",
-        available: true,
-      };
-    case "OUT_OF_STOCK":
-      return {
-        status: "Out of Stock",
-        color: "text-red-400",
-        available: false,
-      };
-    case "PARTIALLY_OUT_OF_STOCK":
-      return {
-        status: "Partially out of stock",
-        color: "text-yellow-400",
-        available: true,
-      };
-    default:
-      // Fallback for unknown status - assume out of stock for safety
-      return {
-        status: "Out of Stock",
-        color: "text-red-400",
-        available: false,
-      };
-  }
+  return getStockStatus(availabilityStatus);
 };
 
 const ProductGridContent = () => {
@@ -378,7 +352,7 @@ const ProductGridContent = () => {
                                         <div className="space-y-1 mt-auto">
                                           {(() => {
                                             const stockInfo =
-                                              getStockStatus(product);
+                                              getProductStockStatus(product);
                                             return compareAtPrice &&
                                               parseFloat(
                                                 compareAtPrice.replace(

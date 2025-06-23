@@ -131,9 +131,12 @@ export const Item = (props: ItemProps) => {
   const rawCompareAmount = product.compareAtPriceRange?.minValue?.amount;
   const compareAtPrice = rawCompareAmount ? `$${rawCompareAmount}` : null;
 
+  const availabilityStatus = String(
+    product.inventory?.availabilityStatus || ""
+  ).toLowerCase();
   const available =
-    product.inventory?.availabilityStatus === "IN_STOCK" ||
-    product.inventory?.availabilityStatus === "PARTIALLY_OUT_OF_STOCK";
+    availabilityStatus === "in_stock" ||
+    availabilityStatus === "partially_out_of_stock";
   const description =
     typeof product.description === "string" ? product.description : "";
 

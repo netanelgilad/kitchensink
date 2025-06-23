@@ -42,6 +42,7 @@ import {
   CatalogOptionsServiceDefinition,
 } from "../../../headless/store/services/catalog-options-service";
 import { FiltersLoading } from "../../../headless/store/components/FilteredCollection";
+import { getStockStatus } from "../../../headless/store/utils/stock-status";
 
 interface StoreExample2PageProps {
   filteredCollectionServiceConfig: any;
@@ -49,41 +50,23 @@ interface StoreExample2PageProps {
   categoriesConfig: any;
 }
 
-// Utility function to determine stock status
-const getStockStatus = (product: any) => {
+// Helper to get stock status for product items
+const getProductStockStatus = (product: any) => {
   const availabilityStatus = product?.inventory?.availabilityStatus;
+  const stockInfo = getStockStatus(availabilityStatus);
 
-  switch (availabilityStatus) {
-    case "IN_STOCK":
-      return {
-        status: "In Stock",
-        color: "text-green-400",
-        dotColor: "bg-green-500",
-        available: true,
-      };
-    case "OUT_OF_STOCK":
-      return {
-        status: "Out of Stock",
-        color: "text-red-400",
-        dotColor: "bg-red-500",
-        available: false,
-      };
-    case "PARTIALLY_OUT_OF_STOCK":
-      return {
-        status: "Partially out of stock",
-        color: "text-yellow-400",
-        dotColor: "bg-yellow-500",
-        available: true,
-      };
-    default:
-      // Fallback for unknown status - assume out of stock for safety
-      return {
-        status: "Out of Stock",
-        color: "text-red-400",
-        dotColor: "bg-red-500",
-        available: false,
-      };
-  }
+  // Add dotColor for example-2's design
+  return {
+    ...stockInfo,
+    dotColor:
+      stockInfo.color === "text-green-400"
+        ? "bg-green-500"
+        : stockInfo.color === "text-red-400"
+        ? "bg-red-500"
+        : stockInfo.color === "text-yellow-400"
+        ? "bg-yellow-500"
+        : "bg-red-500",
+  };
 };
 
 const ProductGridContent = () => {
@@ -383,7 +366,7 @@ const ProductGridContent = () => {
                                           <div className="space-y-1">
                                             {(() => {
                                               const stockInfo =
-                                                getStockStatus(product);
+                                                getProductStockStatus(product);
                                               return compareAtPrice &&
                                                 parseFloat(
                                                   compareAtPrice.replace(

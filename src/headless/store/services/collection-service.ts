@@ -422,11 +422,11 @@ function parseURLParams(
     // Map display names back to API values
     const inventoryStatusValues = availabilityValues.map((value) => {
       return value === "In Stock"
-        ? "IN_STOCK"
+        ? "in_stock" // Use lowercase to match actual API values
         : value === "Out of Stock"
-        ? "OUT_OF_STOCK"
+        ? "out_of_stock"
         : value === "Partially out of stock"
-        ? "PARTIALLY_OUT_OF_STOCK"
+        ? "partially_out_of_stock"
         : value;
     });
 
