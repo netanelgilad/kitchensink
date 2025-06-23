@@ -50,39 +50,27 @@ interface StoreExample2PageProps {
 
 // Utility function to determine stock status
 const getProductStockStatus = (product: any) => {
-  const availabilityStatus = product?.inventory?.availabilityStatus;
+  const status = product?.inventory?.availabilityStatus?.toLowerCase();
 
-  switch (availabilityStatus) {
-    case "IN_STOCK":
-      return {
-        status: "In Stock",
-        color: "text-green-400",
-        dotColor: "bg-green-500",
-        available: true,
-      };
-    case "OUT_OF_STOCK":
-      return {
-        status: "Out of Stock",
-        color: "text-red-400",
-        dotColor: "bg-red-500",
-        available: false,
-      };
-    case "PARTIALLY_OUT_OF_STOCK":
-      return {
-        status: "Partially out of stock",
-        color: "text-yellow-400",
-        dotColor: "bg-yellow-500",
-        available: true,
-      };
-    default:
-      // Fallback for unknown status - assume out of stock for safety
-      return {
-        status: "Out of Stock",
-        color: "text-red-400",
-        dotColor: "bg-red-500",
-        available: false,
-      };
+  if (status === "in_stock") {
+    return {
+      status: "In Stock",
+      color: "text-green-400",
+      dotColor: "bg-green-500",
+    };
   }
+  if (status === "partially_out_of_stock") {
+    return {
+      status: "Partially out of stock",
+      color: "text-yellow-400",
+      dotColor: "bg-yellow-500",
+    };
+  }
+  return {
+    status: "Out of Stock",
+    color: "text-red-400",
+    dotColor: "bg-red-500",
+  };
 };
 
 const ProductGridContent = () => {
