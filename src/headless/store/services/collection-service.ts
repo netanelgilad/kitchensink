@@ -428,12 +428,6 @@ function parseURLParams(
           return "OUT_OF_STOCK";
         case "PARTIALLY OUT OF STOCK":
           return "PARTIALLY_OUT_OF_STOCK";
-        case "IN_STOCK":
-          return "IN_STOCK";
-        case "OUT_OF_STOCK":
-          return "OUT_OF_STOCK";
-        case "PARTIALLY_OUT_OF_STOCK":
-          return "PARTIALLY_OUT_OF_STOCK";
         default:
           // Convert any other value to uppercase for consistency
           return value.toUpperCase();
