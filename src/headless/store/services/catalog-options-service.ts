@@ -199,11 +199,11 @@ export const CatalogOptionsService = implementService.withConfig<{}>()(
             (status) => ({
               id: status.toUpperCase(), // Use uppercase to match actual availabilityStatus values
               name:
-                status === "in_stock"
+                status.toUpperCase() === "IN_STOCK"
                   ? "In Stock"
-                  : status === "out_of_stock"
+                  : status.toUpperCase() === "OUT_OF_STOCK"
                   ? "Out of Stock"
-                  : status === "partially_out_of_stock"
+                  : status.toUpperCase() === "PARTIALLY_OUT_OF_STOCK"
                   ? "Partially out of stock"
                   : status,
             })

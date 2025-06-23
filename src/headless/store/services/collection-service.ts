@@ -421,15 +421,22 @@ function parseURLParams(
 
     // Map display names back to actual choice IDs for inventory filter
     const inventoryStatusValues = availabilityValues.map((value) => {
-      switch (value) {
-        case "In Stock":
+      switch (value.toUpperCase()) {
+        case "IN STOCK":
           return "IN_STOCK";
-        case "Out of Stock":
+        case "OUT OF STOCK":
           return "OUT_OF_STOCK";
-        case "Partially out of stock":
+        case "PARTIALLY OUT OF STOCK":
+          return "PARTIALLY_OUT_OF_STOCK";
+        case "IN_STOCK":
+          return "IN_STOCK";
+        case "OUT_OF_STOCK":
+          return "OUT_OF_STOCK";
+        case "PARTIALLY_OUT_OF_STOCK":
           return "PARTIALLY_OUT_OF_STOCK";
         default:
-          return value;
+          // Convert any other value to uppercase for consistency
+          return value.toUpperCase();
       }
     });
 
