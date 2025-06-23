@@ -47,20 +47,6 @@ interface StoreCollectionPageProps {
   currentCartServiceConfig: any;
   categoriesConfig: any;
 }
-
-// Utility function to determine stock status
-const getProductStockStatus = (product: any) => {
-  const status = product?.inventory?.availabilityStatus?.toLowerCase();
-
-  if (status === "in_stock") {
-    return { status: "In Stock", color: "text-green-400" };
-  }
-  if (status === "partially_out_of_stock") {
-    return { status: "Partially out of stock", color: "text-yellow-400" };
-  }
-  return { status: "Out of Stock", color: "text-red-400" };
-};
-
 const ProductGridContent = () => {
   return (
     <FilteredCollection.Provider>
@@ -356,8 +342,25 @@ const ProductGridContent = () => {
 
                                         <div className="space-y-1 mt-auto">
                                           {(() => {
+                                            const status =
+                                              product?.inventory?.availabilityStatus?.toLowerCase();
                                             const stockInfo =
-                                              getProductStockStatus(product);
+                                              status === "in_stock"
+                                                ? {
+                                                    status: "In Stock",
+                                                    color: "text-green-400",
+                                                  }
+                                                : status ===
+                                                  "partially_out_of_stock"
+                                                ? {
+                                                    status:
+                                                      "Partially out of stock",
+                                                    color: "text-yellow-400",
+                                                  }
+                                                : {
+                                                    status: "Out of Stock",
+                                                    color: "text-red-400",
+                                                  };
                                             return compareAtPrice &&
                                               parseFloat(
                                                 compareAtPrice.replace(
