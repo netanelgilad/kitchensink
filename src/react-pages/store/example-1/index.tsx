@@ -343,15 +343,16 @@ const ProductGridContent = () => {
                                         <div className="space-y-1 mt-auto">
                                           {(() => {
                                             const status =
-                                              product?.inventory?.availabilityStatus?.toLowerCase();
+                                              product?.inventory
+                                                ?.availabilityStatus;
                                             const stockInfo =
-                                              status === "in_stock"
+                                              status === "IN_STOCK"
                                                 ? {
                                                     status: "In Stock",
                                                     color: "text-green-400",
                                                   }
                                                 : status ===
-                                                  "partially_out_of_stock"
+                                                  "PARTIALLY_OUT_OF_STOCK"
                                                 ? {
                                                     status:
                                                       "Partially out of stock",

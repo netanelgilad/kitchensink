@@ -181,9 +181,10 @@ export const SelectedVariantService = implementService.withConfig<{
           compareAtPrice: configProduct.compareAtPriceRange?.minValue,
         },
         inventoryStatus: {
-          inStock: ["in_stock", "partially_out_of_stock"].includes(
-            configProduct.inventory?.availabilityStatus?.toLowerCase() || ""
-          ),
+          inStock:
+            configProduct.inventory?.availabilityStatus === "IN_STOCK" ||
+            configProduct.inventory?.availabilityStatus ===
+              "PARTIALLY_OUT_OF_STOCK",
           preorderEnabled:
             configProduct.inventory?.preorderStatus === "ENABLED",
         },
@@ -275,8 +276,8 @@ export const SelectedVariantService = implementService.withConfig<{
       return variant.inventoryStatus?.inStock ?? false;
     }
 
-    const status = prod?.inventory?.availabilityStatus?.toLowerCase() || "";
-    return status === "in_stock" || status === "partially_out_of_stock";
+    const status = prod?.inventory?.availabilityStatus;
+    return status === "IN_STOCK" || status === "PARTIALLY_OUT_OF_STOCK";
   });
 
   const product: ReadOnlySignal<productsV3.V3Product | null> = v3Product;

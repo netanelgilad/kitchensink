@@ -134,12 +134,10 @@ export const FilteredItem: React.FC<FilteredItemProps> = ({
       ? `$${product.compareAtPriceRange.minValue.amount}`
       : null);
 
-  const availabilityStatus = String(
-    product.inventory?.availabilityStatus || ""
-  ).toLowerCase();
+  const availabilityStatus = product.inventory?.availabilityStatus;
   const available =
-    availabilityStatus === "in_stock" ||
-    availabilityStatus === "partially_out_of_stock";
+    availabilityStatus === "IN_STOCK" ||
+    availabilityStatus === "PARTIALLY_OUT_OF_STOCK";
   const href = `/store/products/${String(product.slug || product._id || "")}`;
   const description = product.plainDescription
     ? String(product.plainDescription)
