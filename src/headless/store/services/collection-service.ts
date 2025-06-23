@@ -419,20 +419,9 @@ function parseURLParams(
       ? urlParams.availability
       : [urlParams.availability];
 
-    // Map display names back to actual choice IDs for inventory filter
-    const inventoryStatusValues = availabilityValues.map((value) => {
-      switch (value.toUpperCase()) {
-        case "IN STOCK":
-          return "IN_STOCK";
-        case "OUT OF STOCK":
-          return "OUT_OF_STOCK";
-        case "PARTIALLY OUT OF STOCK":
-          return "PARTIALLY_OUT_OF_STOCK";
-        default:
-          // Convert any other value to uppercase for consistency
-          return value.toUpperCase();
-      }
-    });
+    const inventoryStatusValues = availabilityValues.map((value) =>
+      value.replace(/\s+/g, "_").toUpperCase()
+    );
 
     initialFilters.selectedOptions["inventory-filter"] = inventoryStatusValues;
   }
