@@ -164,21 +164,13 @@ export const CollectionService = implementService.withConfig<{
     (initialProducts.length > 0) as any
   );
 
-  // Load catalog-wide price range and options
-  const initializeFilters = async () => {
-    const selectedCategory = categoryService.selectedCategory.get();
-    await collectionFilters.loadCatalogPriceRange(selectedCategory || undefined);
-    await collectionFilters.loadCatalogOptions(selectedCategory || undefined);
-  };
-  
-  void initializeFilters();
-
   const pageSize = config.pageSize || 12;
   let allProducts: productsV3.V3Product[] = initialProducts;
   
   // Debouncing mechanism to prevent multiple simultaneous refreshes
   let refreshTimeout: NodeJS.Timeout | null = null;
   let isRefreshing = false;
+  let hasInitialized = false;
 
   const loadMore = async () => {
     // Don't load more if there are no more products available
@@ -303,7 +295,13 @@ export const CollectionService = implementService.withConfig<{
     const selectedCategory = categoryService.selectedCategory.get();
     await collectionFilters.loadCatalogPriceRange(selectedCategory || undefined);
     await collectionFilters.loadCatalogOptions(selectedCategory || undefined);
-    debouncedRefresh(false);
+    
+    // Only trigger refresh if this isn't the initial load
+    if (hasInitialized) {
+      debouncedRefresh(false);
+    } else {
+      hasInitialized = true;
+    }
   });
 
   sortService.currentSort.subscribe(() => {

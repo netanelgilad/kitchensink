@@ -83,7 +83,7 @@ export const CatalogOptionsService = implementService.withConfig<{}>()(
       error.set(null);
 
       try {
-        // Step 1: Get unique option and choice names from catalog via aggregation
+        // Step 1: Get unique option and choice names from catalog via aggregation (no products returned)
         const aggregationRequest = {
           aggregations: [
             {
@@ -100,7 +100,8 @@ export const CatalogOptionsService = implementService.withConfig<{}>()(
             }
           ],
           filter: buildCategoryFilter(categoryId),
-          includeProducts: false
+          includeProducts: false,
+          cursorPaging: { limit: 0 }
         };
 
         const aggregationResponse = await productsV3.searchProducts(aggregationRequest as any);

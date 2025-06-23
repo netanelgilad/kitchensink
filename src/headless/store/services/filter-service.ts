@@ -88,8 +88,11 @@ export const FilterService = implementService.withConfig<{
       
       // Update current filters to use catalog price range
       const currentFiltersValue = currentFilters.get();
-      // Only update if current filter range is at defaults or if it's the first time setting it
-      if (currentFiltersValue.priceRange.min === 0 && currentFiltersValue.priceRange.max === 0) {
+      // Only update if current filter range is at defaults (either 0-0 or 0-1000)
+      const isDefaultRange = (currentFiltersValue.priceRange.min === 0 && currentFiltersValue.priceRange.max === 0) ||
+                             (currentFiltersValue.priceRange.min === 0 && currentFiltersValue.priceRange.max === 1000);
+      
+      if (isDefaultRange) {
         currentFilters.set({
           ...currentFiltersValue,
           priceRange
@@ -252,48 +255,13 @@ export const FilterService = implementService.withConfig<{
   };
 
   const loadCatalogPriceRange = async (categoryId?: string) => {
+    // Just call the catalog service - subscriptions will handle signal updates
     await catalogPriceRangeService.loadCatalogPriceRange(categoryId);
-    
-    // Wait for the catalog price range to be loaded and then update our signals
-    // We need to get the result after the async operation completes
-    const catalogPriceRange = catalogPriceRangeService.catalogPriceRange.get();
-    
-    if (catalogPriceRange && catalogPriceRange.minPrice < catalogPriceRange.maxPrice) {
-      const priceRange = {
-        min: catalogPriceRange.minPrice,
-        max: catalogPriceRange.maxPrice
-      };
-      
-      // Update available options with catalog price range
-      const currentAvailableOptions = availableOptions.get();
-      availableOptions.set({
-        ...currentAvailableOptions,
-        priceRange
-      });
-      
-      // Update current filters to use catalog price range (always set it to the full range initially)
-      const currentFiltersValue = currentFilters.get();
-      currentFilters.set({
-        ...currentFiltersValue,
-        priceRange
-      });
-    }
   };
 
   const loadCatalogOptions = async (categoryId?: string) => {
+    // Just call the catalog service - subscriptions will handle signal updates
     await catalogOptionsService.loadCatalogOptions(categoryId);
-    
-    // Wait for the catalog options to be loaded and then update our signals
-    const catalogOptions = catalogOptionsService.catalogOptions.get();
-    
-    if (catalogOptions && catalogOptions.length > 0) {
-      // Update available options with catalog options
-      const currentAvailableOptions = availableOptions.get();
-      availableOptions.set({
-        ...currentAvailableOptions,
-        productOptions: catalogOptions
-      });
-    }
   };
 
   return {

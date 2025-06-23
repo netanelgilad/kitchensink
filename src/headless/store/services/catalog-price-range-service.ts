@@ -7,18 +7,25 @@ import { SignalsServiceDefinition } from "@wix/services-definitions/core-service
 import type { Signal } from "../../Signal";
 import { productsV3 } from "@wix/stores";
 
-const searchProducts = async (searchOptions: any) => {
-  const searchParams = {
-    filter: searchOptions.search?.filter,
-    sort: searchOptions.search?.sort,
-    ...(searchOptions.cursorPaging && { cursorPaging: searchOptions.cursorPaging })
-  };
+// Helper function to extract scalar aggregation values
+const extractScalarAggregationValue = (aggregationResponse: any, name: string): number | null => {
+  const aggregation = aggregationResponse.aggregations?.[name] || 
+    aggregationResponse.aggregationData?.results?.find((r: any) => r.name === name);
+  const value = aggregation?.scalar?.value;
+  return value !== undefined && value !== null ? parseFloat(value) : null;
+};
 
-  const options = {
-    fields: searchOptions.fields || []
-  };
+const buildCategoryFilter = (categoryId?: string) => {
+  if (!categoryId) {
+    return { visible: true };
+  }
 
-  return await productsV3.searchProducts(searchParams, options);
+  return {
+    visible: true,
+    'allCategoriesInfo.categories': {
+      $matchItems: [{ _id: { $in: [categoryId] } }]
+    }
+  };
 };
 
 export interface CatalogPriceRange {
@@ -47,77 +54,42 @@ export const CatalogPriceRangeService = implementService.withConfig<{}>()(
     const error: Signal<string | null> = signalsService.signal(null as any);
 
     /**
-     * Load the catalog-wide price range using multiple queries
-     * This fetches min/max prices from ALL products in the catalog
-     * Uses sorting to get the cheapest and most expensive products
+     * Load the catalog-wide price range using a single aggregation query
+     * This fetches min/max prices from ALL products in the catalog using SCALAR aggregations
      */
     const loadCatalogPriceRange = async (categoryId?: string): Promise<void> => {
       isLoading.set(true);
       error.set(null);
 
       try {
-        // Build search options using the same format as the working search
-        const buildCatalogSearchOptions = (sortField: string, sortOrder: 'ASC' | 'DESC') => {
-          const searchOptions: any = {
-            search: {
-              sort: [{ fieldName: sortField, order: sortOrder }]
+        // Single aggregation request to get both min and max prices (no products returned)
+        const aggregationRequest = {
+          aggregations: [
+            {
+              name: 'minPrice',
+              fieldPath: 'actualPriceRange.minValue.amount',
+              type: 'SCALAR' as const,
+              scalar: { type: 'MIN' as const }
             },
-            cursorPaging: { limit: 1 },
-            fields: [
-              "PLAIN_DESCRIPTION",
-              "MEDIA_ITEMS_INFO", 
-              "CURRENCY",
-              "THUMBNAIL",
-              "URL",
-              "ALL_CATEGORIES_INFO"
-            ]
-          };
-
-          // Add category filter if specified (using the correct $matchItems format)
-          if (categoryId) {
-            searchOptions.search.filter = {
-              "allCategoriesInfo.categories": {
-                $matchItems: [
-                  {
-                    id: {
-                      $in: [categoryId],
-                    },
-                  },
-                ],
-              },
-            };
-          }
-
-          return searchOptions;
+            {
+              name: 'maxPrice', 
+              fieldPath: 'actualPriceRange.maxValue.amount',
+              type: 'SCALAR' as const,
+              scalar: { type: 'MAX' as const }
+            }
+          ],
+          filter: buildCategoryFilter(categoryId),
+          includeProducts: false,
+          cursorPaging: { limit: 0 }
         };
 
-        // Query for the cheapest product (sort by price ascending)
-        const minPriceQuery = await searchProducts(
-          buildCatalogSearchOptions('actualPriceRange.minValue.amount', 'ASC')
-        );
+        const aggregationResponse = await productsV3.searchProducts(aggregationRequest as any);
+        
+        const minPrice = extractScalarAggregationValue(aggregationResponse, 'minPrice');
+        const maxPrice = extractScalarAggregationValue(aggregationResponse, 'maxPrice');
 
-        // Query for the most expensive product (sort by price descending) 
-        const maxPriceQuery = await searchProducts(
-          buildCatalogSearchOptions('actualPriceRange.maxValue.amount', 'DESC')
-        );
-
-        let minPrice = 0;
-        let maxPrice = 0;
-
-        // Extract min price from cheapest product
-        if (minPriceQuery.products && minPriceQuery.products.length > 0) {
-          const cheapestProduct = minPriceQuery.products[0];
-          minPrice = parseFloat(cheapestProduct.actualPriceRange?.minValue?.amount || '0');
-        }
-
-        // Extract max price from most expensive product
-        if (maxPriceQuery.products && maxPriceQuery.products.length > 0) {
-          const expensiveProduct = maxPriceQuery.products[0];
-          maxPrice = parseFloat(expensiveProduct.actualPriceRange?.maxValue?.amount || '0');
-        }
-
-        // Only set price range if we found valid products with prices
-        if (minPrice > 0 || maxPrice > 0) {
+        // Only set price range if we found valid prices
+        if (minPrice !== null && maxPrice !== null && (minPrice > 0 || maxPrice > 0)) {
           catalogPriceRange.set({
             minPrice,
             maxPrice
