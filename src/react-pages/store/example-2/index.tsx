@@ -42,13 +42,11 @@ import {
   CatalogOptionsServiceDefinition,
 } from "../../../headless/store/services/catalog-options-service";
 import { FiltersLoading } from "../../../headless/store/components/FilteredCollection";
-
 interface StoreExample2PageProps {
   filteredCollectionServiceConfig: any;
   currentCartServiceConfig: any;
   categoriesConfig: any;
 }
-
 const ProductGridContent = () => {
   return (
     <FilteredCollection.Provider>
@@ -83,7 +81,7 @@ const ProductGridContent = () => {
                                     currentFilters={currentFilters}
                                     isFiltered={isFiltered}
                                   />
-                                  
+
                                   {/* Pulse Loading Overlay */}
                                   {!isFullyLoaded && (
                                     <div className="absolute inset-0 bg-white/10 backdrop-blur-sm rounded-xl">
@@ -234,12 +232,13 @@ const ProductGridContent = () => {
                                           )}
                                         </div>
 
-                                          {product.ribbon?.name &&
-                                            (<div className="absolute top-2 left-2">
-                                              <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full font-medium">
-                                                {product.ribbon.name}
-                                              </span>
-                                            </div>)}
+                                        {product.ribbon?.name && (
+                                          <div className="absolute top-2 left-2">
+                                            <span className="bg-gradient-to-r from-teal-500 to-cyan-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                                              {product.ribbon.name}
+                                            </span>
+                                          </div>
+                                        )}
 
                                         <h3 className="text-white font-semibold mb-2 line-clamp-2">
                                           {title}
@@ -319,15 +318,15 @@ const ProductGridContent = () => {
                                                       {option.choicesSettings
                                                         ?.choices?.length >
                                                         3 && (
-                                                          <span className="text-white/60 text-xs">
-                                                            +
-                                                            {option
-                                                              .choicesSettings
-                                                              .choices.length -
-                                                              3}{" "}
-                                                            more
-                                                          </span>
-                                                        )}
+                                                        <span className="text-white/60 text-xs">
+                                                          +
+                                                          {option
+                                                            .choicesSettings
+                                                            .choices.length -
+                                                            3}{" "}
+                                                          more
+                                                        </span>
+                                                      )}
                                                     </div>
                                                   </div>
                                                 )
@@ -343,50 +342,75 @@ const ProductGridContent = () => {
 
                                         <div className="mt-auto mb-3">
                                           <div className="space-y-1">
-                                            {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 ? (
-                                              <>
-                                                <div className="text-xl font-bold text-white">
-                                                  {price}
-                                                </div>
+                                            {(() => {
+                                              const status =
+                                                product?.inventory
+                                                  ?.availabilityStatus;
+                                              const stockInfo =
+                                                status === "IN_STOCK"
+                                                  ? {
+                                                      status: "In Stock",
+                                                      color: "text-green-400",
+                                                      dotColor: "bg-green-500",
+                                                    }
+                                                  : status ===
+                                                    "PARTIALLY_OUT_OF_STOCK"
+                                                  ? {
+                                                      status:
+                                                        "Partially out of stock",
+                                                      color: "text-yellow-400",
+                                                      dotColor: "bg-yellow-500",
+                                                    }
+                                                  : {
+                                                      status: "Out of Stock",
+                                                      color: "text-red-400",
+                                                      dotColor: "bg-red-500",
+                                                    };
+                                              return compareAtPrice &&
+                                                parseFloat(
+                                                  compareAtPrice.replace(
+                                                    /[^\d.]/g,
+                                                    ""
+                                                  )
+                                                ) > 0 ? (
+                                                <>
+                                                  <div className="text-xl font-bold text-white">
+                                                    {price}
+                                                  </div>
+                                                  <div className="flex items-center justify-between">
+                                                    <div className="text-sm font-medium text-white/50 line-through">
+                                                      {compareAtPrice}
+                                                    </div>
+                                                    <div className="flex items-center gap-2">
+                                                      <span
+                                                        className={`${stockInfo.color} text-sm flex items-center gap-1`}
+                                                      >
+                                                        <div
+                                                          className={`w-2 h-2 ${stockInfo.dotColor} rounded-full`}
+                                                        ></div>
+                                                        {stockInfo.status}
+                                                      </span>
+                                                    </div>
+                                                  </div>
+                                                </>
+                                              ) : (
                                                 <div className="flex items-center justify-between">
-                                                  <div className="text-sm font-medium text-white/50 line-through">
-                                                    {compareAtPrice}
+                                                  <div className="text-xl font-bold text-white">
+                                                    {price}
                                                   </div>
                                                   <div className="flex items-center gap-2">
-                                                    {available ? (
-                                                      <span className="text-green-400 text-sm flex items-center gap-1">
-                                                        <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                                        In Stock
-                                                      </span>
-                                                    ) : (
-                                                      <span className="text-red-400 text-sm flex items-center gap-1">
-                                                        <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                                        Out of Stock
-                                                      </span>
-                                                    )}
+                                                    <span
+                                                      className={`${stockInfo.color} text-sm flex items-center gap-1`}
+                                                    >
+                                                      <div
+                                                        className={`w-2 h-2 ${stockInfo.dotColor} rounded-full`}
+                                                      ></div>
+                                                      {stockInfo.status}
+                                                    </span>
                                                   </div>
                                                 </div>
-                                              </>
-                                            ) : (
-                                              <div className="flex items-center justify-between">
-                                                <div className="text-xl font-bold text-white">
-                                                  {price}
-                                                </div>
-                                                <div className="flex items-center gap-2">
-                                                  {available ? (
-                                                    <span className="text-green-400 text-sm flex items-center gap-1">
-                                                      <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-                                                      In Stock
-                                                    </span>
-                                                  ) : (
-                                                    <span className="text-red-400 text-sm flex items-center gap-1">
-                                                      <div className="w-2 h-2 bg-red-500 rounded-full"></div>
-                                                      Out of Stock
-                                                    </span>
-                                                  )}
-                                                </div>
-                                              </div>
-                                            )}
+                                              );
+                                            })()}
                                           </div>
                                         </div>
 
@@ -502,7 +526,8 @@ const LoadMoreSection = () => {
                     </div>
 
                     <p className="text-white/60 text-sm mt-4">
-                      Advanced store experience • {totalProducts} products loaded
+                      Advanced store experience • {totalProducts} products
+                      loaded
                     </p>
                   </div>
                 )}
@@ -524,21 +549,23 @@ export default function StoreExample2Page({
   // Create navigation handler for example-2 specific URLs
   const handleCategoryChange = (categoryId: string | null, category: any) => {
     if (typeof window !== "undefined") {
-      const basePath = '/store/example-2';
+      const basePath = "/store/example-2";
       let newPath;
-      
+
       if (categoryId === null) {
-        // No category selected - fallback to base path  
+        // No category selected - fallback to base path
         newPath = basePath;
       } else {
         // Use category slug for URL
         if (!category?.slug) {
-          console.warn(`Category ${categoryId} has no slug, using category ID as fallback`);
+          console.warn(
+            `Category ${categoryId} has no slug, using category ID as fallback`
+          );
         }
         const categorySlug = category?.slug || categoryId;
         newPath = `${basePath}/category/${categorySlug}`;
       }
-      
+
       // Navigate immediately - pulse animation will show during page load
       window.location.href = newPath;
     }
@@ -563,12 +590,16 @@ export default function StoreExample2Page({
       )
       .addService(CategoryServiceDefinition, CategoryService, {
         ...categoriesConfig,
-        onCategoryChange: handleCategoryChange
+        onCategoryChange: handleCategoryChange,
       })
       .addService(SortServiceDefinition, SortService, {
         initialSort: filteredCollectionServiceConfig.initialSort,
       })
-      .addService(CatalogPriceRangeServiceDefinition, CatalogPriceRangeService, {})
+      .addService(
+        CatalogPriceRangeServiceDefinition,
+        CatalogPriceRangeService,
+        {}
+      )
       .addService(CatalogOptionsServiceDefinition, CatalogOptionsService, {})
   );
 
