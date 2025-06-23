@@ -425,6 +425,8 @@ function parseURLParams(
         ? "IN_STOCK"
         : value === "Out of Stock"
         ? "OUT_OF_STOCK"
+        : value === "Partially out of stock"
+        ? "PARTIALLY_OUT_OF_STOCK"
         : value;
     });
 
