@@ -493,6 +493,29 @@ export default function StoreExample2Page({
   currentCartServiceConfig,
   categoriesConfig,
 }: StoreExample2PageProps) {
+  // Create navigation handler for example-2 specific URLs
+  const handleCategoryChange = (categoryId: string | null, category: any) => {
+    if (typeof window !== "undefined") {
+      const basePath = '/store/example-2';
+      let newPath;
+      
+      if (categoryId === null) {
+        // No category selected - fallback to base path  
+        newPath = basePath;
+      } else {
+        // Use category slug for URL
+        if (!category?.slug) {
+          console.warn(`Category ${categoryId} has no slug, using category ID as fallback`);
+        }
+        const categorySlug = category?.slug || categoryId;
+        newPath = `${basePath}/category/${categorySlug}`;
+      }
+      
+      // Clear all filters when changing categories - only navigate to the clean category URL
+      window.location.href = newPath;
+    }
+  };
+
   const servicesManager = createServicesManager(
     createServicesMap()
       .addService(
@@ -510,7 +533,10 @@ export default function StoreExample2Page({
         CurrentCartService,
         currentCartServiceConfig
       )
-      .addService(CategoryServiceDefinition, CategoryService, categoriesConfig)
+      .addService(CategoryServiceDefinition, CategoryService, {
+        ...categoriesConfig,
+        onCategoryChange: handleCategoryChange
+      })
       .addService(SortServiceDefinition, SortService, {
         initialSort: filteredCollectionServiceConfig.initialSort,
       })

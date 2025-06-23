@@ -15,6 +15,7 @@ export const CategoryServiceDefinition =
 export interface CategoryServiceConfig {
   categories: categories.Category[];
   initialCategoryId?: string | null;
+  onCategoryChange?: (categoryId: string | null, category: categories.Category | null) => void;
 }
 
 export const CategoryService =
@@ -45,32 +46,13 @@ export const CategoryService =
           return;
         }
 
-        // Update URL based on current path and category selection
-        if (typeof window !== "undefined") {
-          const currentPath = window.location.pathname;
+        // If a navigation handler is provided, use it
+        if (config.onCategoryChange) {
+          const category = categoryId 
+            ? config.categories.find((cat) => cat._id === categoryId) || null
+            : null;
           
-          // Determine the base path (example-1 or example-2)
-          const isExample1 = currentPath.includes('/example-1');
-          const isExample2 = currentPath.includes('/example-2');
-          const basePath = isExample1 ? '/store/example-1' : isExample2 ? '/store/example-2' : '/store/example-1';
-          
-          let newPath;
-          
-          if (categoryId === null) {
-            // No category selected - fallback to base path
-            newPath = basePath;
-          } else {
-            // Find category to get its real slug
-            const category = config.categories.find((cat) => cat._id === categoryId);
-            if (!category?.slug) {
-              console.warn(`Category ${categoryId} has no slug, using category ID as fallback`);
-            }
-            const categorySlug = category?.slug || categoryId;
-            newPath = `${basePath}/category/${categorySlug}`;
-          }
-          
-          // Clear all filters when changing categories - only navigate to the clean category URL
-          window.location.href = newPath;
+          config.onCategoryChange(categoryId, category);
         }
       });
 

@@ -309,7 +309,7 @@ const ProductGridContent = () => {
 
                                         {description && (
                                           <p className="text-white/60 text-sm mb-3 line-clamp-2">
-                                            {description.replace(/<[^>]*>/g, '')}
+                                            {description}
                                           </p>
                                         )}
 
@@ -492,6 +492,29 @@ export default function StoreCollectionPage({
   currentCartServiceConfig,
   categoriesConfig,
 }: StoreCollectionPageProps) {
+  // Create navigation handler for example-1 specific URLs
+  const handleCategoryChange = (categoryId: string | null, category: any) => {
+    if (typeof window !== "undefined") {
+      const basePath = '/store/example-1';
+      let newPath;
+      
+      if (categoryId === null) {
+        // No category selected - fallback to base path  
+        newPath = basePath;
+      } else {
+        // Use category slug for URL
+        if (!category?.slug) {
+          console.warn(`Category ${categoryId} has no slug, using category ID as fallback`);
+        }
+        const categorySlug = category?.slug || categoryId;
+        newPath = `${basePath}/category/${categorySlug}`;
+      }
+      
+      // Clear all filters when changing categories - only navigate to the clean category URL
+      window.location.href = newPath;
+    }
+  };
+
   const servicesManager = createServicesManager(
     createServicesMap()
       .addService(
@@ -509,7 +532,10 @@ export default function StoreCollectionPage({
         CurrentCartService,
         currentCartServiceConfig
       )
-      .addService(CategoryServiceDefinition, CategoryService, categoriesConfig)
+      .addService(CategoryServiceDefinition, CategoryService, {
+        ...categoriesConfig,
+        onCategoryChange: handleCategoryChange
+      })
       .addService(SortServiceDefinition, SortService, {
         initialSort: filteredCollectionServiceConfig.initialSort,
       })
