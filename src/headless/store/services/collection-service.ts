@@ -419,16 +419,7 @@ function parseURLParams(
       ? urlParams.availability
       : [urlParams.availability];
 
-    // Map display names back to API values
-    const inventoryStatusValues = availabilityValues.map((value) => {
-      return value === "In Stock"
-        ? "in_stock"
-        : value === "Out of Stock"
-        ? "out_of_stock"
-        : value === "Partially out of stock"
-        ? "partially_out_of_stock"
-        : value;
-    });
+    const inventoryStatusValues = availabilityValues;
 
     initialFilters.selectedOptions["inventory-filter"] = inventoryStatusValues;
   }
