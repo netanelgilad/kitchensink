@@ -422,7 +422,7 @@ function parseURLParams(
     // Map display names back to API values
     const inventoryStatusValues = availabilityValues.map((value) => {
       return value === "In Stock"
-        ? "in_stock" // Use lowercase to match actual API values
+        ? "in_stock"
         : value === "Out of Stock"
         ? "out_of_stock"
         : value === "Partially out of stock"

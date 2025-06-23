@@ -199,12 +199,11 @@ export const CatalogOptionsService = implementService.withConfig<{}>()(
             (status) => ({
               id: status,
               name:
-                status === "IN_STOCK" || status === "in_stock"
+                status === "in_stock"
                   ? "In Stock"
-                  : status === "OUT_OF_STOCK" || status === "out_of_stock"
+                  : status === "out_of_stock"
                   ? "Out of Stock"
-                  : status === "PARTIALLY_OUT_OF_STOCK" ||
-                    status === "partially_out_of_stock"
+                  : status === "partially_out_of_stock"
                   ? "Partially out of stock"
                   : status,
             })
