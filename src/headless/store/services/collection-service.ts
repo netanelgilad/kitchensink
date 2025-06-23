@@ -419,7 +419,19 @@ function parseURLParams(
       ? urlParams.availability
       : [urlParams.availability];
 
-    const inventoryStatusValues = availabilityValues;
+    // Map display names back to actual choice IDs for inventory filter
+    const inventoryStatusValues = availabilityValues.map((value) => {
+      switch (value) {
+        case "In Stock":
+          return "IN_STOCK";
+        case "Out of Stock":
+          return "OUT_OF_STOCK";
+        case "Partially out of stock":
+          return "PARTIALLY_OUT_OF_STOCK";
+        default:
+          return value;
+      }
+    });
 
     initialFilters.selectedOptions["inventory-filter"] = inventoryStatusValues;
   }

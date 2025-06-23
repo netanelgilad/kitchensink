@@ -197,7 +197,7 @@ export const CatalogOptionsService = implementService.withConfig<{}>()(
         if (inventoryStatuses.length > 1) {
           const inventoryChoices: ProductChoice[] = inventoryStatuses.map(
             (status) => ({
-              id: status,
+              id: status.toUpperCase(), // Use uppercase to match actual availabilityStatus values
               name:
                 status === "in_stock"
                   ? "In Stock"
