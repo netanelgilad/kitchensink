@@ -10,6 +10,7 @@ import {
 } from "../headless/store/services/current-cart-service";
 import { CurrentCart } from "../headless/store/components/CurrentCart";
 import { KitchensinkLayout } from "../layouts/KitchensinkLayout";
+import WixMediaImage from "../headless/media/components/Image";
 
 interface CartPageProps {
   data?: any;
@@ -171,10 +172,14 @@ const CartContent = () => {
                                       {/* Product Image */}
                                       <div className="flex-shrink-0">
                                         {image ? (
-                                          <img
-                                            className="h-24 w-24 rounded-lg object-cover border border-white/20"
-                                            src={image}
+                                          <WixMediaImage
+                                            media={{
+                                              image,
+                                            }}
+                                            width={96}
+                                            height={96}
                                             alt={title}
+                                            className="h-24 w-24 rounded-lg object-cover border border-white/20 overflow-hidden"
                                           />
                                         ) : (
                                           <div className="h-24 w-24 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
