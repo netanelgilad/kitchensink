@@ -173,8 +173,11 @@ export function StoreLayout({
                                             <div className="w-16 h-16 bg-white/10 rounded-lg overflow-hidden flex-shrink-0">
                                               {image && (
                                                 <WixMediaImage
-                                                  media={{ image: image }}
-                                                  className="w-full h-full object-cover"
+                                                  media={{
+                                                    image,
+                                                  }}
+                                                  width={64}
+                                                  height={64}
                                                 />
                                               )}
                                             </div>
