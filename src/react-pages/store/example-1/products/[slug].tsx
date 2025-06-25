@@ -26,7 +26,7 @@ import {
 import { ProductMediaGallery } from "../../../../headless/store/components/ProductMediaGallery";
 import { ProductVariantSelector } from "../../../../headless/store/components/ProductVariantSelector";
 import { Product } from "../../../../headless/store/components/Product";
-import { CurrentCart } from "../../../../headless/store/components/CurrentCart";
+import { CurrentCart } from "../../../../headless/ecom/components/CurrentCart";
 import {
   withDocsWrapper,
   PageDocsRegistration,

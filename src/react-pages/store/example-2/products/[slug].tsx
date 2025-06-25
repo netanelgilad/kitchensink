@@ -40,7 +40,7 @@ import {
 import { Product } from "../../../../headless/store/components/Product";
 import { ProductVariantSelector } from "../../../../headless/store/components/ProductVariantSelector";
 import { ProductMediaGallery } from "../../../../headless/store/components/ProductMediaGallery";
-import { CurrentCart } from "../../../../headless/store/components/CurrentCart";
+import { CurrentCart } from "../../../../headless/ecom/components/CurrentCart";
 import { SocialSharing } from "../../../../headless/store/components/SocialSharing";
 import { RelatedProducts } from "../../../../headless/store/components/RelatedProducts";
 import WixMediaImage from "../../../../headless/media/components/Image";
