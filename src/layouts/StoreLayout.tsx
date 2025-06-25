@@ -259,23 +259,17 @@ export function StoreLayout({
                       {/* Order Notes */}
                       <CurrentCart.BuyerNotes>
                         {withDocsWrapper(
-                          ({
-                            notes,
-                            onNotesChange,
-                            isLoading,
-                            placeholder,
-                          }) => (
+                          ({ notes, onNotesChange, placeholder }) => (
                             <div>
                               <label className="block text-xs font-medium text-white/80 mb-2">
-                                Buyer Notes
+                                Notes:
                               </label>
                               <textarea
                                 value={notes}
                                 onChange={(e) => onNotesChange(e.target.value)}
-                                disabled={isLoading}
                                 placeholder={placeholder}
                                 rows={2}
-                                className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white placeholder-white/60 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-colors duration-200 resize-vertical disabled:opacity-50"
+                                className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white placeholder-white/60 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-colors duration-200 resize-vertical"
                               />
                             </div>
                           ),

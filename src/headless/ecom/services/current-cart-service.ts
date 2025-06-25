@@ -167,13 +167,7 @@ export const CurrentCartService = implementService.withConfig<{
   };
 
   const setBuyerNotes = async (notes: string) => {
-    try {
-      buyerNotes.set(notes);
-    } catch (err) {
-      error.set(
-        err instanceof Error ? err.message : "Failed to set buyer notes"
-      );
-    }
+    buyerNotes.set(notes);
   };
 
   const proceedToCheckout = async () => {

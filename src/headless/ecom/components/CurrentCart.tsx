@@ -393,8 +393,6 @@ export interface BuyerNotesRenderProps {
   notes: string;
   /** Function to update buyer notes */
   onNotesChange: (notes: string) => Promise<void>;
-  /** Whether notes are being updated */
-  isLoading: boolean;
   /** Placeholder text for notes field */
   placeholder: string;
 }
@@ -408,12 +406,10 @@ export const BuyerNotes = (props: BuyerNotesProps) => {
   >;
 
   const notes = service.buyerNotes.get();
-  const isLoading = service.isLoading.get();
 
   return props.children({
     notes,
     onNotesChange: service.setBuyerNotes,
-    isLoading,
     placeholder:
       "Special instructions for your order (e.g., gift wrap, delivery notes)",
   });
