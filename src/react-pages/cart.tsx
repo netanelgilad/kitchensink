@@ -154,10 +154,7 @@ const CartContent = () => {
 
                             <div className="space-y-6">
                               {items.map((item: any) => (
-                                <CurrentCart.Item
-                                  key={item._id}
-                                  lineItemId={item._id}
-                                >
+                                <CurrentCart.Item key={item._id} item={item}>
                                   {({
                                     title,
                                     image,
@@ -179,7 +176,8 @@ const CartContent = () => {
                                             width={96}
                                             height={96}
                                             alt={title}
-                                            className="h-24 w-24 rounded-lg object-cover border border-white/20 overflow-hidden"
+                                            displayMode="fill"
+                                            className="h-24 w-24 rounded-lg border border-white/20 overflow-hidden"
                                           />
                                         ) : (
                                           <div className="h-24 w-24 bg-white/10 rounded-lg flex items-center justify-center border border-white/20">
