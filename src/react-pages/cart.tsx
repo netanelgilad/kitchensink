@@ -154,10 +154,7 @@ const CartContent = () => {
 
                             <div className="space-y-6">
                               {items.map((item: any) => (
-                                <CurrentCart.Item
-                                  key={item._id}
-                                  lineItemId={item._id}
-                                >
+                                <CurrentCart.Item key={item._id} item={item}>
                                   {({
                                     title,
                                     image,
