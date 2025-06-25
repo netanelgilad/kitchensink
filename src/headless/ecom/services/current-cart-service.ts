@@ -169,7 +169,6 @@ export const CurrentCartService = implementService.withConfig<{
   const setOrderNotes = async (notes: string) => {
     try {
       orderNotes.set(notes);
-      // Store the notes for later use during checkout
     } catch (err) {
       error.set(
         err instanceof Error ? err.message : "Failed to set order notes"
@@ -182,25 +181,29 @@ export const CurrentCartService = implementService.withConfig<{
       isLoading.set(true);
       error.set(null);
 
+      const notes = orderNotes.get();
+      if (notes) {
+        try {
+          const updatedCart = await currentCart.updateCurrentCart({
+            cartInfo: {
+              buyerNote: notes,
+            },
+          });
+          cart.set(updatedCart || null);
+        } catch (noteError) {
+          console.warn("Failed to add buyer notes to cart:", noteError);
+          // Don't fail the checkout process if notes can't be added
+        }
+      }
+
+      console.log({ cart });
+
       const checkoutResult = await currentCart.createCheckoutFromCurrentCart({
         channelType: checkout.ChannelType.WEB,
       });
 
       if (!checkoutResult.checkoutId) {
         throw new Error("Failed to create checkout");
-      }
-
-      // Add buyer notes to the checkout if they exist
-      const notes = orderNotes.get();
-      if (notes && checkoutResult.checkoutId) {
-        try {
-          await checkout.updateCheckout(checkoutResult.checkoutId, {
-            buyerNote: notes,
-          });
-        } catch (noteError) {
-          console.warn("Failed to add buyer notes to checkout:", noteError);
-          // Don't fail the checkout process if notes can't be added
-        }
       }
 
       const { redirectSession } = await redirects.createRedirectSession({
