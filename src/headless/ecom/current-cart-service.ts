@@ -5,7 +5,7 @@ import {
 } from "@wix/services-definitions";
 import type { ReadOnlySignal } from "@wix/services-definitions";
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
-import type { Signal } from "../../Signal";
+import type { Signal } from "../Signal";
 import { currentCart, checkout } from "@wix/ecom";
 import { redirects } from "@wix/redirects";
 

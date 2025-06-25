@@ -22,7 +22,7 @@ import {
 import {
   CurrentCartServiceDefinition,
   CurrentCartService,
-} from "../../../../headless/store/services/current-cart-service";
+} from "../../../../headless/ecom/current-cart-service";
 import { ProductMediaGallery } from "../../../../headless/store/components/ProductMediaGallery";
 import { ProductVariantSelector } from "../../../../headless/store/components/ProductVariantSelector";
 import { Product } from "../../../../headless/store/components/Product";
@@ -304,14 +304,16 @@ export default function ProductDetailPage({
                     {withDocsWrapper(
                       ({ price, compareAtPrice, isVariantPrice }) => (
                         <div className="space-y-1">
-                        <div className="text-3xl font-bold text-white">
-                          {price}
+                          <div className="text-3xl font-bold text-white">
+                            {price}
                           </div>
-                          {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 && (
-                            <div className="text-lg font-medium text-white/50 line-through">
-                              {compareAtPrice}
-                            </div>
-                          )}
+                          {compareAtPrice &&
+                            parseFloat(compareAtPrice.replace(/[^\d.]/g, "")) >
+                              0 && (
+                              <div className="text-lg font-medium text-white/50 line-through">
+                                {compareAtPrice}
+                              </div>
+                            )}
                         </div>
                       ),
                       "ProductVariantSelector.Price",
@@ -361,7 +363,7 @@ export default function ProductDetailPage({
                             <h3 className="text-lg font-semibold text-white">
                               Product Options
                             </h3>
-                            
+
                             {options.map((option: any) => (
                               <div key={option.name}>
                                 <ProductVariantSelector.Option option={option}>
@@ -395,87 +397,91 @@ export default function ProductDetailPage({
                                                     ({
                                                       value,
                                                       isSelected,
-                                      isAvailable,
+                                                      isAvailable,
                                                       onSelect,
                                                     }) => (
                                                       <>
                                                         {isColorOption &&
                                                         hasColorCode ? (
                                                           // Color Swatch
-                                          <div className="relative">
-                                                          <button
-                                                            onClick={onSelect}
-                                              disabled={!isAvailable}
-                                                            title={value}
-                                                            className={`w-10 h-10 rounded-full border-4 transition-all duration-200 ${
-                                                              isSelected
-                                                                ? "border-blue-400 shadow-lg scale-110 ring-2 ring-blue-500/30"
-                                                  : isAvailable
-                                                  ? "border-white/30 hover:border-white/60 hover:scale-105"
-                                                  : "border-white/10 opacity-50 cursor-not-allowed"
-                                              } ${
-                                                !isAvailable
-                                                  ? "grayscale"
-                                                  : ""
-                                                            }`}
-                                                            style={{
-                                                              backgroundColor:
-                                                                choice.colorCode ||
-                                                                "#000000",
-                                                            }}
-                                                          />
-                                            {!isAvailable && (
-                                              <div className="absolute inset-0 flex items-center justify-center">
-                                                <svg
-                                                  className="w-6 h-6 text-red-400"
-                                                  fill="none"
-                                                  viewBox="0 0 24 24"
-                                                  stroke="currentColor"
-                                                >
-                                                  <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="2"
-                                                    d="M6 18L18 6M6 6l12 12"
-                                                  />
-                                                </svg>
-                                              </div>
-                                            )}
-                                          </div>
+                                                          <div className="relative">
+                                                            <button
+                                                              onClick={onSelect}
+                                                              disabled={
+                                                                !isAvailable
+                                                              }
+                                                              title={value}
+                                                              className={`w-10 h-10 rounded-full border-4 transition-all duration-200 ${
+                                                                isSelected
+                                                                  ? "border-blue-400 shadow-lg scale-110 ring-2 ring-blue-500/30"
+                                                                  : isAvailable
+                                                                  ? "border-white/30 hover:border-white/60 hover:scale-105"
+                                                                  : "border-white/10 opacity-50 cursor-not-allowed"
+                                                              } ${
+                                                                !isAvailable
+                                                                  ? "grayscale"
+                                                                  : ""
+                                                              }`}
+                                                              style={{
+                                                                backgroundColor:
+                                                                  choice.colorCode ||
+                                                                  "#000000",
+                                                              }}
+                                                            />
+                                                            {!isAvailable && (
+                                                              <div className="absolute inset-0 flex items-center justify-center">
+                                                                <svg
+                                                                  className="w-6 h-6 text-red-400"
+                                                                  fill="none"
+                                                                  viewBox="0 0 24 24"
+                                                                  stroke="currentColor"
+                                                                >
+                                                                  <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth="2"
+                                                                    d="M6 18L18 6M6 6l12 12"
+                                                                  />
+                                                                </svg>
+                                                              </div>
+                                                            )}
+                                                          </div>
                                                         ) : (
                                                           // Regular Text Button
-                                          <div className="relative">
-                                                          <button
-                                                            onClick={onSelect}
-                                              disabled={!isAvailable}
-                                                            className={`px-4 py-2 border rounded-lg transition-all duration-200 ${
-                                                              isSelected
-                                                                ? "bg-blue-500/20 border-blue-400/50 text-blue-300"
-                                                  : isAvailable
-                                                  ? "bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
-                                                  : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
-                                                            }`}
-                                                          >
-                                                            {value}
-                                                          </button>
-                                            {!isAvailable && (
-                                              <div className="absolute inset-0 flex items-center justify-center">
-                                                <svg
-                                                  className="w-6 h-6 text-red-400"
-                                                  fill="none"
-                                                  viewBox="0 0 24 24"
-                                                  stroke="currentColor"
-                                                >
-                                                  <path
-                                                    strokeLinecap="round"
-                                                    strokeLinejoin="round"
-                                                    strokeWidth="2"
-                                                    d="M6 18L18 6M6 6l12 12"
-                                                  />
-                                                </svg>
-                                              </div>
-                                            )}
-                                          </div>
+                                                          <div className="relative">
+                                                            <button
+                                                              onClick={onSelect}
+                                                              disabled={
+                                                                !isAvailable
+                                                              }
+                                                              className={`px-4 py-2 border rounded-lg transition-all duration-200 ${
+                                                                isSelected
+                                                                  ? "bg-blue-500/20 border-blue-400/50 text-blue-300"
+                                                                  : isAvailable
+                                                                  ? "bg-white/10 hover:bg-white/20 border-white/20 hover:border-white/30 text-white"
+                                                                  : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
+                                                              }`}
+                                                            >
+                                                              {value}
+                                                            </button>
+                                                            {!isAvailable && (
+                                                              <div className="absolute inset-0 flex items-center justify-center">
+                                                                <svg
+                                                                  className="w-6 h-6 text-red-400"
+                                                                  fill="none"
+                                                                  viewBox="0 0 24 24"
+                                                                  stroke="currentColor"
+                                                                >
+                                                                  <path
+                                                                    strokeLinecap="round"
+                                                                    strokeLinejoin="round"
+                                                                    strokeWidth="2"
+                                                                    d="M6 18L18 6M6 6l12 12"
+                                                                  />
+                                                                </svg>
+                                                              </div>
+                                                            )}
+                                                          </div>
                                                         )}
                                                       </>
                                                     ),
@@ -495,14 +501,17 @@ export default function ProductDetailPage({
                                 </ProductVariantSelector.Option>
                               </div>
                             ))}
-                            
+
                             {/* Reset Button - appears after all options */}
                             {Object.keys(selectedChoices).length > 0 && (
                               <div className="pt-4">
                                 <button
                                   onClick={() => {
                                     // Reset all selections
-                                    const variantService = servicesManager.getService(SelectedVariantServiceDefinition);
+                                    const variantService =
+                                      servicesManager.getService(
+                                        SelectedVariantServiceDefinition
+                                      );
                                     variantService.resetSelections();
                                   }}
                                   className="text-sm text-blue-400 hover:text-blue-300 transition-colors"
