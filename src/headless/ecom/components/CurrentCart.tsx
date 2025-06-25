@@ -393,8 +393,6 @@ export interface NotesRenderProps {
   notes: string;
   /** Function to update notes */
   onNotesChange: (notes: string) => Promise<void>;
-  /** Placeholder text for notes field */
-  placeholder: string;
 }
 
 /**
@@ -410,8 +408,6 @@ export const Notes = (props: NotesProps) => {
   return props.children({
     notes,
     onNotesChange: service.setBuyerNotes,
-    placeholder:
-      "Special instructions for your order (e.g., gift wrap, delivery notes)",
   });
 };
 
