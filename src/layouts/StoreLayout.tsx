@@ -255,7 +255,35 @@ export function StoreLayout({
                       </CurrentCart.Items>
                     </div>
 
-                    <div className="border-t border-white/10 p-6">
+                    <div className="border-t border-white/10 p-6 space-y-4">
+                      {/* Order Notes */}
+                      <CurrentCart.OrderNotes>
+                        {withDocsWrapper(
+                          ({
+                            notes,
+                            onNotesChange,
+                            isLoading,
+                            placeholder,
+                          }) => (
+                            <div>
+                              <label className="block text-xs font-medium text-white/80 mb-2">
+                                Order Notes
+                              </label>
+                              <textarea
+                                value={notes}
+                                onChange={(e) => onNotesChange(e.target.value)}
+                                disabled={isLoading}
+                                placeholder={placeholder}
+                                rows={2}
+                                className="w-full px-2 py-1 text-xs bg-white/10 border border-white/20 rounded text-white placeholder-white/60 focus:border-teal-400 focus:ring-1 focus:ring-teal-400 transition-colors duration-200 resize-vertical disabled:opacity-50"
+                              />
+                            </div>
+                          ),
+                          "CurrentCart.OrderNotes",
+                          "/docs/components/current-cart#order-notes"
+                        )}
+                      </CurrentCart.OrderNotes>
+
                       <CurrentCart.Summary>
                         {withDocsWrapper(
                           ({ subtotal, itemCount }) => (

@@ -15,6 +15,7 @@ export interface CurrentCartServiceAPI {
   isLoading: Signal<boolean>;
   error: Signal<string | null>;
   cartCount: ReadOnlySignal<number>;
+  orderNotes: Signal<string>;
 
   addToCart: (
     lineItems: currentCart.AddToCurrentCartRequest["lineItems"]
@@ -29,6 +30,7 @@ export interface CurrentCartServiceAPI {
   openCart: () => void;
   closeCart: () => void;
   clearCart: () => Promise<void>;
+  setOrderNotes: (notes: string) => Promise<void>;
   proceedToCheckout: () => Promise<void>;
 }
 
@@ -46,6 +48,7 @@ export const CurrentCartService = implementService.withConfig<{
   const isOpen: Signal<boolean> = signalsService.signal(false as any);
   const isLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
+  const orderNotes: Signal<string> = signalsService.signal("" as any);
 
   const cartCount: ReadOnlySignal<number> = signalsService.computed(() => {
     const currentCart = cart.get();
@@ -163,6 +166,17 @@ export const CurrentCartService = implementService.withConfig<{
     }
   };
 
+  const setOrderNotes = async (notes: string) => {
+    try {
+      orderNotes.set(notes);
+      // Store the notes for later use during checkout
+    } catch (err) {
+      error.set(
+        err instanceof Error ? err.message : "Failed to set order notes"
+      );
+    }
+  };
+
   const proceedToCheckout = async () => {
     try {
       isLoading.set(true);
@@ -174,6 +188,19 @@ export const CurrentCartService = implementService.withConfig<{
 
       if (!checkoutResult.checkoutId) {
         throw new Error("Failed to create checkout");
+      }
+
+      // Add buyer notes to the checkout if they exist
+      const notes = orderNotes.get();
+      if (notes && checkoutResult.checkoutId) {
+        try {
+          await checkout.updateCheckout(checkoutResult.checkoutId, {
+            buyerNote: notes,
+          });
+        } catch (noteError) {
+          console.warn("Failed to add buyer notes to checkout:", noteError);
+          // Don't fail the checkout process if notes can't be added
+        }
       }
 
       const { redirectSession } = await redirects.createRedirectSession({
@@ -203,6 +230,7 @@ export const CurrentCartService = implementService.withConfig<{
     cartCount,
     isLoading,
     error,
+    orderNotes,
     addToCart,
     removeLineItem,
     updateLineItemQuantity,
@@ -211,6 +239,7 @@ export const CurrentCartService = implementService.withConfig<{
     openCart,
     closeCart,
     clearCart,
+    setOrderNotes,
     proceedToCheckout,
   };
 });

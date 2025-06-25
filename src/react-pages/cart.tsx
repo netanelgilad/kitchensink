@@ -292,6 +292,38 @@ const CartContent = () => {
                               Order Summary
                             </h2>
 
+                            {/* Order Notes */}
+                            <div className="mb-6">
+                              <CurrentCart.OrderNotes>
+                                {({
+                                  notes,
+                                  onNotesChange,
+                                  isLoading,
+                                  placeholder,
+                                }) => (
+                                  <div>
+                                    <label className="block text-sm font-medium text-white mb-2">
+                                      Order Notes
+                                    </label>
+                                    <textarea
+                                      value={notes}
+                                      onChange={(e) =>
+                                        onNotesChange(e.target.value)
+                                      }
+                                      disabled={isLoading}
+                                      placeholder={placeholder}
+                                      rows={3}
+                                      className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-colors duration-200 resize-vertical disabled:opacity-50"
+                                    />
+                                    <p className="text-xs text-white/60 mt-1">
+                                      Optional: Add special instructions for
+                                      your order
+                                    </p>
+                                  </div>
+                                )}
+                              </CurrentCart.OrderNotes>
+                            </div>
+
                             <CurrentCart.Summary>
                               {({
                                 subtotal,

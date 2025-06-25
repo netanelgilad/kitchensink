@@ -377,6 +377,48 @@ export const Checkout = (props: CheckoutProps) => {
   });
 };
 
+/**
+ * Props for OrderNotes headless component
+ */
+export interface OrderNotesProps {
+  /** Render prop function that receives order notes data */
+  children: (props: OrderNotesRenderProps) => React.ReactNode;
+}
+
+/**
+ * Render props for OrderNotes component
+ */
+export interface OrderNotesRenderProps {
+  /** Current order notes value */
+  notes: string;
+  /** Function to update order notes */
+  onNotesChange: (notes: string) => Promise<void>;
+  /** Whether notes are being updated */
+  isLoading: boolean;
+  /** Placeholder text for notes field */
+  placeholder: string;
+}
+
+/**
+ * Headless component for order notes
+ */
+export const OrderNotes = (props: OrderNotesProps) => {
+  const service = useService(CurrentCartServiceDefinition) as ServiceAPI<
+    typeof CurrentCartServiceDefinition
+  >;
+
+  const notes = service.orderNotes.get();
+  const isLoading = service.isLoading.get();
+
+  return props.children({
+    notes,
+    onNotesChange: service.setOrderNotes,
+    isLoading,
+    placeholder:
+      "Special instructions for your order (e.g., gift wrap, delivery notes)",
+  });
+};
+
 export const CurrentCart = {
   Trigger,
   Content,
@@ -385,4 +427,5 @@ export const CurrentCart = {
   Summary,
   Checkout,
   Clear,
+  OrderNotes,
 } as const;
