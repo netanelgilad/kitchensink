@@ -189,14 +189,11 @@ export const CurrentCartService = implementService.withConfig<{
               buyerNote: notes,
             },
           });
-          cart.set(updatedCart || null);
+          cart.set(updatedCart);
         } catch (noteError) {
           console.warn("Failed to add buyer notes to cart:", noteError);
-          // Don't fail the checkout process if notes can't be added
         }
       }
-
-      console.log({ cart });
 
       const checkoutResult = await currentCart.createCheckoutFromCurrentCart({
         channelType: checkout.ChannelType.WEB,
