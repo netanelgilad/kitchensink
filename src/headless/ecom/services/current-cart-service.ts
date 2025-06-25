@@ -15,7 +15,7 @@ export interface CurrentCartServiceAPI {
   isLoading: Signal<boolean>;
   error: Signal<string | null>;
   cartCount: ReadOnlySignal<number>;
-  orderNotes: Signal<string>;
+  buyerNotes: Signal<string>;
 
   addToCart: (
     lineItems: currentCart.AddToCurrentCartRequest["lineItems"]
@@ -30,7 +30,7 @@ export interface CurrentCartServiceAPI {
   openCart: () => void;
   closeCart: () => void;
   clearCart: () => Promise<void>;
-  setOrderNotes: (notes: string) => Promise<void>;
+  setBuyerNotes: (notes: string) => Promise<void>;
   proceedToCheckout: () => Promise<void>;
 }
 
@@ -48,7 +48,7 @@ export const CurrentCartService = implementService.withConfig<{
   const isOpen: Signal<boolean> = signalsService.signal(false as any);
   const isLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
-  const orderNotes: Signal<string> = signalsService.signal("" as any);
+  const buyerNotes: Signal<string> = signalsService.signal("" as any);
 
   const cartCount: ReadOnlySignal<number> = signalsService.computed(() => {
     const currentCart = cart.get();
@@ -166,12 +166,12 @@ export const CurrentCartService = implementService.withConfig<{
     }
   };
 
-  const setOrderNotes = async (notes: string) => {
+  const setBuyerNotes = async (notes: string) => {
     try {
-      orderNotes.set(notes);
+      buyerNotes.set(notes);
     } catch (err) {
       error.set(
-        err instanceof Error ? err.message : "Failed to set order notes"
+        err instanceof Error ? err.message : "Failed to set buyer notes"
       );
     }
   };
@@ -181,7 +181,7 @@ export const CurrentCartService = implementService.withConfig<{
       isLoading.set(true);
       error.set(null);
 
-      const notes = orderNotes.get();
+      const notes = buyerNotes.get();
       if (notes) {
         try {
           const updatedCart = await currentCart.updateCurrentCart({
@@ -230,7 +230,7 @@ export const CurrentCartService = implementService.withConfig<{
     cartCount,
     isLoading,
     error,
-    orderNotes,
+    buyerNotes,
     addToCart,
     removeLineItem,
     updateLineItemQuantity,
@@ -239,7 +239,7 @@ export const CurrentCartService = implementService.withConfig<{
     openCart,
     closeCart,
     clearCart,
-    setOrderNotes,
+    setBuyerNotes,
     proceedToCheckout,
   };
 });

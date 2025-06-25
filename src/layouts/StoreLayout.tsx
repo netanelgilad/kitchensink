@@ -257,7 +257,7 @@ export function StoreLayout({
 
                     <div className="border-t border-white/10 p-6 space-y-4">
                       {/* Order Notes */}
-                      <CurrentCart.OrderNotes>
+                      <CurrentCart.BuyerNotes>
                         {withDocsWrapper(
                           ({
                             notes,
@@ -267,7 +267,7 @@ export function StoreLayout({
                           }) => (
                             <div>
                               <label className="block text-xs font-medium text-white/80 mb-2">
-                                Order Notes
+                                Buyer Notes
                               </label>
                               <textarea
                                 value={notes}
@@ -279,10 +279,10 @@ export function StoreLayout({
                               />
                             </div>
                           ),
-                          "CurrentCart.OrderNotes",
-                          "/docs/components/current-cart#order-notes"
+                          "CurrentCart.BuyerNotes",
+                          "/docs/components/current-cart#buyer-notes"
                         )}
-                      </CurrentCart.OrderNotes>
+                      </CurrentCart.BuyerNotes>
 
                       <CurrentCart.Summary>
                         {withDocsWrapper(

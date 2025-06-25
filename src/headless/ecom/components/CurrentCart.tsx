@@ -378,20 +378,20 @@ export const Checkout = (props: CheckoutProps) => {
 };
 
 /**
- * Props for OrderNotes headless component
+ * Props for BuyerNotes headless component
  */
-export interface OrderNotesProps {
-  /** Render prop function that receives order notes data */
-  children: (props: OrderNotesRenderProps) => React.ReactNode;
+export interface BuyerNotesProps {
+  /** Render prop function that receives buyer notes data */
+  children: (props: BuyerNotesRenderProps) => React.ReactNode;
 }
 
 /**
- * Render props for OrderNotes component
+ * Render props for BuyerNotes component
  */
-export interface OrderNotesRenderProps {
-  /** Current order notes value */
+export interface BuyerNotesRenderProps {
+  /** Current buyer notes value */
   notes: string;
-  /** Function to update order notes */
+  /** Function to update buyer notes */
   onNotesChange: (notes: string) => Promise<void>;
   /** Whether notes are being updated */
   isLoading: boolean;
@@ -400,19 +400,19 @@ export interface OrderNotesRenderProps {
 }
 
 /**
- * Headless component for order notes
+ * Headless component for buyer notes
  */
-export const OrderNotes = (props: OrderNotesProps) => {
+export const BuyerNotes = (props: BuyerNotesProps) => {
   const service = useService(CurrentCartServiceDefinition) as ServiceAPI<
     typeof CurrentCartServiceDefinition
   >;
 
-  const notes = service.orderNotes.get();
+  const notes = service.buyerNotes.get();
   const isLoading = service.isLoading.get();
 
   return props.children({
     notes,
-    onNotesChange: service.setOrderNotes,
+    onNotesChange: service.setBuyerNotes,
     isLoading,
     placeholder:
       "Special instructions for your order (e.g., gift wrap, delivery notes)",
@@ -427,5 +427,5 @@ export const CurrentCart = {
   Summary,
   Checkout,
   Clear,
-  OrderNotes,
+  BuyerNotes,
 } as const;

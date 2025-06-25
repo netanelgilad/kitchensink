@@ -294,7 +294,7 @@ const CartContent = () => {
 
                             {/* Order Notes */}
                             <div className="mb-6">
-                              <CurrentCart.OrderNotes>
+                              <CurrentCart.BuyerNotes>
                                 {({
                                   notes,
                                   onNotesChange,
@@ -303,7 +303,7 @@ const CartContent = () => {
                                 }) => (
                                   <div>
                                     <label className="block text-sm font-medium text-white mb-2">
-                                      Order Notes
+                                      Buyer Notes
                                     </label>
                                     <textarea
                                       value={notes}
@@ -321,7 +321,7 @@ const CartContent = () => {
                                     </p>
                                   </div>
                                 )}
-                              </CurrentCart.OrderNotes>
+                              </CurrentCart.BuyerNotes>
                             </div>
 
                             <CurrentCart.Summary>
