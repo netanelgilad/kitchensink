@@ -18,7 +18,7 @@ import {
 import {
   CurrentCartServiceDefinition,
   CurrentCartService,
-} from "../../../../headless/store/services/current-cart-service";
+} from "../../../../headless/ecom/services/current-cart-service";
 import {
   ProductMediaGalleryServiceDefinition,
   ProductMediaGalleryService,
@@ -40,7 +40,7 @@ import {
 import { Product } from "../../../../headless/store/components/Product";
 import { ProductVariantSelector } from "../../../../headless/store/components/ProductVariantSelector";
 import { ProductMediaGallery } from "../../../../headless/store/components/ProductMediaGallery";
-import { CurrentCart } from "../../../../headless/store/components/CurrentCart";
+import { CurrentCart } from "../../../../headless/ecom/components/CurrentCart";
 import { SocialSharing } from "../../../../headless/store/components/SocialSharing";
 import { RelatedProducts } from "../../../../headless/store/components/RelatedProducts";
 import WixMediaImage from "../../../../headless/media/components/Image";
@@ -221,11 +221,19 @@ const ProductImageGallery = () => {
   );
 };
 
-const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void; servicesManager: any }) => {
+const ProductInfo = ({
+  onAddToCart,
+  servicesManager,
+}: {
+  onAddToCart: () => void;
+  servicesManager: any;
+}) => {
   const [quantity, setQuantity] = useState(1);
-  
+
   // Get access to variant service for reset functionality
-  const variantService = useService(SelectedVariantServiceDefinition) as ServiceAPI<typeof SelectedVariantServiceDefinition>;
+  const variantService = useService(
+    SelectedVariantServiceDefinition
+  ) as ServiceAPI<typeof SelectedVariantServiceDefinition>;
 
   return (
     <div className="space-y-6">
@@ -273,11 +281,12 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
           ({ price, compareAtPrice, isVariantPrice, currency }) => (
             <div className="space-y-1">
               <div className="text-3xl font-bold text-white">{price}</div>
-              {compareAtPrice && parseFloat(compareAtPrice.replace(/[^\d.]/g, '')) > 0 && (
-                <div className="text-lg font-medium text-white/50 line-through">
-                  {compareAtPrice}
-              </div>
-              )}
+              {compareAtPrice &&
+                parseFloat(compareAtPrice.replace(/[^\d.]/g, "")) > 0 && (
+                  <div className="text-lg font-medium text-white/50 line-through">
+                    {compareAtPrice}
+                  </div>
+                )}
               {currency && (
                 <p className="text-white/60 text-sm">Currency: {currency}</p>
               )}
@@ -362,9 +371,9 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
             <>
               {hasOptions && (
                 <div className="space-y-4">
-                    <h3 className="text-lg font-semibold text-white">
-                      Product Options
-                    </h3>
+                  <h3 className="text-lg font-semibold text-white">
+                    Product Options
+                  </h3>
 
                   {options.map((option: any) => (
                     <ProductVariantSelector.Option
@@ -411,27 +420,27 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
                                                 hasColorCode ? (
                                                   // Color Swatch
                                                   <div className="relative">
-                                                  <button
-                                                    onClick={onSelect}
-                                                    disabled={!isAvailable}
-                                                    title={value}
-                                                    className={`w-10 h-10 rounded-full border-4 transition-all duration-200 ${
-                                                      isSelected
-                                                        ? "border-teal-400 shadow-lg scale-110 ring-2 ring-teal-500/30"
-                                                        : isAvailable
-                                                        ? "border-white/30 hover:border-white/60 hover:scale-105"
-                                                        : "border-white/10 opacity-50 cursor-not-allowed"
-                                                    } ${
-                                                      !isAvailable
-                                                        ? "grayscale"
-                                                        : ""
-                                                    }`}
-                                                    style={{
-                                                      backgroundColor:
-                                                        choice.colorCode ||
-                                                        "#000000",
-                                                    }}
-                                                  />
+                                                    <button
+                                                      onClick={onSelect}
+                                                      disabled={!isAvailable}
+                                                      title={value}
+                                                      className={`w-10 h-10 rounded-full border-4 transition-all duration-200 ${
+                                                        isSelected
+                                                          ? "border-teal-400 shadow-lg scale-110 ring-2 ring-teal-500/30"
+                                                          : isAvailable
+                                                          ? "border-white/30 hover:border-white/60 hover:scale-105"
+                                                          : "border-white/10 opacity-50 cursor-not-allowed"
+                                                      } ${
+                                                        !isAvailable
+                                                          ? "grayscale"
+                                                          : ""
+                                                      }`}
+                                                      style={{
+                                                        backgroundColor:
+                                                          choice.colorCode ||
+                                                          "#000000",
+                                                      }}
+                                                    />
                                                     {!isAvailable && (
                                                       <div className="absolute inset-0 flex items-center justify-center">
                                                         <svg
@@ -453,18 +462,18 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
                                                 ) : (
                                                   // Regular Text Button
                                                   <div className="relative">
-                                                  <button
-                                                    onClick={onSelect}
-                                                    disabled={!isAvailable}
-                                                    className={`px-4 py-2 rounded-lg border transition-all ${
-                                                      isSelected
-                                                        ? "bg-teal-500 border-teal-500 text-white ring-2 ring-teal-500/30"
-                                                        : isAvailable
-                                                        ? "bg-white/5 border-white/20 text-white hover:border-white/40 hover:bg-white/10"
+                                                    <button
+                                                      onClick={onSelect}
+                                                      disabled={!isAvailable}
+                                                      className={`px-4 py-2 rounded-lg border transition-all ${
+                                                        isSelected
+                                                          ? "bg-teal-500 border-teal-500 text-white ring-2 ring-teal-500/30"
+                                                          : isAvailable
+                                                          ? "bg-white/5 border-white/20 text-white hover:border-white/40 hover:bg-white/10"
                                                           : "bg-white/5 border-white/10 text-white/30 cursor-not-allowed"
-                                                    }`}
-                                                  >
-                                                    {value}
+                                                      }`}
+                                                    >
+                                                      {value}
                                                     </button>
                                                     {!isAvailable && (
                                                       <div className="absolute inset-0 flex items-center justify-center">
@@ -504,7 +513,7 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
                       )}
                     </ProductVariantSelector.Option>
                   ))}
-                  
+
                   {/* Reset Button - appears after all options */}
                   {variantService.hasAnySelections() && (
                     <div className="pt-2">
@@ -609,12 +618,14 @@ const ProductInfo = ({ onAddToCart, servicesManager }: { onAddToCart: () => void
                     onClick={async () => {
                       // Clear cart first, then add this product and proceed to checkout
                       try {
-                        const cartService = servicesManager.getService(CurrentCartServiceDefinition);
+                        const cartService = servicesManager.getService(
+                          CurrentCartServiceDefinition
+                        );
                         await cartService.clearCart();
-                      await onAddToCart();
+                        await onAddToCart();
                         await cartService.proceedToCheckout();
                       } catch (error) {
-                        console.error('Buy now failed:', error);
+                        console.error("Buy now failed:", error);
                         // Fallback to cart page if checkout fails
                         window.location.href = "/cart";
                       }
