@@ -1,6 +1,6 @@
 import type { ServiceAPI } from "@wix/services-definitions";
 import { useService } from "@wix/services-manager-react";
-import { CurrentCartServiceDefinition } from "../../ecom/current-cart-service";
+import { CurrentCartServiceDefinition } from "../../ecom/services/current-cart-service";
 import { currentCart } from "@wix/ecom";
 import { media } from "@wix/sdk";
 

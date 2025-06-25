@@ -22,7 +22,7 @@ import {
 import {
   CurrentCartServiceDefinition,
   CurrentCartService,
-} from "../../../../headless/ecom/current-cart-service";
+} from "../../../../headless/ecom/services/current-cart-service";
 import { ProductMediaGallery } from "../../../../headless/store/components/ProductMediaGallery";
 import { ProductVariantSelector } from "../../../../headless/store/components/ProductVariantSelector";
 import { Product } from "../../../../headless/store/components/Product";

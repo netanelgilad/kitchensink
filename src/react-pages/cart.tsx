@@ -7,7 +7,7 @@ import { ServicesManagerProvider } from "@wix/services-manager-react";
 import {
   CurrentCartServiceDefinition,
   CurrentCartService,
-} from "../headless/ecom/current-cart-service";
+} from "../headless/ecom/services/current-cart-service";
 import { CurrentCart } from "../headless/store/components/CurrentCart";
 import { KitchensinkLayout } from "../layouts/KitchensinkLayout";
 import WixMediaImage from "../headless/media/components/Image";

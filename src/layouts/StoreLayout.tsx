@@ -7,7 +7,7 @@ import {
 import {
   CurrentCartServiceDefinition,
   CurrentCartService,
-} from "../headless/ecom/current-cart-service";
+} from "../headless/ecom/services/current-cart-service";
 import { CurrentCart } from "../headless/store/components/CurrentCart";
 import { withDocsWrapper } from "../components/DocsMode";
 import WixMediaImage from "../headless/media/components/Image";

@@ -18,7 +18,7 @@ import {
 import {
   CurrentCartServiceDefinition,
   CurrentCartService,
-} from "../../../../headless/ecom/current-cart-service";
+} from "../../../../headless/ecom/services/current-cart-service";
 import {
   ProductMediaGalleryServiceDefinition,
   ProductMediaGalleryService,
