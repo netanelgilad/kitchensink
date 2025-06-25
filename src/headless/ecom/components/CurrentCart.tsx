@@ -378,29 +378,29 @@ export const Checkout = (props: CheckoutProps) => {
 };
 
 /**
- * Props for BuyerNotes headless component
+ * Props for Notes headless component
  */
-export interface BuyerNotesProps {
-  /** Render prop function that receives buyer notes data */
-  children: (props: BuyerNotesRenderProps) => React.ReactNode;
+export interface NotesProps {
+  /** Render prop function that receives notes data */
+  children: (props: NotesRenderProps) => React.ReactNode;
 }
 
 /**
- * Render props for BuyerNotes component
+ * Render props for Notes component
  */
-export interface BuyerNotesRenderProps {
-  /** Current buyer notes value */
+export interface NotesRenderProps {
+  /** Current notes value */
   notes: string;
-  /** Function to update buyer notes */
+  /** Function to update notes */
   onNotesChange: (notes: string) => Promise<void>;
   /** Placeholder text for notes field */
   placeholder: string;
 }
 
 /**
- * Headless component for buyer notes
+ * Headless component for notes
  */
-export const BuyerNotes = (props: BuyerNotesProps) => {
+export const Notes = (props: NotesProps) => {
   const service = useService(CurrentCartServiceDefinition) as ServiceAPI<
     typeof CurrentCartServiceDefinition
   >;
@@ -423,5 +423,5 @@ export const CurrentCart = {
   Summary,
   Checkout,
   Clear,
-  BuyerNotes,
+  Notes,
 } as const;

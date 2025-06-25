@@ -257,7 +257,7 @@ export function StoreLayout({
 
                     <div className="border-t border-white/10 p-6 space-y-4">
                       {/* Order Notes */}
-                      <CurrentCart.BuyerNotes>
+                      <CurrentCart.Notes>
                         {withDocsWrapper(
                           ({ notes, onNotesChange, placeholder }) => (
                             <div>
@@ -273,10 +273,10 @@ export function StoreLayout({
                               />
                             </div>
                           ),
-                          "CurrentCart.BuyerNotes",
-                          "/docs/components/current-cart#buyer-notes"
+                          "CurrentCart.Notes",
+                          "/docs/components/current-cart#notes"
                         )}
-                      </CurrentCart.BuyerNotes>
+                      </CurrentCart.Notes>
 
                       <CurrentCart.Summary>
                         {withDocsWrapper(
