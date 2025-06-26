@@ -194,31 +194,19 @@ export function StoreLayout({
                                                   <div className="flex flex-wrap gap-1">
                                                     {selectedOptions.map(
                                                       (option, index) => {
-                                                        const isColorOption =
+                                                        const isColor =
                                                           typeof option.value ===
-                                                            "object" &&
-                                                          option.value !==
-                                                            null &&
-                                                          "code" in
-                                                            option.value;
-                                                        const displayText =
-                                                          isColorOption
-                                                            ? (
-                                                                option.value as {
-                                                                  name: string;
-                                                                  code: string;
-                                                                }
-                                                              ).name
-                                                            : (option.value as string);
-                                                        const colorCode =
-                                                          isColorOption
-                                                            ? (
-                                                                option.value as {
-                                                                  name: string;
-                                                                  code: string;
-                                                                }
-                                                              ).code
-                                                            : undefined;
+                                                          "object";
+                                                        const text = isColor
+                                                          ? (
+                                                              option.value as any
+                                                            ).name
+                                                          : option.value;
+                                                        const color = isColor
+                                                          ? (
+                                                              option.value as any
+                                                            ).code
+                                                          : null;
 
                                                         return (
                                                           <div
@@ -229,20 +217,18 @@ export function StoreLayout({
                                                               {option.name}:
                                                             </span>
                                                             <div className="flex items-center gap-1">
-                                                              {colorCode && (
+                                                              {color && (
                                                                 <div
                                                                   className="w-3 h-3 rounded-full border border-white/30"
                                                                   style={{
                                                                     backgroundColor:
-                                                                      colorCode,
+                                                                      color,
                                                                   }}
-                                                                  title={
-                                                                    displayText
-                                                                  }
+                                                                  title={text}
                                                                 />
                                                               )}
                                                               <span className="font-medium">
-                                                                {displayText}
+                                                                {text}
                                                               </span>
                                                             </div>
                                                             {index <
