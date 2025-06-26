@@ -169,6 +169,10 @@ export interface ItemRenderProps {
   image: string | null;
   /** Line item price */
   price: string;
+  /** Variant information (e.g., size, color) */
+  variantInfo: Array<{ name: string; value: string; colorCode?: string }>;
+  /** Whether this item has variant selections */
+  hasVariants: boolean;
   /** Function to increase quantity */
   onIncrease: () => Promise<void>;
   /** Function to decrease quantity */
@@ -199,6 +203,8 @@ export const Item = (props: ItemProps) => {
       title: "",
       image: null,
       price: formatCurrency(0, currency),
+      variantInfo: [],
+      hasVariants: false,
       onIncrease: async () => {},
       onDecrease: async () => {},
       onRemove: async () => {},
@@ -215,6 +221,32 @@ export const Item = (props: ItemProps) => {
       console.warn("Failed to get image URL:", error);
       image = null;
     }
+  }
+
+  // Extract variant information from description lines
+  const variantInfo: Array<{
+    name: string;
+    value: string;
+    colorCode?: string;
+  }> = [];
+
+  if (item.descriptionLines) {
+    item.descriptionLines.forEach((line: any) => {
+      if (line.name?.original) {
+        const variantData: { name: string; value: string; colorCode?: string } =
+          {
+            name: line.name.original,
+            value: line.plainText?.original || line.colorInfo?.original || "",
+          };
+
+        // Add color code if it's a color variant
+        if (line.colorInfo?.code) {
+          variantData.colorCode = line.colorInfo.code;
+        }
+
+        variantInfo.push(variantData);
+      }
+    });
   }
 
   // Calculate total price for this line item (unit price × quantity)
@@ -234,6 +266,8 @@ export const Item = (props: ItemProps) => {
     title: item.productName?.original || "",
     image,
     price: formattedPrice,
+    variantInfo,
+    hasVariants: variantInfo.length > 0,
     onIncrease: () => service.increaseLineItemQuantity(lineItemId),
     onDecrease: () => service.decreaseLineItemQuantity(lineItemId),
     onRemove: () => service.removeLineItem(lineItemId),

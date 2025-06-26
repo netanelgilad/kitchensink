@@ -165,6 +165,8 @@ export function StoreLayout({
                                           image,
                                           price,
                                           quantity,
+                                          variantInfo,
+                                          hasVariants,
                                           onIncrease,
                                           onDecrease,
                                           onRemove,
@@ -186,6 +188,51 @@ export function StoreLayout({
                                               <h3 className="text-white font-medium text-sm truncate">
                                                 {title}
                                               </h3>
+
+                                              {/* Variant Information */}
+                                              {hasVariants && (
+                                                <div className="mt-1 mb-2">
+                                                  <div className="flex flex-wrap gap-1">
+                                                    {variantInfo.map(
+                                                      (variant, index) => (
+                                                        <div
+                                                          key={index}
+                                                          className="flex items-center gap-1 text-xs text-white/70"
+                                                        >
+                                                          <span>
+                                                            {variant.name}:
+                                                          </span>
+                                                          <div className="flex items-center gap-1">
+                                                            {variant.colorCode && (
+                                                              <div
+                                                                className="w-3 h-3 rounded-full border border-white/30"
+                                                                style={{
+                                                                  backgroundColor:
+                                                                    variant.colorCode,
+                                                                }}
+                                                                title={
+                                                                  variant.value
+                                                                }
+                                                              />
+                                                            )}
+                                                            <span className="font-medium">
+                                                              {variant.value}
+                                                            </span>
+                                                          </div>
+                                                          {index <
+                                                            variantInfo.length -
+                                                              1 && (
+                                                            <span className="text-white/40">
+                                                              ,
+                                                            </span>
+                                                          )}
+                                                        </div>
+                                                      )
+                                                    )}
+                                                  </div>
+                                                </div>
+                                              )}
+
                                               <p className="text-teal-400 font-semibold text-sm mt-1">
                                                 {price}
                                               </p>
