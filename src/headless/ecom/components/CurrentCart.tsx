@@ -20,6 +20,26 @@ function formatCurrency(amount: number, currencyCode: string): string {
 }
 
 /**
+ * Helper function to parse amount from string
+ */
+function parseAmount(amount?: string): number {
+  return parseFloat(amount || "0");
+}
+
+/**
+ * Helper function to calculate manual totals from cart items
+ */
+function calculateManualSubtotal(cart: any): number {
+  return (
+    cart?.lineItems?.reduce((acc: number, item: any) => {
+      const itemPrice = parseAmount(item.price?.amount);
+      const quantity = item.quantity || 0;
+      return acc + itemPrice * quantity;
+    }, 0) || 0
+  );
+}
+
+/**
  * Props for Trigger headless component
  */
 export interface TriggerProps {
@@ -316,49 +336,24 @@ export const Summary = (props: SummaryProps) => {
   const cart = service.cart.get();
   const itemCount = service.cartCount.get();
   const cartTotals = service.cartTotals.get();
-
-  // Get totals from SDK if available, otherwise fallback to manual calculation
-  let subtotalAmount = 0;
-  let shippingAmount = 0;
-  let taxAmount = 0;
-  let totalAmount = 0;
-
-  if (cartTotals?.priceSummary) {
-    // Use SDK totals
-    subtotalAmount = parseFloat(
-      cartTotals.priceSummary.subtotal?.amount || "0"
-    );
-    shippingAmount = parseFloat(
-      cartTotals.priceSummary.shipping?.amount || "0"
-    );
-    taxAmount = parseFloat(cartTotals.priceSummary.tax?.amount || "0");
-    totalAmount = parseFloat(cartTotals.priceSummary.total?.amount || "0");
-  } else {
-    // Fallback to manual calculation
-    subtotalAmount =
-      cart?.lineItems?.reduce((acc: number, item: any) => {
-        const itemPrice = parseFloat(item.price?.amount || "0");
-        const quantity = item.quantity || 0;
-        return acc + itemPrice * quantity;
-      }, 0) || 0;
-
-    // For now, shipping and tax are $0 in fallback mode
-    shippingAmount = 0;
-    taxAmount = 0;
-    totalAmount = subtotalAmount + shippingAmount + taxAmount;
-  }
-
   const currency = cart?.currency || cartTotals?.currency || "USD";
-  const subtotal = formatCurrency(subtotalAmount, currency);
-  const shipping = formatCurrency(shippingAmount, currency);
-  const tax = formatCurrency(taxAmount, currency);
-  const total = formatCurrency(totalAmount, currency);
+
+  // Use SDK totals if available, otherwise fallback to manual calculation
+  const priceSummary = cartTotals?.priceSummary;
+  const subtotalAmount = priceSummary
+    ? parseAmount(priceSummary.subtotal?.amount)
+    : calculateManualSubtotal(cart);
+  const shippingAmount = parseAmount(priceSummary?.shipping?.amount);
+  const taxAmount = parseAmount(priceSummary?.tax?.amount);
+  const totalAmount = priceSummary
+    ? parseAmount(priceSummary.total?.amount)
+    : subtotalAmount; // Fallback: total = subtotal when no SDK totals
 
   return props.children({
-    subtotal,
-    shipping,
-    tax,
-    total,
+    subtotal: formatCurrency(subtotalAmount, currency),
+    shipping: formatCurrency(shippingAmount, currency),
+    tax: formatCurrency(taxAmount, currency),
+    total: formatCurrency(totalAmount, currency),
     currency,
     itemCount,
     canCheckout: itemCount > 0,

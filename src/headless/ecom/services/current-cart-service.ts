@@ -9,6 +9,16 @@ import type { Signal } from "../../Signal";
 import { currentCart, checkout } from "@wix/ecom";
 import { redirects } from "@wix/redirects";
 
+interface CartTotals {
+  priceSummary?: {
+    subtotal?: { amount?: string };
+    shipping?: { amount?: string };
+    tax?: { amount?: string };
+    total?: { amount?: string };
+  };
+  currency?: string;
+}
+
 export interface CurrentCartServiceAPI {
   cart: Signal<currentCart.Cart | null>;
   isOpen: Signal<boolean>;
@@ -16,7 +26,7 @@ export interface CurrentCartServiceAPI {
   error: Signal<string | null>;
   cartCount: ReadOnlySignal<number>;
   buyerNotes: Signal<string>;
-  cartTotals: Signal<any | null>;
+  cartTotals: Signal<CartTotals | null>;
 
   addToCart: (
     lineItems: currentCart.AddToCurrentCartRequest["lineItems"]
@@ -33,7 +43,6 @@ export interface CurrentCartServiceAPI {
   clearCart: () => Promise<void>;
   setBuyerNotes: (notes: string) => Promise<void>;
   proceedToCheckout: () => Promise<void>;
-  estimateTotals: () => Promise<void>;
 }
 
 export const CurrentCartServiceDefinition =
@@ -51,7 +60,9 @@ export const CurrentCartService = implementService.withConfig<{
   const isLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
   const buyerNotes: Signal<string> = signalsService.signal("" as any);
-  const cartTotals: Signal<any | null> = signalsService.signal(null as any);
+  const cartTotals: Signal<CartTotals | null> = signalsService.signal(
+    null as any
+  );
 
   const cartCount: ReadOnlySignal<number> = signalsService.computed(() => {
     const currentCart = cart.get();
@@ -61,6 +72,27 @@ export const CurrentCartService = implementService.withConfig<{
       0
     );
   });
+
+  const estimateTotals = async () => {
+    try {
+      const totalsResponse = await currentCart.estimateCurrentCartTotals();
+      cartTotals.set(totalsResponse || null);
+    } catch (err) {
+      console.warn("Failed to estimate cart totals:", err);
+      cartTotals.set(null);
+    }
+  };
+
+  const updateCartAndEstimateTotals = async (
+    updatedCart: currentCart.Cart | null
+  ) => {
+    cart.set(updatedCart || null);
+    if (updatedCart?.lineItems?.length) {
+      await estimateTotals();
+    } else {
+      cartTotals.set(null);
+    }
+  };
 
   const addToCart = async (
     lineItems: currentCart.AddToCurrentCartRequest["lineItems"]
@@ -72,12 +104,7 @@ export const CurrentCartService = implementService.withConfig<{
       const { cart: updatedCart } = await currentCart.addToCurrentCart({
         lineItems,
       });
-      cart.set(updatedCart || null);
-
-      // Estimate totals after cart update
-      if (updatedCart) {
-        await estimateTotals();
-      }
+      await updateCartAndEstimateTotals(updatedCart || null);
     } catch (err) {
       error.set(err instanceof Error ? err.message : "Failed to add to cart");
     } finally {
@@ -92,12 +119,7 @@ export const CurrentCartService = implementService.withConfig<{
 
       const { cart: updatedCart } =
         await currentCart.removeLineItemsFromCurrentCart([lineItemId]);
-      cart.set(updatedCart || null);
-
-      // Estimate totals after cart update
-      if (updatedCart) {
-        await estimateTotals();
-      }
+      await updateCartAndEstimateTotals(updatedCart || null);
     } catch (err) {
       error.set(err instanceof Error ? err.message : "Failed to remove item");
     } finally {
@@ -120,12 +142,7 @@ export const CurrentCartService = implementService.withConfig<{
             quantity,
           },
         ]);
-      cart.set(updatedCart || null);
-
-      // Estimate totals after cart update
-      if (updatedCart) {
-        await estimateTotals();
-      }
+      await updateCartAndEstimateTotals(updatedCart || null);
     } catch (err) {
       error.set(
         err instanceof Error ? err.message : "Failed to update quantity"
@@ -175,10 +192,7 @@ export const CurrentCartService = implementService.withConfig<{
           .filter(Boolean);
         const { cart: updatedCart } =
           await currentCart.removeLineItemsFromCurrentCart(lineItemIds);
-        cart.set(updatedCart || null);
-
-        // Clear totals when cart is empty
-        cartTotals.set(null);
+        await updateCartAndEstimateTotals(updatedCart || null);
       }
     } catch (err) {
       error.set(err instanceof Error ? err.message : "Failed to clear cart");
@@ -239,28 +253,9 @@ export const CurrentCartService = implementService.withConfig<{
     }
   };
 
-  const estimateTotals = async () => {
-    try {
-      isLoading.set(true);
-      error.set(null);
-
-      const totalsResponse = await currentCart.estimateCurrentCartTotals();
-      cartTotals.set(totalsResponse || null);
-    } catch (err) {
-      error.set(
-        err instanceof Error ? err.message : "Failed to estimate totals"
-      );
-    } finally {
-      isLoading.set(false);
-    }
-  };
-
-  // Initialize totals if we have an initial cart
+  // Initialize totals for existing cart
   if (config.initialCart?.lineItems?.length) {
-    // Estimate totals asynchronously without blocking initialization
-    setTimeout(() => {
-      estimateTotals().catch(console.warn);
-    }, 0);
+    setTimeout(() => estimateTotals(), 0);
   }
 
   return {
@@ -281,7 +276,6 @@ export const CurrentCartService = implementService.withConfig<{
     clearCart,
     setBuyerNotes,
     proceedToCheckout,
-    estimateTotals,
   };
 });
 
@@ -290,18 +284,6 @@ export async function loadCurrentCartServiceConfig(): Promise<
 > {
   try {
     const cartData = await currentCart.getCurrentCart();
-
-    // If we have a cart with items, estimate totals
-    if (cartData?.lineItems?.length) {
-      try {
-        const totalsResponse = await currentCart.estimateCurrentCartTotals();
-        // We can't return the totals here as they need to be set in the service
-        // The service will estimate totals when it initializes
-      } catch (error) {
-        console.warn("Failed to estimate initial cart totals:", error);
-      }
-    }
-
     return {
       initialCart: cartData || null,
     };
