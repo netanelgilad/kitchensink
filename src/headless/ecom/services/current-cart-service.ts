@@ -253,9 +253,9 @@ export const CurrentCartService = implementService.withConfig<{
     }
   };
 
-  // Initialize totals for existing cart
+  // Initialize totals immediately for existing cart
   if (config.initialCart?.lineItems?.length) {
-    setTimeout(() => estimateTotals(), 0);
+    estimateTotals();
   }
 
   return {

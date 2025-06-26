@@ -27,19 +27,6 @@ function parseAmount(amount?: string): number {
 }
 
 /**
- * Helper function to calculate manual totals from cart items
- */
-function calculateManualSubtotal(cart: any): number {
-  return (
-    cart?.lineItems?.reduce((acc: number, item: any) => {
-      const itemPrice = parseAmount(item.price?.amount);
-      const quantity = item.quantity || 0;
-      return acc + itemPrice * quantity;
-    }, 0) || 0
-  );
-}
-
-/**
  * Props for Trigger headless component
  */
 export interface TriggerProps {
@@ -338,16 +325,12 @@ export const Summary = (props: SummaryProps) => {
   const cartTotals = service.cartTotals.get();
   const currency = cart?.currency || cartTotals?.currency || "USD";
 
-  // Use SDK totals if available, otherwise fallback to manual calculation
+  // Use SDK totals only
   const priceSummary = cartTotals?.priceSummary;
-  const subtotalAmount = priceSummary
-    ? parseAmount(priceSummary.subtotal?.amount)
-    : calculateManualSubtotal(cart);
+  const subtotalAmount = parseAmount(priceSummary?.subtotal?.amount);
   const shippingAmount = parseAmount(priceSummary?.shipping?.amount);
   const taxAmount = parseAmount(priceSummary?.tax?.amount);
-  const totalAmount = priceSummary
-    ? parseAmount(priceSummary.total?.amount)
-    : subtotalAmount; // Fallback: total = subtotal when no SDK totals
+  const totalAmount = parseAmount(priceSummary?.total?.amount);
 
   return props.children({
     subtotal: formatCurrency(subtotalAmount, currency),
