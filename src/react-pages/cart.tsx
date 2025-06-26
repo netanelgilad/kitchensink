@@ -215,24 +215,24 @@ const CartContent = () => {
                                                     typeof option.value ===
                                                       "object" &&
                                                     option.value !== null &&
-                                                    "color" in option.value;
+                                                    "code" in option.value;
                                                   const displayText =
                                                     isColorOption
                                                       ? (
                                                           option.value as {
-                                                            text: string;
-                                                            color: string;
+                                                            name: string;
+                                                            code: string;
                                                           }
-                                                        ).text
+                                                        ).name
                                                       : (option.value as string);
                                                   const colorCode =
                                                     isColorOption
                                                       ? (
                                                           option.value as {
-                                                            text: string;
-                                                            color: string;
+                                                            name: string;
+                                                            code: string;
                                                           }
-                                                        ).color
+                                                        ).code
                                                       : undefined;
 
                                                   return (

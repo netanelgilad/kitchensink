@@ -158,14 +158,11 @@ export interface ItemProps {
 type SelectedOptionPlainText = string;
 
 type SelectedOptionColor = {
-  text: string;
-  color: string;
+  name: string;
+  code: string;
 };
 
-type SelectedOptionValue = {
-  name: string;
-  value: SelectedOptionPlainText | SelectedOptionColor;
-};
+type SelectedOptionValue = SelectedOptionPlainText | SelectedOptionColor;
 
 /**
  * Render props for Item component
@@ -238,7 +235,7 @@ export const Item = (props: ItemProps) => {
   // Extract variant information from description lines
   const selectedOptions: Array<{
     name: string;
-    value: string | { text: string; color: string };
+    value: string | { name: string; code: string };
   }> = [];
 
   if (item.descriptionLines) {
@@ -250,8 +247,8 @@ export const Item = (props: ItemProps) => {
           selectedOptions.push({
             name: optionName,
             value: {
-              text: line.colorInfo.original,
-              color: line.colorInfo.code,
+              name: line.colorInfo.original,
+              code: line.colorInfo.code,
             },
           });
         } else if (line.plainText) {

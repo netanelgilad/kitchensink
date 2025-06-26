@@ -189,12 +189,12 @@ Manages individual cart line item functionality including quantity changes and r
                 const isColorOption =
                   typeof option.value === "object" &&
                   option.value !== null &&
-                  "color" in option.value;
+                  "code" in option.value;
                 const displayText = isColorOption
-                  ? (option.value as { text: string; color: string }).text
+                  ? (option.value as { name: string; code: string }).name
                   : (option.value as string);
                 const colorCode = isColorOption
-                  ? (option.value as { text: string; color: string }).color
+                  ? (option.value as { name: string; code: string }).code
                   : undefined;
 
                 return (
