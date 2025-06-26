@@ -340,7 +340,14 @@ export function StoreLayout({
 
                       <CurrentCart.Summary>
                         {withDocsWrapper(
-                          ({ subtotal, shipping, tax, total, itemCount }) => (
+                          ({
+                            subtotal,
+                            shipping,
+                            tax,
+                            total,
+                            itemCount,
+                            isTotalsLoading,
+                          }) => (
                             <div className="space-y-4">
                               <div className="space-y-2">
                                 <div className="flex justify-between">
@@ -349,7 +356,13 @@ export function StoreLayout({
                                     {itemCount === 1 ? "item" : "items"})
                                   </span>
                                   <span className="text-white font-semibold">
-                                    {subtotal}
+                                    {isTotalsLoading ? (
+                                      <span className="text-white/60">
+                                        Calculating...
+                                      </span>
+                                    ) : (
+                                      subtotal
+                                    )}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
@@ -357,13 +370,25 @@ export function StoreLayout({
                                     Shipping
                                   </span>
                                   <span className="text-white font-semibold">
-                                    {shipping}
+                                    {isTotalsLoading ? (
+                                      <span className="text-white/60">
+                                        Calculating...
+                                      </span>
+                                    ) : (
+                                      shipping
+                                    )}
                                   </span>
                                 </div>
                                 <div className="flex justify-between">
                                   <span className="text-white/80">Tax</span>
                                   <span className="text-white font-semibold">
-                                    {tax}
+                                    {isTotalsLoading ? (
+                                      <span className="text-white/60">
+                                        Calculating...
+                                      </span>
+                                    ) : (
+                                      tax
+                                    )}
                                   </span>
                                 </div>
                                 <div className="border-t border-white/20 pt-2">
@@ -372,7 +397,13 @@ export function StoreLayout({
                                       Total
                                     </span>
                                     <span className="text-white font-bold text-lg">
-                                      {total}
+                                      {isTotalsLoading ? (
+                                        <span className="text-white/60">
+                                          Calculating...
+                                        </span>
+                                      ) : (
+                                        total
+                                      )}
                                     </span>
                                   </div>
                                 </div>

@@ -371,6 +371,7 @@ const CartContent = () => {
                                 total,
                                 itemCount,
                                 canCheckout,
+                                isTotalsLoading,
                               }) => (
                                 <div className="space-y-4">
                                   <div className="space-y-3">
@@ -380,21 +381,39 @@ const CartContent = () => {
                                         {itemCount === 1 ? "item" : "items"})
                                       </span>
                                       <span className="font-semibold">
-                                        {subtotal}
+                                        {isTotalsLoading ? (
+                                          <span className="text-white/60">
+                                            Calculating...
+                                          </span>
+                                        ) : (
+                                          subtotal
+                                        )}
                                       </span>
                                     </div>
 
                                     <div className="flex justify-between text-lg text-white">
                                       <span>Shipping</span>
                                       <span className="font-semibold">
-                                        {shipping}
+                                        {isTotalsLoading ? (
+                                          <span className="text-white/60">
+                                            Calculating...
+                                          </span>
+                                        ) : (
+                                          shipping
+                                        )}
                                       </span>
                                     </div>
 
                                     <div className="flex justify-between text-lg text-white">
                                       <span>Tax</span>
                                       <span className="font-semibold">
-                                        {tax}
+                                        {isTotalsLoading ? (
+                                          <span className="text-white/60">
+                                            Calculating...
+                                          </span>
+                                        ) : (
+                                          tax
+                                        )}
                                       </span>
                                     </div>
                                   </div>
@@ -402,7 +421,15 @@ const CartContent = () => {
                                   <div className="border-t border-white/20 pt-4">
                                     <div className="flex justify-between text-xl font-bold text-white">
                                       <span>Total</span>
-                                      <span>{total}</span>
+                                      <span>
+                                        {isTotalsLoading ? (
+                                          <span className="text-white/60">
+                                            Calculating...
+                                          </span>
+                                        ) : (
+                                          total
+                                        )}
+                                      </span>
                                     </div>
                                   </div>
 

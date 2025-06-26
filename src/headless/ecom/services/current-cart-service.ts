@@ -23,6 +23,7 @@ export interface CurrentCartServiceAPI {
   cart: Signal<currentCart.Cart | null>;
   isOpen: Signal<boolean>;
   isLoading: Signal<boolean>;
+  isTotalsLoading: Signal<boolean>;
   error: Signal<string | null>;
   cartCount: ReadOnlySignal<number>;
   buyerNotes: Signal<string>;
@@ -58,6 +59,7 @@ export const CurrentCartService = implementService.withConfig<{
   );
   const isOpen: Signal<boolean> = signalsService.signal(false as any);
   const isLoading: Signal<boolean> = signalsService.signal(false as any);
+  const isTotalsLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
   const buyerNotes: Signal<string> = signalsService.signal("" as any);
   const cartTotals: Signal<CartTotals | null> = signalsService.signal(
@@ -75,11 +77,14 @@ export const CurrentCartService = implementService.withConfig<{
 
   const estimateTotals = async () => {
     try {
+      isTotalsLoading.set(true);
       const totalsResponse = await currentCart.estimateCurrentCartTotals();
       cartTotals.set(totalsResponse || null);
     } catch (err) {
       console.warn("Failed to estimate cart totals:", err);
       cartTotals.set(null);
+    } finally {
+      isTotalsLoading.set(false);
     }
   };
 
@@ -263,6 +268,7 @@ export const CurrentCartService = implementService.withConfig<{
     isOpen,
     cartCount,
     isLoading,
+    isTotalsLoading,
     error,
     buyerNotes,
     cartTotals,

@@ -310,6 +310,8 @@ export interface SummaryRenderProps {
   itemCount: number;
   /** Whether checkout is available */
   canCheckout: boolean;
+  /** Whether totals are being calculated */
+  isTotalsLoading: boolean;
 }
 
 /**
@@ -323,6 +325,7 @@ export const Summary = (props: SummaryProps) => {
   const cart = service.cart.get();
   const itemCount = service.cartCount.get();
   const cartTotals = service.cartTotals.get();
+  const isTotalsLoading = service.isTotalsLoading.get();
   const currency = cart?.currency || cartTotals?.currency || "USD";
 
   // Use SDK totals only
@@ -340,6 +343,7 @@ export const Summary = (props: SummaryProps) => {
     currency,
     itemCount,
     canCheckout: itemCount > 0,
+    isTotalsLoading,
   });
 };
 
