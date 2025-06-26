@@ -20,13 +20,6 @@ function formatCurrency(amount: number, currencyCode: string): string {
 }
 
 /**
- * Helper function to parse amount from string
- */
-function parseAmount(amount?: string): number {
-  return parseFloat(amount || "0");
-}
-
-/**
  * Props for Trigger headless component
  */
 export interface TriggerProps {
@@ -329,17 +322,26 @@ export const Summary = (props: SummaryProps) => {
   const currency = cart?.currency || cartTotals?.currency || "USD";
 
   // Use SDK totals only
-  const priceSummary = cartTotals?.priceSummary;
-  const subtotalAmount = parseAmount(priceSummary?.subtotal?.amount);
-  const shippingAmount = parseAmount(priceSummary?.shipping?.amount);
-  const taxAmount = parseAmount(priceSummary?.tax?.amount);
-  const totalAmount = parseAmount(priceSummary?.total?.amount);
+  const totals = cartTotals?.priceSummary || {};
+  const subtotal = formatCurrency(
+    parseFloat(totals.subtotal?.amount || "0"),
+    currency
+  );
+  const shipping = formatCurrency(
+    parseFloat(totals.shipping?.amount || "0"),
+    currency
+  );
+  const tax = formatCurrency(parseFloat(totals.tax?.amount || "0"), currency);
+  const total = formatCurrency(
+    parseFloat(totals.total?.amount || "0"),
+    currency
+  );
 
   return props.children({
-    subtotal: formatCurrency(subtotalAmount, currency),
-    shipping: formatCurrency(shippingAmount, currency),
-    tax: formatCurrency(taxAmount, currency),
-    total: formatCurrency(totalAmount, currency),
+    subtotal,
+    shipping,
+    tax,
+    total,
     currency,
     itemCount,
     canCheckout: itemCount > 0,

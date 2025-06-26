@@ -9,16 +9,6 @@ import type { Signal } from "../../Signal";
 import { currentCart, checkout } from "@wix/ecom";
 import { redirects } from "@wix/redirects";
 
-interface CartTotals {
-  priceSummary?: {
-    subtotal?: { amount?: string };
-    shipping?: { amount?: string };
-    tax?: { amount?: string };
-    total?: { amount?: string };
-  };
-  currency?: string;
-}
-
 export interface CurrentCartServiceAPI {
   cart: Signal<currentCart.Cart | null>;
   isOpen: Signal<boolean>;
@@ -27,7 +17,7 @@ export interface CurrentCartServiceAPI {
   error: Signal<string | null>;
   cartCount: ReadOnlySignal<number>;
   buyerNotes: Signal<string>;
-  cartTotals: Signal<CartTotals | null>;
+  cartTotals: Signal<any | null>;
 
   addToCart: (
     lineItems: currentCart.AddToCurrentCartRequest["lineItems"]
@@ -62,9 +52,7 @@ export const CurrentCartService = implementService.withConfig<{
   const isTotalsLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
   const buyerNotes: Signal<string> = signalsService.signal("" as any);
-  const cartTotals: Signal<CartTotals | null> = signalsService.signal(
-    null as any
-  );
+  const cartTotals: Signal<any | null> = signalsService.signal(null as any);
 
   const cartCount: ReadOnlySignal<number> = signalsService.computed(() => {
     const currentCart = cart.get();
@@ -88,17 +76,6 @@ export const CurrentCartService = implementService.withConfig<{
     }
   };
 
-  const updateCartAndEstimateTotals = async (
-    updatedCart: currentCart.Cart | null
-  ) => {
-    cart.set(updatedCart || null);
-    if (updatedCart?.lineItems?.length) {
-      await estimateTotals();
-    } else {
-      cartTotals.set(null);
-    }
-  };
-
   const addToCart = async (
     lineItems: currentCart.AddToCurrentCartRequest["lineItems"]
   ) => {
@@ -109,7 +86,10 @@ export const CurrentCartService = implementService.withConfig<{
       const { cart: updatedCart } = await currentCart.addToCurrentCart({
         lineItems,
       });
-      await updateCartAndEstimateTotals(updatedCart || null);
+      cart.set(updatedCart || null);
+      if (updatedCart?.lineItems?.length) {
+        estimateTotals();
+      }
     } catch (err) {
       error.set(err instanceof Error ? err.message : "Failed to add to cart");
     } finally {
@@ -124,7 +104,12 @@ export const CurrentCartService = implementService.withConfig<{
 
       const { cart: updatedCart } =
         await currentCart.removeLineItemsFromCurrentCart([lineItemId]);
-      await updateCartAndEstimateTotals(updatedCart || null);
+      cart.set(updatedCart || null);
+      if (updatedCart?.lineItems?.length) {
+        estimateTotals();
+      } else {
+        cartTotals.set(null);
+      }
     } catch (err) {
       error.set(err instanceof Error ? err.message : "Failed to remove item");
     } finally {
@@ -147,7 +132,10 @@ export const CurrentCartService = implementService.withConfig<{
             quantity,
           },
         ]);
-      await updateCartAndEstimateTotals(updatedCart || null);
+      cart.set(updatedCart || null);
+      if (updatedCart?.lineItems?.length) {
+        estimateTotals();
+      }
     } catch (err) {
       error.set(
         err instanceof Error ? err.message : "Failed to update quantity"
@@ -197,7 +185,12 @@ export const CurrentCartService = implementService.withConfig<{
           .filter(Boolean);
         const { cart: updatedCart } =
           await currentCart.removeLineItemsFromCurrentCart(lineItemIds);
-        await updateCartAndEstimateTotals(updatedCart || null);
+        cart.set(updatedCart || null);
+        if (updatedCart?.lineItems?.length) {
+          estimateTotals();
+        } else {
+          cartTotals.set(null);
+        }
       }
     } catch (err) {
       error.set(err instanceof Error ? err.message : "Failed to clear cart");
