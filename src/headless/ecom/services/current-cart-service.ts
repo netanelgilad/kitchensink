@@ -219,8 +219,29 @@ export const CurrentCartService = implementService.withConfig<{
       if (updatedCart?.lineItems?.length) {
         await estimateTotals();
       }
-    } catch (err) {
-      error.set(err instanceof Error ? err.message : "Failed to apply coupon");
+    } catch (err: any) {
+      console.error("Coupon application error:", err);
+
+      // Handle specific coupon errors
+      if (
+        err?.details?.applicationError?.code === "ERROR_COUPON_DOES_NOT_EXIST"
+      ) {
+        error.set(
+          "This coupon code does not exist. Please check the code and try again."
+        );
+      } else if (
+        err?.details?.applicationError?.code === "ERROR_COUPON_EXPIRED"
+      ) {
+        error.set("This coupon has expired.");
+      } else if (
+        err?.details?.applicationError?.code === "ERROR_COUPON_NOT_APPLICABLE"
+      ) {
+        error.set("This coupon cannot be applied to your current cart.");
+      } else if (err?.message?.includes("coupon")) {
+        error.set(err.message);
+      } else {
+        error.set("Failed to apply coupon. Please try again.");
+      }
     } finally {
       isCouponLoading.set(false);
     }
@@ -237,7 +258,8 @@ export const CurrentCartService = implementService.withConfig<{
       if (updatedCart?.lineItems?.length) {
         await estimateTotals();
       }
-    } catch (err) {
+    } catch (err: any) {
+      console.error("Coupon removal error:", err);
       error.set(err instanceof Error ? err.message : "Failed to remove coupon");
     } finally {
       isCouponLoading.set(false);
