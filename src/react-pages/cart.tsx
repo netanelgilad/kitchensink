@@ -160,8 +160,8 @@ const CartContent = () => {
                                     image,
                                     price,
                                     quantity,
-                                    variantInfo,
-                                    hasVariants,
+                                    selectedOptions,
+                                    hasSelectedOptions,
                                     onIncrease,
                                     onDecrease,
                                     onRemove,
@@ -206,36 +206,62 @@ const CartContent = () => {
                                           {title}
                                         </h3>
 
-                                        {/* Variant Information */}
-                                        {hasVariants && (
+                                        {/* Selected Options */}
+                                        {hasSelectedOptions && (
                                           <div className="mb-3">
                                             <div className="flex flex-wrap gap-2">
-                                              {variantInfo.map(
-                                                (variant, index) => (
-                                                  <div
-                                                    key={index}
-                                                    className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/20"
-                                                  >
-                                                    <span className="text-sm text-white/80 font-medium">
-                                                      {variant.name}:
-                                                    </span>
-                                                    <div className="flex items-center gap-1">
-                                                      {variant.colorCode && (
-                                                        <div
-                                                          className="w-4 h-4 rounded-full border border-white/30"
-                                                          style={{
-                                                            backgroundColor:
-                                                              variant.colorCode,
-                                                          }}
-                                                          title={variant.value}
-                                                        />
-                                                      )}
-                                                      <span className="text-sm text-white font-medium">
-                                                        {variant.value}
+                                              {selectedOptions.map(
+                                                (option, index) => {
+                                                  const isColorOption =
+                                                    typeof option.value ===
+                                                      "object" &&
+                                                    option.value !== null &&
+                                                    "color" in option.value;
+                                                  const displayText =
+                                                    isColorOption
+                                                      ? (
+                                                          option.value as {
+                                                            text: string;
+                                                            color: string;
+                                                          }
+                                                        ).text
+                                                      : (option.value as string);
+                                                  const colorCode =
+                                                    isColorOption
+                                                      ? (
+                                                          option.value as {
+                                                            text: string;
+                                                            color: string;
+                                                          }
+                                                        ).color
+                                                      : undefined;
+
+                                                  return (
+                                                    <div
+                                                      key={index}
+                                                      className="flex items-center gap-2 px-3 py-1 bg-white/10 rounded-full border border-white/20"
+                                                    >
+                                                      <span className="text-sm text-white/80 font-medium">
+                                                        {option.name}:
                                                       </span>
+                                                      <div className="flex items-center gap-1">
+                                                        {colorCode && (
+                                                          <div
+                                                            className="w-4 h-4 rounded-full border border-white/30"
+                                                            style={{
+                                                              backgroundColor:
+                                                                colorCode,
+                                                            }}
+                                                            title={displayText}
+                                                          />
+                                                        )}
+                                                        <span className="text-sm text-white font-medium">
+                                                          {displayText}
+                                                        </span>
+                                                      </div>
                                                     </div>
-                                                  </div>
-                                                )
+                                                  );
+                                                }
                                               )}
                                             </div>
                                           </div>

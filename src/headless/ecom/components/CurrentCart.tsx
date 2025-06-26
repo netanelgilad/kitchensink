@@ -169,10 +169,13 @@ export interface ItemRenderProps {
   image: string | null;
   /** Line item price */
   price: string;
-  /** Variant information (e.g., size, color) */
-  variantInfo: Array<{ name: string; value: string; colorCode?: string }>;
-  /** Whether this item has variant selections */
-  hasVariants: boolean;
+  /** Selected product options (e.g., size, color) */
+  selectedOptions: Array<{
+    name: string;
+    value: string | { text: string; color: string };
+  }>;
+  /** Whether this item has selected options */
+  hasSelectedOptions: boolean;
   /** Function to increase quantity */
   onIncrease: () => Promise<void>;
   /** Function to decrease quantity */
@@ -203,8 +206,8 @@ export const Item = (props: ItemProps) => {
       title: "",
       image: null,
       price: formatCurrency(0, currency),
-      variantInfo: [],
-      hasVariants: false,
+      selectedOptions: [],
+      hasSelectedOptions: false,
       onIncrease: async () => {},
       onDecrease: async () => {},
       onRemove: async () => {},
@@ -224,27 +227,31 @@ export const Item = (props: ItemProps) => {
   }
 
   // Extract variant information from description lines
-  const variantInfo: Array<{
+  const selectedOptions: Array<{
     name: string;
-    value: string;
-    colorCode?: string;
+    value: string | { text: string; color: string };
   }> = [];
 
   if (item.descriptionLines) {
     item.descriptionLines.forEach((line: any) => {
       if (line.name?.original) {
-        const variantData: { name: string; value: string; colorCode?: string } =
-          {
-            name: line.name.original,
-            value: line.plainText?.original || line.colorInfo?.original || "",
-          };
+        const optionName = line.name.original;
 
-        // Add color code if it's a color variant
-        if (line.colorInfo?.code) {
-          variantData.colorCode = line.colorInfo.code;
+        // Check if this is a color option
+        if (line.colorInfo?.code && line.colorInfo?.original) {
+          selectedOptions.push({
+            name: optionName,
+            value: {
+              text: line.colorInfo.original,
+              color: line.colorInfo.code,
+            },
+          });
+        } else if (line.plainText?.original) {
+          selectedOptions.push({
+            name: optionName,
+            value: line.plainText.original,
+          });
         }
-
-        variantInfo.push(variantData);
       }
     });
   }
@@ -266,8 +273,8 @@ export const Item = (props: ItemProps) => {
     title: item.productName?.original || "",
     image,
     price: formattedPrice,
-    variantInfo,
-    hasVariants: variantInfo.length > 0,
+    selectedOptions,
+    hasSelectedOptions: selectedOptions.length > 0,
     onIncrease: () => service.increaseLineItemQuantity(lineItemId),
     onDecrease: () => service.decreaseLineItemQuantity(lineItemId),
     onRemove: () => service.removeLineItem(lineItemId),

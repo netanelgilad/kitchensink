@@ -165,8 +165,8 @@ export function StoreLayout({
                                           image,
                                           price,
                                           quantity,
-                                          variantInfo,
-                                          hasVariants,
+                                          selectedOptions,
+                                          hasSelectedOptions,
                                           onIncrease,
                                           onDecrease,
                                           onRemove,
@@ -189,45 +189,73 @@ export function StoreLayout({
                                                 {title}
                                               </h3>
 
-                                              {/* Variant Information */}
-                                              {hasVariants && (
+                                              {/* Selected Options */}
+                                              {hasSelectedOptions && (
                                                 <div className="mt-1 mb-2">
                                                   <div className="flex flex-wrap gap-1">
-                                                    {variantInfo.map(
-                                                      (variant, index) => (
-                                                        <div
-                                                          key={index}
-                                                          className="flex items-center gap-1 text-xs text-white/70"
-                                                        >
-                                                          <span>
-                                                            {variant.name}:
-                                                          </span>
-                                                          <div className="flex items-center gap-1">
-                                                            {variant.colorCode && (
-                                                              <div
-                                                                className="w-3 h-3 rounded-full border border-white/30"
-                                                                style={{
-                                                                  backgroundColor:
-                                                                    variant.colorCode,
-                                                                }}
-                                                                title={
-                                                                  variant.value
+                                                    {selectedOptions.map(
+                                                      (option, index) => {
+                                                        const isColorOption =
+                                                          typeof option.value ===
+                                                            "object" &&
+                                                          option.value !==
+                                                            null &&
+                                                          "color" in
+                                                            option.value;
+                                                        const displayText =
+                                                          isColorOption
+                                                            ? (
+                                                                option.value as {
+                                                                  text: string;
+                                                                  color: string;
                                                                 }
-                                                              />
+                                                              ).text
+                                                            : (option.value as string);
+                                                        const colorCode =
+                                                          isColorOption
+                                                            ? (
+                                                                option.value as {
+                                                                  text: string;
+                                                                  color: string;
+                                                                }
+                                                              ).color
+                                                            : undefined;
+
+                                                        return (
+                                                          <div
+                                                            key={index}
+                                                            className="flex items-center gap-1 text-xs text-white/70"
+                                                          >
+                                                            <span>
+                                                              {option.name}:
+                                                            </span>
+                                                            <div className="flex items-center gap-1">
+                                                              {colorCode && (
+                                                                <div
+                                                                  className="w-3 h-3 rounded-full border border-white/30"
+                                                                  style={{
+                                                                    backgroundColor:
+                                                                      colorCode,
+                                                                  }}
+                                                                  title={
+                                                                    displayText
+                                                                  }
+                                                                />
+                                                              )}
+                                                              <span className="font-medium">
+                                                                {displayText}
+                                                              </span>
+                                                            </div>
+                                                            {index <
+                                                              selectedOptions.length -
+                                                                1 && (
+                                                              <span className="text-white/40">
+                                                                ,
+                                                              </span>
                                                             )}
-                                                            <span className="font-medium">
-                                                              {variant.value}
-                                                            </span>
                                                           </div>
-                                                          {index <
-                                                            variantInfo.length -
-                                                              1 && (
-                                                            <span className="text-white/40">
-                                                              ,
-                                                            </span>
-                                                          )}
-                                                        </div>
-                                                      )
+                                                        );
+                                                      }
                                                     )}
                                                   </div>
                                                 </div>
