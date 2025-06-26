@@ -161,7 +161,6 @@ const CartContent = () => {
                                     price,
                                     quantity,
                                     selectedOptions,
-                                    hasSelectedOptions,
                                     onIncrease,
                                     onDecrease,
                                     onRemove,
@@ -207,7 +206,7 @@ const CartContent = () => {
                                         </h3>
 
                                         {/* Selected Options */}
-                                        {hasSelectedOptions && (
+                                        {selectedOptions.length > 0 && (
                                           <div className="mb-3">
                                             <div className="flex flex-wrap gap-2">
                                               {selectedOptions.map(

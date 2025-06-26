@@ -166,7 +166,6 @@ export function StoreLayout({
                                           price,
                                           quantity,
                                           selectedOptions,
-                                          hasSelectedOptions,
                                           onIncrease,
                                           onDecrease,
                                           onRemove,
@@ -190,7 +189,7 @@ export function StoreLayout({
                                               </h3>
 
                                               {/* Selected Options */}
-                                              {hasSelectedOptions && (
+                                              {selectedOptions.length > 0 && (
                                                 <div className="mt-1 mb-2">
                                                   <div className="flex flex-wrap gap-1">
                                                     {selectedOptions.map(

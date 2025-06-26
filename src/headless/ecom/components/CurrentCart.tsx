@@ -174,8 +174,6 @@ export interface ItemRenderProps {
     name: string;
     value: string | { text: string; color: string };
   }>;
-  /** Whether this item has selected options */
-  hasSelectedOptions: boolean;
   /** Function to increase quantity */
   onIncrease: () => Promise<void>;
   /** Function to decrease quantity */
@@ -207,7 +205,6 @@ export const Item = (props: ItemProps) => {
       image: null,
       price: formatCurrency(0, currency),
       selectedOptions: [],
-      hasSelectedOptions: false,
       onIncrease: async () => {},
       onDecrease: async () => {},
       onRemove: async () => {},
@@ -274,7 +271,6 @@ export const Item = (props: ItemProps) => {
     image,
     price: formattedPrice,
     selectedOptions,
-    hasSelectedOptions: selectedOptions.length > 0,
     onIncrease: () => service.increaseLineItemQuantity(lineItemId),
     onDecrease: () => service.decreaseLineItemQuantity(lineItemId),
     onRemove: () => service.removeLineItem(lineItemId),
