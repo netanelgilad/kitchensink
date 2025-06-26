@@ -366,16 +366,37 @@ const CartContent = () => {
                             <CurrentCart.Summary>
                               {({
                                 subtotal,
+                                shipping,
+                                tax,
                                 total,
                                 itemCount,
                                 canCheckout,
                               }) => (
                                 <div className="space-y-4">
-                                  <div className="flex justify-between text-lg text-white">
-                                    <span>Subtotal ({itemCount} items)</span>
-                                    <span className="font-semibold">
-                                      {subtotal}
-                                    </span>
+                                  <div className="space-y-3">
+                                    <div className="flex justify-between text-lg text-white">
+                                      <span>
+                                        Subtotal ({itemCount}{" "}
+                                        {itemCount === 1 ? "item" : "items"})
+                                      </span>
+                                      <span className="font-semibold">
+                                        {subtotal}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex justify-between text-lg text-white">
+                                      <span>Shipping</span>
+                                      <span className="font-semibold">
+                                        {shipping}
+                                      </span>
+                                    </div>
+
+                                    <div className="flex justify-between text-lg text-white">
+                                      <span>Tax</span>
+                                      <span className="font-semibold">
+                                        {tax}
+                                      </span>
+                                    </div>
                                   </div>
 
                                   <div className="border-t border-white/20 pt-4">

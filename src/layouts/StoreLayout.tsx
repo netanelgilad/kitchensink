@@ -340,15 +340,42 @@ export function StoreLayout({
 
                       <CurrentCart.Summary>
                         {withDocsWrapper(
-                          ({ subtotal, itemCount }) => (
+                          ({ subtotal, shipping, tax, total, itemCount }) => (
                             <div className="space-y-4">
-                              <div className="flex justify-between">
-                                <span className="text-white/80">
-                                  Items ({itemCount})
-                                </span>
-                                <span className="text-white font-semibold">
-                                  {subtotal}
-                                </span>
+                              <div className="space-y-2">
+                                <div className="flex justify-between">
+                                  <span className="text-white/80">
+                                    Subtotal ({itemCount}{" "}
+                                    {itemCount === 1 ? "item" : "items"})
+                                  </span>
+                                  <span className="text-white font-semibold">
+                                    {subtotal}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/80">
+                                    Shipping
+                                  </span>
+                                  <span className="text-white font-semibold">
+                                    {shipping}
+                                  </span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-white/80">Tax</span>
+                                  <span className="text-white font-semibold">
+                                    {tax}
+                                  </span>
+                                </div>
+                                <div className="border-t border-white/20 pt-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-white font-bold">
+                                      Total
+                                    </span>
+                                    <span className="text-white font-bold text-lg">
+                                      {total}
+                                    </span>
+                                  </div>
+                                </div>
                               </div>
 
                               <CurrentCart.Checkout>

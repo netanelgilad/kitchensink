@@ -291,6 +291,10 @@ export interface SummaryProps {
 export interface SummaryRenderProps {
   /** Cart subtotal */
   subtotal: string;
+  /** Shipping cost */
+  shipping: string;
+  /** Tax amount */
+  tax: string;
   /** Cart total */
   total: string;
   /** Currency code */
@@ -312,7 +316,7 @@ export const Summary = (props: SummaryProps) => {
   const cart = service.cart.get();
   const itemCount = service.cartCount.get();
 
-  // Calculate totals manually since cart.totals doesn't exist
+  // Calculate subtotal manually since cart.totals doesn't exist
   const subtotalAmount =
     cart?.lineItems?.reduce((acc: number, item: any) => {
       const itemPrice = parseFloat(item.price?.amount || "0");
@@ -320,12 +324,23 @@ export const Summary = (props: SummaryProps) => {
       return acc + itemPrice * quantity;
     }, 0) || 0;
 
+  // For now, shipping and tax are $0 - these would be calculated based on cart data in a real implementation
+  const shippingAmount = 0;
+  const taxAmount = 0;
+
+  // Calculate total as subtotal + shipping + tax
+  const totalAmount = subtotalAmount + shippingAmount + taxAmount;
+
   const currency = cart?.currency || "USD";
   const subtotal = formatCurrency(subtotalAmount, currency);
-  const total = subtotal; // For now, total = subtotal (no taxes/shipping calculated)
+  const shipping = formatCurrency(shippingAmount, currency);
+  const tax = formatCurrency(taxAmount, currency);
+  const total = formatCurrency(totalAmount, currency);
 
   return props.children({
     subtotal,
+    shipping,
+    tax,
     total,
     currency,
     itemCount,
