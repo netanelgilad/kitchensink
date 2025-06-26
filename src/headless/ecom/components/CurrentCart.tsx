@@ -155,6 +155,18 @@ export interface ItemProps {
   children: (props: ItemRenderProps) => React.ReactNode;
 }
 
+type SelectedOptionPlainText = string;
+
+type SelectedOptionColor = {
+  text: string;
+  color: string;
+};
+
+type SelectedOptionValue = {
+  name: string;
+  value: SelectedOptionPlainText | SelectedOptionColor;
+};
+
 /**
  * Render props for Item component
  */
@@ -172,7 +184,7 @@ export interface ItemRenderProps {
   /** Selected product options (e.g., size, color) */
   selectedOptions: Array<{
     name: string;
-    value: string | { text: string; color: string };
+    value: SelectedOptionValue;
   }>;
   /** Function to increase quantity */
   onIncrease: () => Promise<void>;
@@ -234,8 +246,7 @@ export const Item = (props: ItemProps) => {
       if (line.name?.original) {
         const optionName = line.name.original;
 
-        // Check if this is a color option
-        if (line.colorInfo?.code && line.colorInfo?.original) {
+        if (line.colorInfo) {
           selectedOptions.push({
             name: optionName,
             value: {
@@ -243,7 +254,7 @@ export const Item = (props: ItemProps) => {
               color: line.colorInfo.code,
             },
           });
-        } else if (line.plainText?.original) {
+        } else if (line.plainText) {
           selectedOptions.push({
             name: optionName,
             value: line.plainText.original,
