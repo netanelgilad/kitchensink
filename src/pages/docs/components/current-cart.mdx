@@ -149,7 +149,7 @@ Manages individual cart line item functionality including quantity changes and r
 - `productName: string` - Product name
 - `imageUrl: string | null` - Product image URL
 - `price: string` - Line item price (formatted)
-- `selectedOptions: Array<{ name: string; value: string | { text: string; color: string } }>` - Selected product options (e.g., size, color)
+- `selectedOptions: Array<{ name: string; value: string | { name: string; code: string } }>` - Selected product options
 - `increaseQuantity: () => Promise<void>` - Function to increase quantity
 - `decreaseQuantity: () => Promise<void>` - Function to decrease quantity
 - `removeItem: () => Promise<void>` - Function to remove item

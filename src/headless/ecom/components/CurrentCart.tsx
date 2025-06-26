@@ -155,15 +155,6 @@ export interface ItemProps {
   children: (props: ItemRenderProps) => React.ReactNode;
 }
 
-type SelectedOptionPlainText = string;
-
-type SelectedOptionColor = {
-  name: string;
-  code: string;
-};
-
-type SelectedOptionValue = SelectedOptionPlainText | SelectedOptionColor;
-
 /**
  * Render props for Item component
  */
@@ -178,10 +169,10 @@ export interface ItemRenderProps {
   image: string | null;
   /** Line item price */
   price: string;
-  /** Selected product options (e.g., size, color) */
+  /** Selected product options */
   selectedOptions: Array<{
     name: string;
-    value: SelectedOptionValue;
+    value: string | { name: string; code: string };
   }>;
   /** Function to increase quantity */
   onIncrease: () => Promise<void>;
