@@ -14,6 +14,7 @@ export interface CurrentCartServiceAPI {
   isOpen: Signal<boolean>;
   isLoading: Signal<boolean>;
   isTotalsLoading: Signal<boolean>;
+  isCouponLoading: Signal<boolean>;
   error: Signal<string | null>;
   cartCount: ReadOnlySignal<number>;
   buyerNotes: Signal<string>;
@@ -34,6 +35,8 @@ export interface CurrentCartServiceAPI {
   clearCart: () => Promise<void>;
   setBuyerNotes: (notes: string) => Promise<void>;
   proceedToCheckout: () => Promise<void>;
+  applyCoupon: (couponCode: string) => Promise<void>;
+  removeCoupon: () => Promise<void>;
 }
 
 export const CurrentCartServiceDefinition =
@@ -50,6 +53,7 @@ export const CurrentCartService = implementService.withConfig<{
   const isOpen: Signal<boolean> = signalsService.signal(false as any);
   const isLoading: Signal<boolean> = signalsService.signal(false as any);
   const isTotalsLoading: Signal<boolean> = signalsService.signal(false as any);
+  const isCouponLoading: Signal<boolean> = signalsService.signal(false as any);
   const error: Signal<string | null> = signalsService.signal(null as any);
   const buyerNotes: Signal<string> = signalsService.signal("" as any);
   const cartTotals: Signal<any | null> = signalsService.signal(null as any);
@@ -203,6 +207,43 @@ export const CurrentCartService = implementService.withConfig<{
     buyerNotes.set(notes);
   };
 
+  const applyCoupon = async (couponCode: string) => {
+    try {
+      isCouponLoading.set(true);
+      error.set(null);
+
+      const updatedCart = await currentCart.updateCurrentCart({
+        couponCode,
+      });
+      cart.set(updatedCart || null);
+      if (updatedCart?.lineItems?.length) {
+        await estimateTotals();
+      }
+    } catch (err) {
+      error.set(err instanceof Error ? err.message : "Failed to apply coupon");
+    } finally {
+      isCouponLoading.set(false);
+    }
+  };
+
+  const removeCoupon = async () => {
+    try {
+      isCouponLoading.set(true);
+      error.set(null);
+
+      await currentCart.removeCouponFromCurrentCart();
+      const updatedCart = await currentCart.getCurrentCart();
+      cart.set(updatedCart || null);
+      if (updatedCart?.lineItems?.length) {
+        await estimateTotals();
+      }
+    } catch (err) {
+      error.set(err instanceof Error ? err.message : "Failed to remove coupon");
+    } finally {
+      isCouponLoading.set(false);
+    }
+  };
+
   const proceedToCheckout = async () => {
     try {
       isLoading.set(true);
@@ -262,6 +303,7 @@ export const CurrentCartService = implementService.withConfig<{
     cartCount,
     isLoading,
     isTotalsLoading,
+    isCouponLoading,
     error,
     buyerNotes,
     cartTotals,
@@ -275,6 +317,8 @@ export const CurrentCartService = implementService.withConfig<{
     clearCart,
     setBuyerNotes,
     proceedToCheckout,
+    applyCoupon,
+    removeCoupon,
   };
 });
 

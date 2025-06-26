@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   createServicesManager,
   createServicesMap,
@@ -15,6 +15,65 @@ import WixMediaImage from "../headless/media/components/Image";
 interface CartPageProps {
   data?: any;
 }
+
+const CouponInputForm = ({
+  onApply,
+  isLoading,
+}: {
+  onApply: (code: string) => void;
+  isLoading: boolean;
+}) => {
+  const [code, setCode] = useState("");
+  const [isExpanded, setIsExpanded] = useState(false);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (code.trim()) {
+      onApply(code.trim());
+      setCode("");
+    }
+  };
+
+  if (!isExpanded) {
+    return (
+      <button
+        onClick={() => setIsExpanded(true)}
+        className="text-blue-400 hover:text-blue-300 text-sm font-medium transition-colors duration-200"
+      >
+        Have a promo code?
+      </button>
+    );
+  }
+
+  return (
+    <form onSubmit={handleSubmit} className="space-y-3">
+      <div className="flex gap-2">
+        <input
+          type="text"
+          value={code}
+          onChange={(e) => setCode(e.target.value)}
+          placeholder="Enter promo code"
+          className="flex-1 px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-white/60 focus:border-blue-400 focus:ring-1 focus:ring-blue-400 transition-colors duration-200"
+          disabled={isLoading}
+        />
+        <button
+          type="submit"
+          disabled={!code.trim() || isLoading}
+          className="px-4 py-2 bg-blue-600 hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-white text-sm font-medium rounded-lg transition-colors duration-200"
+        >
+          {isLoading ? "Applying..." : "Apply"}
+        </button>
+      </div>
+      <button
+        type="button"
+        onClick={() => setIsExpanded(false)}
+        className="text-white/60 hover:text-white/80 text-sm transition-colors duration-200"
+      >
+        Cancel
+      </button>
+    </form>
+  );
+};
 
 const CartContent = () => {
   return (
@@ -363,9 +422,68 @@ const CartContent = () => {
                               </CurrentCart.Notes>
                             </div>
 
+                            {/* Coupon Code */}
+                            <div className="mb-6">
+                              <CurrentCart.Coupon>
+                                {({
+                                  appliedCoupon,
+                                  onApply,
+                                  onRemove,
+                                  isLoading,
+                                  error,
+                                }) => (
+                                  <div>
+                                    {error && error.includes("coupon") && (
+                                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-3">
+                                        <p className="text-red-400 text-sm">
+                                          {error}
+                                        </p>
+                                      </div>
+                                    )}
+
+                                    {appliedCoupon ? (
+                                      <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
+                                        <div className="flex items-center">
+                                          <svg
+                                            className="w-5 h-5 text-green-400 mr-2"
+                                            fill="none"
+                                            viewBox="0 0 24 24"
+                                            stroke="currentColor"
+                                          >
+                                            <path
+                                              strokeLinecap="round"
+                                              strokeLinejoin="round"
+                                              strokeWidth={2}
+                                              d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
+                                            />
+                                          </svg>
+                                          <span className="text-green-400 text-sm font-medium">
+                                            Coupon applied: {appliedCoupon}
+                                          </span>
+                                        </div>
+                                        <button
+                                          onClick={onRemove}
+                                          disabled={isLoading}
+                                          className="text-red-400 hover:text-red-300 text-sm font-medium disabled:opacity-50 transition-colors duration-200"
+                                        >
+                                          {isLoading ? "Removing..." : "Remove"}
+                                        </button>
+                                      </div>
+                                    ) : (
+                                      <CouponInputForm
+                                        onApply={onApply}
+                                        isLoading={isLoading}
+                                      />
+                                    )}
+                                  </div>
+                                )}
+                              </CurrentCart.Coupon>
+                            </div>
+
                             <CurrentCart.Summary>
                               {({
                                 subtotal,
+                                discount,
                                 shipping,
                                 tax,
                                 total,
@@ -400,6 +518,16 @@ const CartContent = () => {
                                           </LoadingOrValue>
                                         </span>
                                       </div>
+                                      {discount && (
+                                        <div className="flex justify-between text-lg text-green-400">
+                                          <span>Discount</span>
+                                          <span className="font-semibold">
+                                            <LoadingOrValue>
+                                              {`-${discount}`}
+                                            </LoadingOrValue>
+                                          </span>
+                                        </div>
+                                      )}
                                       <div className="flex justify-between text-lg text-white">
                                         <span>Shipping</span>
                                         <span className="font-semibold">
