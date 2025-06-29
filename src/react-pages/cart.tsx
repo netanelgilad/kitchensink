@@ -433,14 +433,6 @@ const CartContent = () => {
                                   error,
                                 }) => (
                                   <div>
-                                    {error && error.includes("coupon") && (
-                                      <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3 mb-3">
-                                        <p className="text-red-400 text-sm">
-                                          {error}
-                                        </p>
-                                      </div>
-                                    )}
-
                                     {appliedCoupon ? (
                                       <div className="flex items-center justify-between p-3 bg-green-500/10 border border-green-500/20 rounded-lg">
                                         <div className="flex items-center">
@@ -480,160 +472,169 @@ const CartContent = () => {
                               </CurrentCart.Coupon>
                             </div>
 
-                            <CurrentCart.Summary>
-                              {({
-                                subtotal,
-                                discount,
-                                shipping,
-                                tax,
-                                total,
-                                itemCount,
-                                canCheckout,
-                                isTotalsLoading,
-                              }) => {
-                                const LoadingOrValue = ({
-                                  children,
-                                }: {
-                                  children: string;
-                                }) =>
-                                  isTotalsLoading ? (
-                                    <span className="text-white/60">
-                                      Calculating...
-                                    </span>
-                                  ) : (
-                                    children
-                                  );
+                            <CurrentCart.Coupon>
+                              {({ appliedCoupon }) => (
+                                <CurrentCart.Summary>
+                                  {({
+                                    subtotal,
+                                    discount,
+                                    shipping,
+                                    tax,
+                                    total,
+                                    itemCount,
+                                    canCheckout,
+                                    isTotalsLoading,
+                                  }) => {
+                                    const LoadingOrValue = ({
+                                      children,
+                                    }: {
+                                      children: string;
+                                    }) =>
+                                      isTotalsLoading ? (
+                                        <span className="text-white/60">
+                                          Calculating...
+                                        </span>
+                                      ) : (
+                                        children
+                                      );
 
-                                return (
-                                  <div className="space-y-4">
-                                    <div className="space-y-3">
-                                      <div className="flex justify-between text-lg text-white">
-                                        <span>
-                                          Subtotal ({itemCount}{" "}
-                                          {itemCount === 1 ? "item" : "items"})
-                                        </span>
-                                        <span className="font-semibold">
-                                          <LoadingOrValue>
-                                            {subtotal}
-                                          </LoadingOrValue>
-                                        </span>
-                                      </div>
-                                      {discount && (
-                                        <div className="flex justify-between text-lg text-green-400">
-                                          <span>Discount</span>
-                                          <span className="font-semibold">
-                                            <LoadingOrValue>
-                                              {`-${discount}`}
-                                            </LoadingOrValue>
-                                          </span>
-                                        </div>
-                                      )}
-                                      <div className="flex justify-between text-lg text-white">
-                                        <span>Shipping</span>
-                                        <span className="font-semibold">
-                                          <LoadingOrValue>
-                                            {shipping}
-                                          </LoadingOrValue>
-                                        </span>
-                                      </div>
-                                      <div className="flex justify-between text-lg text-white">
-                                        <span>Tax</span>
-                                        <span className="font-semibold">
-                                          <LoadingOrValue>{tax}</LoadingOrValue>
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <div className="border-t border-white/20 pt-4">
-                                      <div className="flex justify-between text-xl font-bold text-white">
-                                        <span>Total</span>
-                                        <span>
-                                          <LoadingOrValue>
-                                            {total}
-                                          </LoadingOrValue>
-                                        </span>
-                                      </div>
-                                    </div>
-
-                                    <CurrentCart.Checkout>
-                                      {({
-                                        onProceed,
-                                        canCheckout: canProceed,
-                                        isLoading: checkoutLoading,
-                                        error: checkoutError,
-                                      }) => (
-                                        <div className="space-y-4">
-                                          {checkoutError && (
-                                            <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
-                                              <p className="text-red-400 text-sm">
-                                                {checkoutError}
-                                              </p>
+                                    return (
+                                      <div className="space-y-4">
+                                        <div className="space-y-3">
+                                          <div className="flex justify-between text-lg text-white">
+                                            <span>
+                                              Subtotal ({itemCount}{" "}
+                                              {itemCount === 1
+                                                ? "item"
+                                                : "items"}
+                                              )
+                                            </span>
+                                            <span className="font-semibold">
+                                              <LoadingOrValue>
+                                                {subtotal}
+                                              </LoadingOrValue>
+                                            </span>
+                                          </div>
+                                          {appliedCoupon && discount && (
+                                            <div className="flex justify-between text-lg text-green-400">
+                                              <span>Discount</span>
+                                              <span className="font-semibold">
+                                                <LoadingOrValue>
+                                                  {`-${discount}`}
+                                                </LoadingOrValue>
+                                              </span>
                                             </div>
                                           )}
-
-                                          <button
-                                            onClick={onProceed}
-                                            disabled={
-                                              !canProceed || checkoutLoading
-                                            }
-                                            className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105"
-                                          >
-                                            {checkoutLoading ? (
-                                              <span className="flex items-center justify-center gap-2">
-                                                <svg
-                                                  className="animate-spin w-5 h-5"
-                                                  fill="none"
-                                                  viewBox="0 0 24 24"
-                                                >
-                                                  <circle
-                                                    className="opacity-25"
-                                                    cx="12"
-                                                    cy="12"
-                                                    r="10"
-                                                    stroke="currentColor"
-                                                    strokeWidth="4"
-                                                  ></circle>
-                                                  <path
-                                                    className="opacity-75"
-                                                    fill="currentColor"
-                                                    d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                                                  ></path>
-                                                </svg>
-                                                Processing...
-                                              </span>
-                                            ) : (
-                                              "Proceed to Checkout"
-                                            )}
-                                          </button>
+                                          <div className="flex justify-between text-lg text-white">
+                                            <span>Shipping</span>
+                                            <span className="font-semibold">
+                                              <LoadingOrValue>
+                                                {shipping}
+                                              </LoadingOrValue>
+                                            </span>
+                                          </div>
+                                          <div className="flex justify-between text-lg text-white">
+                                            <span>Tax</span>
+                                            <span className="font-semibold">
+                                              <LoadingOrValue>
+                                                {tax}
+                                              </LoadingOrValue>
+                                            </span>
+                                          </div>
                                         </div>
-                                      )}
-                                    </CurrentCart.Checkout>
 
-                                    <div className="text-center pt-4">
-                                      <a
-                                        href="/store"
-                                        className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
-                                      >
-                                        <svg
-                                          className="w-4 h-4"
-                                          fill="none"
-                                          viewBox="0 0 24 24"
-                                          stroke="currentColor"
-                                        >
-                                          <path
-                                            strokeLinecap="round"
-                                            strokeLinejoin="round"
-                                            strokeWidth={2}
-                                            d="M15 19l-7-7 7-7"
-                                          />
-                                        </svg>
-                                        Continue Shopping
-                                      </a>
-                                    </div>
-                                  </div>
-                                );
-                              }}
-                            </CurrentCart.Summary>
+                                        <div className="border-t border-white/20 pt-4">
+                                          <div className="flex justify-between text-xl font-bold text-white">
+                                            <span>Total</span>
+                                            <span>
+                                              <LoadingOrValue>
+                                                {total}
+                                              </LoadingOrValue>
+                                            </span>
+                                          </div>
+                                        </div>
+
+                                        <CurrentCart.Checkout>
+                                          {({
+                                            onProceed,
+                                            canCheckout: canProceed,
+                                            isLoading: checkoutLoading,
+                                            error: checkoutError,
+                                          }) => (
+                                            <div className="space-y-4">
+                                              {checkoutError && (
+                                                <div className="bg-red-500/10 border border-red-500/20 rounded-lg p-3">
+                                                  <p className="text-red-400 text-sm">
+                                                    {checkoutError}
+                                                  </p>
+                                                </div>
+                                              )}
+
+                                              <button
+                                                onClick={onProceed}
+                                                disabled={
+                                                  !canProceed || checkoutLoading
+                                                }
+                                                className="w-full bg-gradient-to-r from-blue-500 to-purple-600 hover:from-blue-600 hover:to-purple-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-bold py-4 px-6 rounded-xl transition-all duration-200 transform hover:scale-105"
+                                              >
+                                                {checkoutLoading ? (
+                                                  <span className="flex items-center justify-center gap-2">
+                                                    <svg
+                                                      className="animate-spin w-5 h-5"
+                                                      fill="none"
+                                                      viewBox="0 0 24 24"
+                                                    >
+                                                      <circle
+                                                        className="opacity-25"
+                                                        cx="12"
+                                                        cy="12"
+                                                        r="10"
+                                                        stroke="currentColor"
+                                                        strokeWidth="4"
+                                                      ></circle>
+                                                      <path
+                                                        className="opacity-75"
+                                                        fill="currentColor"
+                                                        d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                                      ></path>
+                                                    </svg>
+                                                    Processing...
+                                                  </span>
+                                                ) : (
+                                                  "Proceed to Checkout"
+                                                )}
+                                              </button>
+                                            </div>
+                                          )}
+                                        </CurrentCart.Checkout>
+
+                                        <div className="text-center pt-4">
+                                          <a
+                                            href="/store"
+                                            className="text-blue-400 hover:text-blue-300 font-medium transition-colors duration-200 flex items-center justify-center gap-2"
+                                          >
+                                            <svg
+                                              className="w-4 h-4"
+                                              fill="none"
+                                              viewBox="0 0 24 24"
+                                              stroke="currentColor"
+                                            >
+                                              <path
+                                                strokeLinecap="round"
+                                                strokeLinejoin="round"
+                                                strokeWidth={2}
+                                                d="M15 19l-7-7 7-7"
+                                              />
+                                            </svg>
+                                            Continue Shopping
+                                          </a>
+                                        </div>
+                                      </div>
+                                    );
+                                  }}
+                                </CurrentCart.Summary>
+                              )}
+                            </CurrentCart.Coupon>
                           </div>
                         </div>
                       </div>
