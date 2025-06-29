@@ -293,6 +293,8 @@ export interface SummaryRenderProps {
   subtotal: string;
   /** Discount amount if coupon applied */
   discount: string | null;
+  /** Applied coupon code if any */
+  appliedCoupon: string | null;
   /** Shipping cost */
   shipping: string;
   /** Tax amount */
@@ -339,11 +341,16 @@ export const Summary = (props: SummaryProps) => {
     currency
   );
 
+  const appliedCoupon =
+    cart?.appliedDiscounts?.find((discount: any) => discount.coupon?.code)
+      ?.coupon?.code || null;
+
   return props.children({
     subtotal,
     discount: totals.discount?.amount
       ? formatCurrency(parseFloat(totals.discount.amount), currency)
       : null,
+    appliedCoupon,
     shipping,
     tax,
     total,

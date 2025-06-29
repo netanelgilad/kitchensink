@@ -442,121 +442,107 @@ export function StoreLayout({
                         )}
                       </CurrentCart.Coupon>
 
-                      <CurrentCart.Coupon>
+                      <CurrentCart.Summary>
                         {withDocsWrapper(
-                          ({ appliedCoupon }) => (
-                            <CurrentCart.Summary>
-                              {withDocsWrapper(
-                                ({
-                                  subtotal,
-                                  discount,
-                                  shipping,
-                                  tax,
-                                  total,
-                                  itemCount,
-                                  isTotalsLoading,
-                                }) => {
-                                  const LoadingOrValue = ({
-                                    children,
-                                  }: {
-                                    children: string;
-                                  }) =>
-                                    isTotalsLoading ? (
-                                      <span className="text-white/60">
-                                        Calculating...
+                          ({
+                            subtotal,
+                            discount,
+                            appliedCoupon,
+                            shipping,
+                            tax,
+                            total,
+                            itemCount,
+                            isTotalsLoading,
+                          }) => {
+                            const LoadingOrValue = ({
+                              children,
+                            }: {
+                              children: string;
+                            }) =>
+                              isTotalsLoading ? (
+                                <span className="text-white/60">
+                                  Calculating...
+                                </span>
+                              ) : (
+                                children
+                              );
+
+                            return (
+                              <div className="space-y-4">
+                                <div className="space-y-2">
+                                  <div className="flex justify-between">
+                                    <span className="text-white/80">
+                                      Subtotal ({itemCount}{" "}
+                                      {itemCount === 1 ? "item" : "items"})
+                                    </span>
+                                    <span className="text-white font-semibold">
+                                      <LoadingOrValue>
+                                        {subtotal}
+                                      </LoadingOrValue>
+                                    </span>
+                                  </div>
+                                  {appliedCoupon && discount && (
+                                    <div className="flex justify-between">
+                                      <span className="text-green-400">
+                                        Discount
                                       </span>
-                                    ) : (
-                                      children
-                                    );
-
-                                  return (
-                                    <div className="space-y-4">
-                                      <div className="space-y-2">
-                                        <div className="flex justify-between">
-                                          <span className="text-white/80">
-                                            Subtotal ({itemCount}{" "}
-                                            {itemCount === 1 ? "item" : "items"}
-                                            )
-                                          </span>
-                                          <span className="text-white font-semibold">
-                                            <LoadingOrValue>
-                                              {subtotal}
-                                            </LoadingOrValue>
-                                          </span>
-                                        </div>
-                                        {appliedCoupon && discount && (
-                                          <div className="flex justify-between">
-                                            <span className="text-green-400">
-                                              Discount
-                                            </span>
-                                            <span className="text-green-400 font-semibold">
-                                              <LoadingOrValue>
-                                                {`-${discount}`}
-                                              </LoadingOrValue>
-                                            </span>
-                                          </div>
-                                        )}
-                                        <div className="flex justify-between">
-                                          <span className="text-white/80">
-                                            Shipping
-                                          </span>
-                                          <span className="text-white font-semibold">
-                                            <LoadingOrValue>
-                                              {shipping}
-                                            </LoadingOrValue>
-                                          </span>
-                                        </div>
-                                        <div className="flex justify-between">
-                                          <span className="text-white/80">
-                                            Tax
-                                          </span>
-                                          <span className="text-white font-semibold">
-                                            <LoadingOrValue>
-                                              {tax}
-                                            </LoadingOrValue>
-                                          </span>
-                                        </div>
-                                        <div className="border-t border-white/20 pt-2">
-                                          <div className="flex justify-between">
-                                            <span className="text-white font-bold">
-                                              Total
-                                            </span>
-                                            <span className="text-white font-bold text-lg">
-                                              <LoadingOrValue>
-                                                {total}
-                                              </LoadingOrValue>
-                                            </span>
-                                          </div>
-                                        </div>
-                                      </div>
-
-                                      <CurrentCart.Checkout>
-                                        {withDocsWrapper(
-                                          ({ onProceed, canCheckout }) => (
-                                            <button
-                                              onClick={onProceed}
-                                              disabled={!canCheckout}
-                                              className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
-                                            >
-                                              Proceed to Checkout
-                                            </button>
-                                          ),
-                                          "CurrentCart.Checkout",
-                                          "/docs/components/current-cart#checkout"
-                                        )}
-                                      </CurrentCart.Checkout>
+                                      <span className="text-green-400 font-semibold">
+                                        <LoadingOrValue>
+                                          {`-${discount}`}
+                                        </LoadingOrValue>
+                                      </span>
                                     </div>
-                                  );
-                                },
-                                "CurrentCart.Summary",
-                                "/docs/components/current-cart#summary"
-                              )}
-                            </CurrentCart.Summary>
-                          ),
-                          "CurrentCart.Coupon",
-                          "/docs/components/current-cart#coupon"
+                                  )}
+                                  <div className="flex justify-between">
+                                    <span className="text-white/80">
+                                      Shipping
+                                    </span>
+                                    <span className="text-white font-semibold">
+                                      <LoadingOrValue>
+                                        {shipping}
+                                      </LoadingOrValue>
+                                    </span>
+                                  </div>
+                                  <div className="flex justify-between">
+                                    <span className="text-white/80">Tax</span>
+                                    <span className="text-white font-semibold">
+                                      <LoadingOrValue>{tax}</LoadingOrValue>
+                                    </span>
+                                  </div>
+                                  <div className="border-t border-white/20 pt-2">
+                                    <div className="flex justify-between">
+                                      <span className="text-white font-bold">
+                                        Total
+                                      </span>
+                                      <span className="text-white font-bold text-lg">
+                                        <LoadingOrValue>{total}</LoadingOrValue>
+                                      </span>
+                                    </div>
+                                  </div>
+                                </div>
+
+                                <CurrentCart.Checkout>
+                                  {withDocsWrapper(
+                                    ({ onProceed, canCheckout }) => (
+                                      <button
+                                        onClick={onProceed}
+                                        disabled={!canCheckout}
+                                        className="w-full bg-gradient-to-r from-teal-500 to-cyan-600 hover:from-teal-600 hover:to-cyan-700 disabled:opacity-50 disabled:cursor-not-allowed text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200"
+                                      >
+                                        Proceed to Checkout
+                                      </button>
+                                    ),
+                                    "CurrentCart.Checkout",
+                                    "/docs/components/current-cart#checkout"
+                                  )}
+                                </CurrentCart.Checkout>
+                              </div>
+                            );
+                          },
+                          "CurrentCart.Summary",
+                          "/docs/components/current-cart#summary"
                         )}
-                      </CurrentCart.Coupon>
+                      </CurrentCart.Summary>
                     </div>
                   </div>
                 </div>
