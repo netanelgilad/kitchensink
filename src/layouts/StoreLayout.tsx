@@ -409,14 +409,6 @@ export function StoreLayout({
                             error,
                           }) => (
                             <div>
-                              {error && error.includes("coupon") && (
-                                <div className="bg-red-500/10 border border-red-500/20 rounded p-2 mb-2">
-                                  <p className="text-red-400 text-xs">
-                                    {error}
-                                  </p>
-                                </div>
-                              )}
-
                               {appliedCoupon ? (
                                 <div className="flex items-center justify-between p-2 bg-green-500/10 border border-green-500/20 rounded">
                                   <span className="text-green-400 text-xs font-medium">
@@ -435,6 +427,13 @@ export function StoreLayout({
                                   onApply={onApply}
                                   isLoading={isLoading}
                                 />
+                              )}
+                              {error && error.includes("coupon") && (
+                                <div className="bg-red-500/10 border border-red-500/20 rounded p-2 mb-2">
+                                  <p className="text-red-400 text-xs">
+                                    {error}
+                                  </p>
+                                </div>
                               )}
                             </div>
                           ),
