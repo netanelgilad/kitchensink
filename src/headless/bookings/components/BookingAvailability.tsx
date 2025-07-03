@@ -3,6 +3,25 @@ import { useService } from "@wix/services-manager-react";
 import { BookingAvailabilityServiceDefinition } from "../services/booking-availability-service";
 import { availabilityCalendar } from "@wix/bookings";
 
+export interface TimezoneProps {
+  children: (props: TimezoneRenderProps) => React.ReactNode;
+}
+
+export interface TimezoneRenderProps {
+  timezone: string;
+}
+
+export const Timezone = (props: TimezoneProps) => {
+  const service = useService(
+    BookingAvailabilityServiceDefinition
+  ) as ServiceAPI<typeof BookingAvailabilityServiceDefinition>;
+  const timezone = service.timezone.get();
+
+  return props.children({
+    timezone,
+  });
+};
+
 /**
  * Props for Calendar headless component
  */
@@ -291,5 +310,6 @@ export const BookingAvailability = {
   Calendar,
   TimeSlots,
   TimeSlot,
+  Timezone,
   AvailabilityHeader,
 } as const;

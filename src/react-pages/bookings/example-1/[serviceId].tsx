@@ -3,7 +3,7 @@ import {
   createServicesManager,
   createServicesMap,
 } from "@wix/services-manager";
-import { ServicesManagerProvider } from "@wix/services-manager-react";
+import { ServicesManagerProvider, useService } from "@wix/services-manager-react";
 import {
   BookingServiceService,
   BookingServiceServiceDefinition,
@@ -61,6 +61,16 @@ const ServiceAutoSelector = ({ serviceId }: { serviceId: string }) => {
       }}
     </BookingService.Service>
   );
+};
+
+const TimezoneAutoSetter = () => {
+  const { setTimezone } = useService(BookingAvailabilityServiceDefinition);
+  useEffect(() => {
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setTimezone(userTimezone);
+  }, [setTimezone]);
+
+  return null;
 };
 
 const CalendarSection = () => {
@@ -560,7 +570,8 @@ export default function ServiceBookingPage({
       <ServicesManagerProvider servicesManager={servicesManager}>
         {/* Auto-select the service on page load */}
         <ServiceAutoSelector serviceId={serviceId} />
-
+        <TimezoneAutoSetter />
+        
         <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
           {/* Header */}
           <div className="border-b border-white/10">
@@ -662,6 +673,27 @@ export default function ServiceBookingPage({
                 </BookingSelection.BookingProgress>
               </div>
             </div>
+          </div>
+
+          {/* Timezone Display */}
+          <div className="flex justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <BookingAvailability.Timezone>
+              {withDocsWrapper(
+                ({ timezone }) => (
+                  <div
+                    className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm text-blue-200 font-medium shadow-sm"
+                    title={`Timezone: ${timezone}`}
+                  >
+                    <svg className="w-4 h-4 mr-2 text-blue-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {timezone}
+                  </div>
+                ),
+                "Timezone",
+                "/docs/components/booking-availability#timezone"
+              )}
+            </BookingAvailability.Timezone>
           </div>
 
           {/* Main Content */}
