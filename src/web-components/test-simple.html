@@ -1,0 +1,184 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wix Web Components - Simple Test</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+        }
+        
+        .test-section {
+            margin: 30px 0;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+        }
+        
+        .product-card {
+            border: 1px solid #eee;
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 8px;
+            background: #f9f9f9;
+        }
+        
+        /* Style the components using CSS Parts */
+        wix-product-name-simple::part(product-name) {
+            font-size: 1.5em;
+            color: #333;
+            font-weight: bold;
+        }
+        
+        wix-product-price-simple::part(product-price) {
+            font-size: 1.2em;
+            color: #e74c3c;
+            font-weight: bold;
+        }
+        
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-family: monospace;
+        }
+        
+        .status.loading {
+            background: #fff3cd;
+            border: 1px solid #ffeaa7;
+        }
+        
+        .status.success {
+            background: #d4edda;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status.error {
+            background: #f8d7da;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
+</head>
+<body>
+    <h1>Wix Web Components - Simple Test</h1>
+    
+    <div class="status loading" id="status">
+        Loading Wix SDK...
+    </div>
+
+    <div class="test-section">
+        <h2>Simple Product Components</h2>
+        <p>These components work directly with the Wix Stores API without the headless services layer.</p>
+        
+        <div class="product-card">
+            <wix-product-simple product-slug="test-product">
+                <h3>
+                    <wix-product-name-simple fallback="Product Name Loading...">
+                    </wix-product-name-simple>
+                </h3>
+                <p>
+                    Price: <wix-product-price-simple fallback="$0.00" show-currency="true">
+                    </wix-product-price-simple>
+                </p>
+            </wix-product-simple>
+        </div>
+    </div>
+
+    <div class="test-section">
+        <h2>Component Events</h2>
+        <div id="events-log" style="background: #f5f5f5; padding: 10px; border-radius: 4px; font-family: monospace; max-height: 200px; overflow-y: auto;">
+            <div>Event log will appear here...</div>
+        </div>
+    </div>
+
+    <!-- Mock Wix SDK for testing -->
+    <script>
+        // Mock Wix Stores API for testing
+        window.wixStores = {
+            products: {
+                queryProducts() {
+                    return {
+                        eq(field, value) {
+                            console.log(`Querying products where ${field} = ${value}`);
+                            return this;
+                        },
+                        async find() {
+                            // Simulate API delay
+                            await new Promise(resolve => setTimeout(resolve, 1000));
+                            
+                            // Mock product data
+                            return {
+                                items: [{
+                                    id: 'test-product-id',
+                                    name: 'Amazing Test Product',
+                                    slug: 'test-product',
+                                    priceData: {
+                                        formatted: {
+                                            price: '$29.99'
+                                        },
+                                        currency: 'USD'
+                                    },
+                                    description: 'This is a fantastic test product with amazing features.'
+                                }]
+                            };
+                        }
+                    };
+                }
+            }
+        };
+
+        // Update status
+        document.getElementById('status').textContent = 'Wix SDK Mock Ready';
+        document.getElementById('status').className = 'status success';
+    </script>
+
+    <!-- Load the web components -->
+    <script src="./dist/wix-web-components.js"></script>
+
+    <script>
+        // Event logging
+        const eventsLog = document.getElementById('events-log');
+        
+        function logEvent(message) {
+            const timestamp = new Date().toLocaleTimeString();
+            const logEntry = document.createElement('div');
+            logEntry.textContent = `[${timestamp}] ${message}`;
+            eventsLog.appendChild(logEntry);
+            eventsLog.scrollTop = eventsLog.scrollHeight;
+        }
+
+        // Listen for component events
+        document.addEventListener('product-loaded', (event) => {
+            logEvent(`Product loaded: ${event.detail.product.name}`);
+        });
+
+        document.addEventListener('product-error', (event) => {
+            logEvent(`Product error: ${event.detail.error}`);
+        });
+
+        document.addEventListener('wix-web-components-ready', (event) => {
+            logEvent(`Web components ready (v${event.detail.version})`);
+        });
+
+        // Log when components are defined
+        const componentsToWatch = [
+            'wix-product-simple',
+            'wix-product-name-simple', 
+            'wix-product-price-simple'
+        ];
+
+        componentsToWatch.forEach(tagName => {
+            customElements.whenDefined(tagName).then(() => {
+                logEvent(`Component defined: ${tagName}`);
+            });
+        });
+
+        logEvent('Test page loaded');
+    </script>
+</body>
+</html> 

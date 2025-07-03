@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wix Web Components Demo</title>
+    
+    <!-- Global Wix SDK initialization -->
+    <script src="https://unpkg.com/@wix/init-sdk-context/build/site.iife.js"></script>
+    
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 2rem;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .demo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .product-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .product-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .product-card h2 {
+            margin: 0 0 1rem 0;
+            font-size: 2rem;
+        }
+
+        .product-info {
+            margin: 1rem 0;
+        }
+
+        .price-section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+        }
+
+        .description-section {
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+        }
+
+        /* Custom styling for web components using CSS parts */
+        wix-product-name::part(product-name) {
+            font-weight: bold;
+            color: #ffd700;
+        }
+
+        wix-product-price::part(product-price) {
+            font-size: 1.5rem;
+            color: #90EE90;
+        }
+
+        wix-product-price::part(variant-indicator) {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+        }
+
+        wix-product-description::part(product-description) {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.5;
+        }
+
+        .loading-indicator {
+            text-align: center;
+            padding: 2rem;
+            opacity: 0.7;
+        }
+
+        .error-message {
+            background: rgba(255, 0, 0, 0.2);
+            border: 1px solid rgba(255, 0, 0, 0.4);
+            color: #ffaaaa;
+            padding: 1rem;
+            border-radius: 8px;
+            margin: 1rem 0;
+        }
+
+        .code-example {
+            background: rgba(0, 0, 0, 0.3);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.9rem;
+            overflow-x: auto;
+        }
+
+        .feature-list {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 8px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .feature-list ul {
+            list-style: none;
+            padding: 0;
+        }
+
+        .feature-list li {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .feature-list li:last-child {
+            border-bottom: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="demo-container">
+        <div class="header">
+            <h1>🎛️ Wix Web Components Demo</h1>
+            <p>Modern, reactive web components for Wix stores</p>
+        </div>
+
+        <div class="feature-list">
+            <h3>🚀 Features</h3>
+            <ul>
+                <li>✅ **Context-based architecture** - Components automatically find their data context</li>
+                <li>✅ **Reactive updates** - Real-time data synchronization using Signals</li>
+                <li>✅ **CSS Parts styling** - Fully customizable with CSS parts and slots</li>
+                <li>✅ **Shadow DOM encapsulation** - No style conflicts</li>
+                <li>✅ **Framework agnostic** - Works with any web technology</li>
+                <li>✅ **TypeScript support** - Full type safety and intellisense</li>
+            </ul>
+        </div>
+
+        <!-- Product examples -->
+        <div class="product-grid">
+            <!-- Product 1 - Replace with actual product slug -->
+            <div class="product-card">
+                <wix-product product-slug="sample-product-1">
+                    <h2>
+                        <wix-product-name fallback="Sample Product 1"></wix-product-name>
+                    </h2>
+                    
+                    <div class="price-section">
+                        <h4>💰 Price</h4>
+                        <wix-product-price fallback="$99.99" show-currency="true"></wix-product-price>
+                    </div>
+                    
+                    <div class="description-section">
+                        <h4>📝 Description</h4>
+                        <wix-product-description 
+                            fallback="This is a sample product description." 
+                            max-length="200">
+                        </wix-product-description>
+                    </div>
+                </wix-product>
+            </div>
+
+            <!-- Product 2 - Replace with actual product slug -->
+            <div class="product-card">
+                <wix-product product-slug="sample-product-2">
+                    <h2>
+                        <wix-product-name fallback="Sample Product 2"></wix-product-name>
+                    </h2>
+                    
+                    <div class="price-section">
+                        <h4>💰 Price</h4>
+                        <wix-product-price fallback="$149.99"></wix-product-price>
+                    </div>
+                    
+                    <div class="description-section">
+                        <h4>📝 Description</h4>
+                        <wix-product-description 
+                            fallback="Another amazing product with great features.">
+                        </wix-product-description>
+                    </div>
+                </wix-product>
+            </div>
+
+            <!-- Product 3 - Using slots for custom layout -->
+            <div class="product-card">
+                <wix-product product-slug="sample-product-3">
+                    <h2>
+                        <!-- Using slots for custom content around components -->
+                        <span slot="before">🌟 </span>
+                        <wix-product-name fallback="Premium Product"></wix-product-name>
+                        <span slot="after"> ⭐</span>
+                    </h2>
+                    
+                    <div class="price-section">
+                        <h4>💎 Premium Price</h4>
+                        <wix-product-price fallback="$299.99" show-currency="true">
+                            <span slot="before">Only </span>
+                            <span slot="after"> today!</span>
+                        </wix-product-price>
+                    </div>
+                    
+                    <div class="description-section">
+                        <h4>✨ Features</h4>
+                        <wix-product-description 
+                            fallback="Our most advanced product with premium features and exceptional quality.">
+                        </wix-product-description>
+                    </div>
+                </wix-product>
+            </div>
+        </div>
+
+        <!-- Usage Examples -->
+        <div class="feature-list">
+            <h3>📖 Usage Examples</h3>
+            
+            <h4>Basic Product Display:</h4>
+            <div class="code-example">
+&lt;wix-product product-slug="your-product-slug"&gt;
+  &lt;h2&gt;&lt;wix-product-name&gt;&lt;/wix-product-name&gt;&lt;/h2&gt;
+  &lt;wix-product-price&gt;&lt;/wix-product-price&gt;
+  &lt;wix-product-description&gt;&lt;/wix-product-description&gt;
+&lt;/wix-product&gt;
+            </div>
+
+            <h4>With Custom Styling (CSS Parts):</h4>
+            <div class="code-example">
+&lt;style&gt;
+  wix-product-name::part(product-name) {
+    color: #gold;
+    font-weight: bold;
+  }
+  
+  wix-product-price::part(product-price) {
+    font-size: 2rem;
+    color: green;
+  }
+&lt;/style&gt;
+            </div>
+
+            <h4>With Fallback Content:</h4>
+            <div class="code-example">
+&lt;wix-product-name fallback="Loading product..."&gt;&lt;/wix-product-name&gt;
+&lt;wix-product-price fallback="$0.00" show-currency="true"&gt;&lt;/wix-product-price&gt;
+&lt;wix-product-description 
+  fallback="No description available" 
+  max-length="150"&gt;
+&lt;/wix-product-description&gt;
+            </div>
+
+            <h4>Using Slots for Custom Layout:</h4>
+            <div class="code-example">
+&lt;wix-product-price&gt;
+  &lt;span slot="before"&gt;Special Price: &lt;/span&gt;
+  &lt;span slot="after"&gt; (Limited Time)&lt;/span&gt;
+&lt;/wix-product-price&gt;
+            </div>
+        </div>
+
+        <!-- Component Status -->
+        <div class="feature-list">
+            <h3>🔧 Component Status</h3>
+            <div id="component-status">
+                <p class="loading-indicator">Checking component status...</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load Wix Web Components -->
+    <!-- Note: In production, this would be the built bundle -->
+    <script type="module">
+        // For demo purposes, we'll simulate loading the components
+        // In production, you would load the built bundle:
+        // <script src="./dist/wix-web-components.js"></script>
+        
+        console.log('🚀 Wix Web Components Demo Started');
+        
+        // Update component status
+        function updateComponentStatus() {
+            const statusDiv = document.getElementById('component-status');
+            const components = [
+                'wix-product',
+                'wix-product-name', 
+                'wix-product-description',
+                'wix-product-price'
+            ];
+            
+            const statusHTML = components.map(tagName => {
+                const isRegistered = customElements.get(tagName) !== undefined;
+                const statusIcon = isRegistered ? '✅' : '❌';
+                const statusText = isRegistered ? 'Registered' : 'Not Found';
+                return `<li>${statusIcon} <code>&lt;${tagName}&gt;</code> - ${statusText}</li>`;
+            }).join('');
+            
+            statusDiv.innerHTML = `<ul>${statusHTML}</ul>`;
+        }
+        
+        // Check status every 500ms until all components are loaded
+        const statusInterval = setInterval(() => {
+            updateComponentStatus();
+            
+            // If all components are loaded, stop checking
+            const allLoaded = ['wix-product', 'wix-product-name', 'wix-product-description', 'wix-product-price']
+                .every(tag => customElements.get(tag) !== undefined);
+                
+            if (allLoaded) {
+                clearInterval(statusInterval);
+                console.log('✅ All Wix Web Components loaded successfully!');
+            }
+        }, 500);
+        
+        // Handle component events
+        document.addEventListener('product-ready', (event) => {
+            console.log('📦 Product ready:', event.detail);
+        });
+        
+        document.addEventListener('product-error', (event) => {
+            console.error('❌ Product error:', event.detail);
+            
+            // Show error message in UI
+            const errorDiv = document.createElement('div');
+            errorDiv.className = 'error-message';
+            errorDiv.innerHTML = `
+                <strong>Error loading product:</strong> ${event.detail.error}
+                <br><small>This is expected in demo mode without real product data.</small>
+            `;
+            event.target.closest('.product-card').appendChild(errorDiv);
+        });
+        
+        window.addEventListener('wix-web-components-ready', (event) => {
+            console.log('🎉 Wix Web Components ready:', event.detail);
+        });
+    </script>
+
+    <script>
+        // Demo note
+        console.log(`
+        🎛️ Wix Web Components Demo
+        
+        This is a demonstration of how Wix Web Components work.
+        
+        To use these components in production:
+        1. Build the web components bundle
+        2. Include the Wix SDK initialization script
+        3. Load the web components script
+        4. Use the components with real product slugs
+        
+        Note: Product data loading will fail in this demo since we don't have 
+        real product slugs, but you can see the component structure and styling.
+        `);
+    </script>
+</body>
+</html> 

@@ -1,0 +1,484 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Wix Web Components - Working Example</title>
+    
+    <!-- Wix SDK initialization -->
+    <script src="https://unpkg.com/@wix/init-sdk-context/build/site.iife.js" data-client-id="1b9b9a32-09cf-4f6a-af55-ef161f95011d" data-cookie-name="wix-session"></script>
+    
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin: 0 0 1rem 0;
+            background: linear-gradient(45deg, #ffd700, #ffed4a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .demo-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        .demo-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            padding: 2rem;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .demo-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+        }
+
+        .product-section {
+            margin: 1.5rem 0;
+            padding: 1rem;
+            background: rgba(255, 255, 255, 0.05);
+            border-radius: 8px;
+            border-left: 4px solid #ffd700;
+        }
+
+        .status-section {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin: 2rem 0;
+        }
+
+        .status-list {
+            list-style: none;
+            padding: 0;
+            margin: 1rem 0;
+        }
+
+        .status-item {
+            padding: 0.5rem 0;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .status-item:last-child {
+            border-bottom: none;
+        }
+
+        .component-tag {
+            font-family: 'Courier New', monospace;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.2rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.9rem;
+        }
+
+        .error-display {
+            background: rgba(255, 99, 71, 0.2);
+            border: 1px solid rgba(255, 99, 71, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .success-display {
+            background: rgba(72, 187, 120, 0.2);
+            border: 1px solid rgba(72, 187, 120, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-size: 0.9rem;
+        }
+
+        .code-block {
+            background: rgba(0, 0, 0, 0.4);
+            border-radius: 8px;
+            padding: 1rem;
+            margin: 1rem 0;
+            font-family: 'Courier New', monospace;
+            font-size: 0.8rem;
+            overflow-x: auto;
+            white-space: pre-wrap;
+        }
+
+        /* Custom styling for web components using CSS parts */
+        wix-product-name::part(product-name) {
+            font-size: 1.8rem;
+            font-weight: bold;
+            color: #ffd700;
+            text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        wix-product-price::part(product-price) {
+            font-size: 1.4rem;
+            color: #90EE90;
+            font-weight: bold;
+        }
+
+        wix-product-price::part(variant-indicator) {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 0.2rem 0.6rem;
+            border-radius: 12px;
+            font-size: 0.7rem;
+            margin-left: 0.5rem;
+        }
+
+        wix-product-description::part(product-description) {
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.6;
+            font-size: 0.95rem;
+        }
+
+        /* Style fallback states */
+        wix-product-name[data-has-name="false"]::part(product-name) {
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        wix-product-price[data-has-price="false"]::part(product-price) {
+            opacity: 0.6;
+            font-style: italic;
+        }
+
+        /* Loading state */
+        .loading {
+            position: relative;
+            overflow: hidden;
+        }
+
+        .loading::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.2), transparent);
+            animation: shimmer 1.5s infinite;
+        }
+
+        @keyframes shimmer {
+            0% { left: -100%; }
+            100% { left: 100%; }
+        }
+
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎛️ Wix Web Components</h1>
+            <p>Modern, reactive web components for Wix stores</p>
+            <p><em>Built on top of headless components and client-side services</em></p>
+        </div>
+
+        <!-- Component Status -->
+        <div class="status-section">
+            <h3>🔧 Component Status</h3>
+            <ul class="status-list" id="component-status">
+                <li class="status-item">
+                    <span>Checking component registration...</span>
+                    <span>⏳</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Demo Products -->
+        <div class="demo-grid">
+            <!-- Product Demo 1 -->
+            <div class="demo-card fade-in">
+                <h2>📱 Basic Product Display</h2>
+                <wix-product product-slug="acme-prism-t-shirt">
+                    <div class="product-section">
+                        <h4>Product Name:</h4>
+                        <wix-product-name fallback="Sample Product">
+                            <span slot="before">🌟 </span>
+                            <span slot="after"> ⭐</span>
+                        </wix-product-name>
+                    </div>
+
+                    <div class="product-section">
+                        <h4>Price:</h4>
+                        <wix-product-price fallback="$99.99" show-currency="true"></wix-product-price>
+                    </div>
+
+                    <div class="product-section">
+                        <h4>Description:</h4>
+                        <wix-product-description 
+                            fallback="This is a sample product with amazing features and great quality."
+                            max-length="150">
+                        </wix-product-description>
+                    </div>
+                </wix-product>
+
+                <div class="code-block">
+&lt;wix-product product-slug="demo-product-1"&gt;
+  &lt;wix-product-name fallback="Sample Product"&gt;&lt;/wix-product-name&gt;
+  &lt;wix-product-price fallback="$99.99"&gt;&lt;/wix-product-price&gt;
+  &lt;wix-product-description fallback="..."&gt;&lt;/wix-product-description&gt;
+&lt;/wix-product&gt;
+                </div>
+            </div>
+
+            <!-- Product Demo 2 -->
+            <div class="demo-card fade-in">
+                <h2>💎 Premium Product</h2>
+                <wix-product product-slug="premium-product">
+                    <div class="product-section">
+                        <h4>Name:</h4>
+                        <wix-product-name fallback="Premium Product"></wix-product-name>
+                    </div>
+
+                    <div class="product-section">
+                        <h4>Price:</h4>
+                        <wix-product-price fallback="$299.99">
+                            <span slot="before">Special: </span>
+                            <span slot="after"> (Limited Time)</span>
+                        </wix-product-price>
+                    </div>
+
+                    <div class="product-section">
+                        <h4>Description:</h4>
+                        <wix-product-description 
+                            fallback="Our most advanced product with premium features and exceptional quality. Perfect for professionals."
+                            max-length="200">
+                        </wix-product-description>
+                    </div>
+                </wix-product>
+
+                <div class="code-block">
+&lt;wix-product-price&gt;
+  &lt;span slot="before"&gt;Special: &lt;/span&gt;
+  &lt;span slot="after"&gt; (Limited Time)&lt;/span&gt;
+&lt;/wix-product-price&gt;
+                </div>
+            </div>
+
+            <!-- Product Demo 3 -->
+            <div class="demo-card fade-in">
+                <h2>🎯 Customized Styling</h2>
+                <wix-product product-slug="styled-product">
+                    <div class="product-section">
+                        <h4>Name (Custom Styled):</h4>
+                        <wix-product-name fallback="Styled Product" style="--custom-color: #ff6b6b;"></wix-product-name>
+                    </div>
+
+                    <div class="product-section">
+                        <h4>Price (CSS Parts):</h4>
+                        <wix-product-price fallback="$149.99" show-currency="true"></wix-product-price>
+                    </div>
+
+                    <div class="product-section">
+                        <h4>Description:</h4>
+                        <wix-product-description fallback="This product showcases the CSS Parts styling capabilities of web components."></wix-product-description>
+                    </div>
+                </wix-product>
+
+                <div class="code-block">
+/* CSS Parts Styling */
+wix-product-name::part(product-name) {
+  color: #ffd700;
+  font-size: 1.8rem;
+  font-weight: bold;
+}
+                </div>
+            </div>
+        </div>
+
+        <!-- Features Section -->
+        <div class="status-section">
+            <h3>✨ Key Features</h3>
+            <ul class="status-list">
+                <li class="status-item">
+                    <span><strong>Context-based Architecture:</strong> Components find data using .closest()</span>
+                    <span>🏗️</span>
+                </li>
+                <li class="status-item">
+                    <span><strong>Reactive Updates:</strong> Real-time data sync with Signals</span>
+                    <span>⚡</span>
+                </li>
+                <li class="status-item">
+                    <span><strong>CSS Parts:</strong> Full styling control without conflicts</span>
+                    <span>🎨</span>
+                </li>
+                <li class="status-item">
+                    <span><strong>Shadow DOM:</strong> Encapsulated styles and markup</span>
+                    <span>🛡️</span>
+                </li>
+                <li class="status-item">
+                    <span><strong>Framework Agnostic:</strong> Works everywhere</span>
+                    <span>🌐</span>
+                </li>
+            </ul>
+        </div>
+
+        <!-- Event Log -->
+        <div class="status-section">
+            <h3>📋 Event Log</h3>
+            <div id="event-log" style="max-height: 200px; overflow-y: auto; font-family: monospace; font-size: 0.8rem;">
+                <div style="opacity: 0.7;">Waiting for events...</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Load the built Wix Web Components bundle -->
+    <script src="./dist/wix-web-components.js"></script>
+
+    <script>
+        // Component status tracking
+        function updateComponentStatus() {
+            const statusList = document.getElementById('component-status');
+            const components = [
+                'wix-product',
+                'wix-product-name', 
+                'wix-product-description',
+                'wix-product-price'
+            ];
+            
+            const statusHTML = components.map(tagName => {
+                const isRegistered = customElements.get(tagName) !== undefined;
+                const statusIcon = isRegistered ? '✅' : '❌';
+                const statusText = isRegistered ? 'Registered' : 'Not Found';
+                const statusClass = isRegistered ? 'success' : 'error';
+                
+                return `
+                    <li class="status-item">
+                        <span class="component-tag">&lt;${tagName}&gt;</span>
+                        <span>${statusIcon} ${statusText}</span>
+                    </li>
+                `;
+            }).join('');
+            
+            statusList.innerHTML = statusHTML;
+            
+            // Check if all are loaded
+            const allLoaded = components.every(tag => customElements.get(tag) !== undefined);
+            if (allLoaded) {
+                logEvent('✅ All web components registered successfully!');
+                return true;
+            }
+            return false;
+        }
+
+        // Event logging
+        function logEvent(message) {
+            const log = document.getElementById('event-log');
+            const timestamp = new Date().toLocaleTimeString();
+            const entry = document.createElement('div');
+            entry.innerHTML = `<span style="opacity: 0.6;">${timestamp}</span> ${message}`;
+            entry.style.marginBottom = '0.5rem';
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // Monitor component registration
+        let statusCheckInterval;
+        let isCheckingStatus = true;
+
+        function startStatusChecking() {
+            statusCheckInterval = setInterval(() => {
+                if (updateComponentStatus() && isCheckingStatus) {
+                    clearInterval(statusCheckInterval);
+                    isCheckingStatus = false;
+                    logEvent('🎉 Component monitoring complete');
+                }
+            }, 500);
+        }
+
+        // Event listeners
+        document.addEventListener('DOMContentLoaded', () => {
+            logEvent('🚀 Page loaded, checking for web components...');
+            startStatusChecking();
+        });
+
+        // Listen for component events
+        document.addEventListener('product-ready', (event) => {
+            logEvent(`📦 Product ready: ${event.detail.productSlug}`);
+            const card = event.target.closest('.demo-card');
+            if (card) {
+                const successMsg = document.createElement('div');
+                successMsg.className = 'success-display';
+                successMsg.innerHTML = `✅ Product "${event.detail.productSlug}" loaded successfully!`;
+                card.appendChild(successMsg);
+            }
+        });
+
+        document.addEventListener('product-error', (event) => {
+            logEvent(`❌ Product error: ${event.detail.error}`);
+            const card = event.target.closest('.demo-card');
+            if (card) {
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-display';
+                errorMsg.innerHTML = `
+                    <strong>⚠️ Expected Error:</strong> ${event.detail.error}<br>
+                    <small>This is normal in demo mode without real product data.</small>
+                `;
+                card.appendChild(errorMsg);
+            }
+        });
+
+        document.addEventListener('context-ready', (event) => {
+            logEvent('🔗 Services context initialized');
+        });
+
+        window.addEventListener('wix-web-components-ready', (event) => {
+            logEvent(`🎉 Wix Web Components v${event.detail.version} ready!`);
+        });
+
+        // Demo interaction
+        document.addEventListener('click', (event) => {
+            if (event.target.matches('wix-product-name, wix-product-price, wix-product-description')) {
+                event.target.style.transform = 'scale(1.05)';
+                setTimeout(() => {
+                    event.target.style.transform = 'scale(1)';
+                }, 200);
+            }
+        });
+
+        // Initial log
+        logEvent('🎛️ Wix Web Components Demo initialized');
+        logEvent('📡 Waiting for component registration...');
+    </script>
+</body>
+</html> 
