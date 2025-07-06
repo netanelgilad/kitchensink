@@ -24,6 +24,7 @@ import {
   withDocsWrapper,
   PageDocsRegistration,
 } from "../../../components/DocsMode";
+import { BookingTimezoneServiceDefinition } from "../../../headless/bookings/services/booking-timezone-service";
 
 interface ServiceBookingPageProps {
   serviceId: string;
@@ -64,11 +65,11 @@ const ServiceAutoSelector = ({ serviceId }: { serviceId: string }) => {
 };
 
 const TimezoneAutoSetter = () => {
-  const { setTimezone } = useService(BookingAvailabilityServiceDefinition);
+  const { setSelectedTimezone } = useService(BookingTimezoneServiceDefinition);
   useEffect(() => {
     const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    setTimezone(userTimezone);
-  }, [setTimezone]);
+    setSelectedTimezone(userTimezone);
+  }, [setSelectedTimezone]);
 
   return null;
 };
@@ -571,7 +572,7 @@ export default function ServiceBookingPage({
         {/* Auto-select the service on page load */}
         <ServiceAutoSelector serviceId={serviceId} />
         <TimezoneAutoSetter />
-        
+
         <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
           {/* Header */}
           <div className="border-b border-white/10">
@@ -679,15 +680,24 @@ export default function ServiceBookingPage({
           <div className="flex justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
             <BookingAvailability.Timezone>
               {withDocsWrapper(
-                ({ timezone }) => (
+                ({ timezones, selectedTimezone, setSelectedTimezone, isDropDownOpen }) => (
                   <div
                     className="inline-flex items-center px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm text-blue-200 font-medium shadow-sm"
-                    title={`Timezone: ${timezone}`}
+                    title={`Timezone: ${selectedTimezone}`}
                   >
                     <svg className="w-4 h-4 mr-2 text-blue-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                    {timezone}
+                    {selectedTimezone}
+                    {isDropDownOpen && (
+                      <div className="absolute top-full mt-2 w-48 bg-white rounded-lg shadow-lg">
+                        {timezones.map((tz) => (
+                          <div key={tz} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer" onClick={() => setSelectedTimezone(tz)}>
+                            {tz}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ),
                 "Timezone",

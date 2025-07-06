@@ -2,24 +2,35 @@ import type { ServiceAPI } from "@wix/services-definitions";
 import { useService } from "@wix/services-manager-react";
 import { BookingAvailabilityServiceDefinition } from "../services/booking-availability-service";
 import { availabilityCalendar } from "@wix/bookings";
+import { BookingTimezoneServiceDefinition, type BookingTimezoneService } from "../services/booking-timezone-service";
+import { useState } from "react";
 
 export interface TimezoneProps {
   children: (props: TimezoneRenderProps) => React.ReactNode;
 }
 
 export interface TimezoneRenderProps {
-  timezone: string;
+  timezones: string[];
+  selectedTimezone: string; 
+  setSelectedTimezone: (tz: string) => void;
+  isDropDownOpen: boolean;
 }
 
 export const Timezone = (props: TimezoneProps) => {
   const service = useService(
-    BookingAvailabilityServiceDefinition
-  ) as ServiceAPI<typeof BookingAvailabilityServiceDefinition>;
-  const timezone = service.timezone.get();
-
-  return props.children({
-    timezone,
-  });
+    BookingTimezoneServiceDefinition
+  ) as ServiceAPI<typeof BookingTimezoneServiceDefinition>;
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  
+  const timezones = service.getTimezones();
+  const selectedTimezone = service.selectedTimezone.get();
+  
+  return <div onClick={() => setIsDropDownOpen(!isDropDownOpen)}>{props.children({
+    timezones,
+    selectedTimezone,
+    isDropDownOpen,
+    setSelectedTimezone: service.setSelectedTimezone,
+  })}</div>;
 };
 
 /**

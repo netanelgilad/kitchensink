@@ -6,8 +6,7 @@ import {
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
 import { availabilityCalendar } from "@wix/bookings";
-import { siteProperties } from "@wix/business-tools";
-
+import { BookingTimezoneServiceDefinition } from "./booking-timezone-service";
 
 export interface BookingAvailabilityServiceAPI {
   slots: Signal<availabilityCalendar.SlotAvailability[]>;
@@ -34,6 +33,7 @@ export const BookingAvailabilityService = implementService.withConfig<{
   initialSlots?: availabilityCalendar.SlotAvailability[];
 }>()(BookingAvailabilityServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
+  const timezoneService = getService(BookingTimezoneServiceDefinition);
 
   // State signals
   const slots: Signal<availabilityCalendar.SlotAvailability[]> =
@@ -44,9 +44,7 @@ export const BookingAvailabilityService = implementService.withConfig<{
   const serviceId: Signal<string | null> = signalsService.signal(
     config.serviceId || (null as any)
   );
-  const timezone: Signal<string> = signalsService.signal(
-    config.timezone || ("UTC" as any)
-  );
+  const timezone = timezoneService.selectedTimezone;
 
   // Computed functions
   const hasSlots = (): boolean => {
@@ -146,10 +144,9 @@ export const BookingAvailabilityService = implementService.withConfig<{
     await loadSlots(startDate, endDate);
   };
 
-  const setTimezone = (newTimezone: string): void => {
-    timezone.set(newTimezone);
+  timezone.subscribe((tz) => {
     refreshSlots();
-  };
+  });
 
   return {
     slots,
@@ -165,26 +162,14 @@ export const BookingAvailabilityService = implementService.withConfig<{
     selectDate,
     setService,
     refreshSlots,
-    setTimezone,
   };
 });
-
-async function getBusinessTimezone(): Promise<string> {
-  try {
-    const response = await siteProperties.getSiteProperties();
-    console.log("response timezone", response.properties?.timeZone);
-    return response.properties?.timeZone || "UTC";
-  } catch (e) {
-    console.error("Failed to get business timezone, falling back to UTC", e);
-    return "UTC";
-  }
-}
 
 export async function loadBookingAvailabilityServiceConfig(
   serviceId: string,
   requestedTimezone?: string
 ): Promise<ServiceFactoryConfig<typeof BookingAvailabilityService>> {
-  const timezone = requestedTimezone || (await getBusinessTimezone());
+  const timezone = requestedTimezone || "UTC";
   try {
     if (serviceId) {
       // Load initial slots for the next 30 days
@@ -210,7 +195,7 @@ export async function loadBookingAvailabilityServiceConfig(
       const queryResponse = await availabilityCalendar.queryAvailability(
         query,
         {
-          timezone,
+          timezone: null,
           slotsPerDay: 20,
         }
       );
