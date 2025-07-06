@@ -6,6 +6,7 @@ import {
 import { SignalsServiceDefinition } from "@wix/services-definitions/core-services/signals";
 import type { Signal } from "../../Signal";
 import { availabilityCalendar } from "@wix/bookings";
+import { BookingTimezoneServiceDefinition } from "./booking-timezone-service";
 
 export interface BookingAvailabilityServiceAPI {
   slots: Signal<availabilityCalendar.SlotAvailability[]>;
@@ -27,11 +28,12 @@ export const BookingAvailabilityServiceDefinition =
   defineService<BookingAvailabilityServiceAPI>("bookingAvailabilityService");
 
 export const BookingAvailabilityService = implementService.withConfig<{
-  serviceId?: string;
-  timezone?: string;
+  serviceId: string;
+  timezone: string;
   initialSlots?: availabilityCalendar.SlotAvailability[];
 }>()(BookingAvailabilityServiceDefinition, ({ getService, config }) => {
   const signalsService = getService(SignalsServiceDefinition);
+  const timezoneService = getService(BookingTimezoneServiceDefinition);
 
   // State signals
   const slots: Signal<availabilityCalendar.SlotAvailability[]> =
@@ -42,9 +44,7 @@ export const BookingAvailabilityService = implementService.withConfig<{
   const serviceId: Signal<string | null> = signalsService.signal(
     config.serviceId || (null as any)
   );
-  const timezone: Signal<string> = signalsService.signal(
-    config.timezone || ("UTC" as any)
-  );
+  const timezone = timezoneService.selectedTimezone;
 
   // Computed functions
   const hasSlots = (): boolean => {
@@ -106,6 +106,8 @@ export const BookingAvailabilityService = implementService.withConfig<{
       const slotsPerDay = 20;
       const currentTimezone = timezone.get();
 
+      console.log(`loadSlots startDate:${startDate.toISOString()} endDate:${endDate.toISOString()} timezone:${currentTimezone}`);
+
       const queryResponse = await availabilityCalendar.queryAvailability(
         query,
         {
@@ -144,6 +146,10 @@ export const BookingAvailabilityService = implementService.withConfig<{
     await loadSlots(startDate, endDate);
   };
 
+  timezone.subscribe((tz) => {
+    refreshSlots();
+  });
+
   return {
     slots,
     selectedDate,
@@ -162,9 +168,10 @@ export const BookingAvailabilityService = implementService.withConfig<{
 });
 
 export async function loadBookingAvailabilityServiceConfig(
-  serviceId?: string,
-  timezone?: string
+  serviceId: string,
+  requestedTimezone?: string
 ): Promise<ServiceFactoryConfig<typeof BookingAvailabilityService>> {
+  const timezone = requestedTimezone || "UTC";
   try {
     if (serviceId) {
       // Load initial slots for the next 30 days
@@ -190,27 +197,28 @@ export async function loadBookingAvailabilityServiceConfig(
       const queryResponse = await availabilityCalendar.queryAvailability(
         query,
         {
-          timezone: timezone || "UTC",
+          timezone: null,
           slotsPerDay: 20,
         }
       );
 
       return {
         serviceId,
-        timezone: timezone || "UTC",
+        timezone,
         initialSlots: queryResponse.availabilityEntries || [],
       };
     }
 
     return {
-      timezone: timezone || "UTC",
+      serviceId,
+      timezone,
       initialSlots: [],
     };
   } catch (error) {
     console.error("Failed to load initial availability:", error);
     return {
       serviceId,
-      timezone: timezone || "UTC",
+      timezone,
       initialSlots: [],
     };
   }

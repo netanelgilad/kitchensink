@@ -2,6 +2,45 @@ import type { ServiceAPI } from "@wix/services-definitions";
 import { useService } from "@wix/services-manager-react";
 import { BookingAvailabilityServiceDefinition } from "../services/booking-availability-service";
 import { availabilityCalendar } from "@wix/bookings";
+import { BookingTimezoneServiceDefinition, type BookingTimezoneService } from "../services/booking-timezone-service";
+import { useState } from "react";
+
+export interface TimezoneProps {
+  children: (props: TimezoneRenderProps) => React.ReactNode;
+}
+
+export interface TimezoneRenderProps {
+  timezones: string[];
+  selectedTimezone: string; 
+  setSelectedTimezone: (tz: string) => void;
+  isDropDownOpen: boolean;
+  toggleOpenStatus: () => void;
+}
+
+export const Timezone = (props: TimezoneProps) => {
+  const service = useService(
+    BookingTimezoneServiceDefinition
+  ) as ServiceAPI<typeof BookingTimezoneServiceDefinition>;
+  const [isDropDownOpen, setIsDropDownOpen] = useState(false);
+  
+  const timezones = service.getTimezones();
+  const selectedTimezone = service.selectedTimezone.get();
+  const toggleOpenStatus = () => {
+    console.log(`toggleOpenStatus current:${isDropDownOpen} new:${!isDropDownOpen}`);
+    setIsDropDownOpen(!isDropDownOpen);
+  }
+  
+  return props.children({
+    timezones,
+    selectedTimezone,
+    isDropDownOpen,
+    toggleOpenStatus,
+    setSelectedTimezone: (tz: string) => {
+      service.setSelectedTimezone(tz);
+      setIsDropDownOpen(false);
+    },
+  });
+};
 
 /**
  * Props for Calendar headless component
@@ -291,5 +330,6 @@ export const BookingAvailability = {
   Calendar,
   TimeSlots,
   TimeSlot,
+  Timezone,
   AvailabilityHeader,
 } as const;

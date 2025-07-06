@@ -62,6 +62,7 @@ export const BookingServicesService = implementService.withConfig<{
       query = query.eq("hidden", false);
 
       const result = await query.find();
+
       servicesSignal.set(result.items || []);
     } catch (err) {
       console.error("Failed to load services:", err);
@@ -100,6 +101,7 @@ export async function loadBookingServicesServiceConfig(
     query = query.eq("onlineBooking.enabled", true).eq("hidden", false);
 
     const result = await query.find();
+    console.log("queryServices find blat", JSON.stringify(result.items[0].schedule, null, 2));
 
     return {
       initialServices: result.items || [],

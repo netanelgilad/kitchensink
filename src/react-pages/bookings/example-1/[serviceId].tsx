@@ -3,7 +3,7 @@ import {
   createServicesManager,
   createServicesMap,
 } from "@wix/services-manager";
-import { ServicesManagerProvider } from "@wix/services-manager-react";
+import { ServicesManagerProvider, useService } from "@wix/services-manager-react";
 import {
   BookingServiceService,
   BookingServiceServiceDefinition,
@@ -24,12 +24,14 @@ import {
   withDocsWrapper,
   PageDocsRegistration,
 } from "../../../components/DocsMode";
+import { BookingTimezoneService, BookingTimezoneServiceDefinition } from "../../../headless/bookings/services/booking-timezone-service";
 
 interface ServiceBookingPageProps {
   serviceId: string;
   bookingServiceConfig: any;
   bookingAvailabilityConfig: any;
   bookingSelectionConfig: any;
+  bookingTimezoneConfig: any;
 }
 
 // Component to automatically select the service when the page loads
@@ -61,6 +63,16 @@ const ServiceAutoSelector = ({ serviceId }: { serviceId: string }) => {
       }}
     </BookingService.Service>
   );
+};
+
+const TimezoneAutoSetter = () => {
+  const { setSelectedTimezone } = useService(BookingTimezoneServiceDefinition);
+  useEffect(() => {
+    const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    setSelectedTimezone(userTimezone);
+  }, [setSelectedTimezone]);
+
+  return null;
 };
 
 const CalendarSection = () => {
@@ -529,6 +541,7 @@ export default function ServiceBookingPage({
   bookingServiceConfig,
   bookingAvailabilityConfig,
   bookingSelectionConfig,
+  bookingTimezoneConfig,
 }: ServiceBookingPageProps) {
   // Create services manager
   const servicesManager = createServicesManager(
@@ -548,6 +561,11 @@ export default function ServiceBookingPage({
         BookingSelectionService,
         bookingSelectionConfig
       )
+      .addService(
+        BookingTimezoneServiceDefinition,
+        BookingTimezoneService,
+        bookingTimezoneConfig
+      )
   );
 
   return (
@@ -560,6 +578,7 @@ export default function ServiceBookingPage({
       <ServicesManagerProvider servicesManager={servicesManager}>
         {/* Auto-select the service on page load */}
         <ServiceAutoSelector serviceId={serviceId} />
+        <TimezoneAutoSetter />
 
         <div className="min-h-screen bg-gradient-to-br from-indigo-900 via-purple-900 to-pink-900">
           {/* Header */}
@@ -662,6 +681,37 @@ export default function ServiceBookingPage({
                 </BookingSelection.BookingProgress>
               </div>
             </div>
+          </div>
+
+          {/* Timezone Display */}
+          <div className="flex justify-end max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+            <BookingAvailability.Timezone>
+              {withDocsWrapper(
+                ({ timezones, selectedTimezone, setSelectedTimezone, isDropDownOpen, toggleOpenStatus }) => (
+                  <div
+                    className="relative cursor-pointer inline-flex items-center px-3 py-1 rounded-full bg-white/10 border border-white/20 text-sm text-blue-200 font-medium shadow-sm"
+                    title={`Timezone: ${selectedTimezone}`}
+                    onClick={toggleOpenStatus}
+                  >
+                    <svg className="w-4 h-4 mr-2 text-blue-300" fill="none" stroke="currentColor" strokeWidth="2" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                    {selectedTimezone}
+                    {isDropDownOpen && (
+                      <div className="absolute z-1 top-full mt-2 w-32 bg-white rounded-lg shadow-lg">
+                        {timezones.map((tz) => (
+                          <div key={tz} className="px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer rounded-lg" onClick={() => setSelectedTimezone(tz)}>
+                            {tz}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ),
+                "Timezone",
+                "/docs/components/booking-availability#timezone"
+              )}
+            </BookingAvailability.Timezone>
           </div>
 
           {/* Main Content */}

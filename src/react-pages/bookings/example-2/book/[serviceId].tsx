@@ -21,12 +21,14 @@ import {
 } from "../../../../components/DocsMode";
 import { BookingAvailabilityServiceDefinition } from "../../../../headless/bookings/services/booking-availability-service";
 import { BookingSelectionServiceDefinition } from "../../../../headless/bookings/services/booking-selection-service";
+import { BookingTimezoneService, BookingTimezoneServiceDefinition } from "../../../../headless/bookings/services/booking-timezone-service";
 
 interface BookNowPageProps {
   serviceId: string;
   bookingServicesConfig: any;
   bookingAvailabilityConfig: any;
   bookingSelectionConfig: any;
+  bookingTimezoneConfig: any;
 }
 
 const ServiceNotFound = () => (
@@ -663,10 +665,16 @@ export default function BookNowPage({
   bookingServicesConfig,
   bookingAvailabilityConfig,
   bookingSelectionConfig,
+  bookingTimezoneConfig,
 }: BookNowPageProps) {
   // Create services manager with all required services
   const servicesManager = createServicesManager(
     createServicesMap()
+      .addService(
+        BookingTimezoneServiceDefinition,
+        BookingTimezoneService,
+        bookingTimezoneConfig
+      )
       .addService(
         BookingServicesServiceDefinition,
         BookingServicesService,
