@@ -14,6 +14,7 @@ export interface TimezoneRenderProps {
   selectedTimezone: string; 
   setSelectedTimezone: (tz: string) => void;
   isDropDownOpen: boolean;
+  toggleOpenStatus: () => void;
 }
 
 export const Timezone = (props: TimezoneProps) => {
@@ -24,13 +25,21 @@ export const Timezone = (props: TimezoneProps) => {
   
   const timezones = service.getTimezones();
   const selectedTimezone = service.selectedTimezone.get();
+  const toggleOpenStatus = () => {
+    console.log(`toggleOpenStatus current:${isDropDownOpen} new:${!isDropDownOpen}`);
+    setIsDropDownOpen(!isDropDownOpen);
+  }
   
-  return <div onClick={() => setIsDropDownOpen(!isDropDownOpen)}>{props.children({
+  return props.children({
     timezones,
     selectedTimezone,
     isDropDownOpen,
-    setSelectedTimezone: service.setSelectedTimezone,
-  })}</div>;
+    toggleOpenStatus,
+    setSelectedTimezone: (tz: string) => {
+      service.setSelectedTimezone(tz);
+      setIsDropDownOpen(false);
+    },
+  });
 };
 
 /**

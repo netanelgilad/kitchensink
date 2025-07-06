@@ -106,6 +106,8 @@ export const BookingAvailabilityService = implementService.withConfig<{
       const slotsPerDay = 20;
       const currentTimezone = timezone.get();
 
+      console.log(`loadSlots startDate:${startDate.toISOString()} endDate:${endDate.toISOString()} timezone:${currentTimezone}`);
+
       const queryResponse = await availabilityCalendar.queryAvailability(
         query,
         {
